@@ -2,6 +2,21 @@ var pool = require('../config/db');
 
 const { encryptPassword, currentTimeInTimeZone } = require('../utils/utils');
 
+//:New
+const getProductsCount = async (center_id) => {
+	let query = `select count(*) as count from product p where 
+		p.center_id = '${center_id}' `;
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				reject(err);
+			}
+			resolve(data[0]);
+		});
+	});
+};
+
 const isUserExist = async (insertValues) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 	let hashed_password = await encryptPassword(insertValues.password);
@@ -260,4 +275,6 @@ module.exports = {
 	updateCenterBankInfo,
 	updateBank,
 	updateBankDefaults,
+
+	getProductsCount,
 };

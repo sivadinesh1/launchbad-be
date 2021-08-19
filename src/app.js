@@ -1,8 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-const { handleError, ErrorHandler } = require('./config/error');
-const config = require('./config/config');
+const httpStatus = require('http-status');
+const { errorConverter, errorHandler } = require('./middleware/error');
+
 const logger = require('./config/log4js');
+const ApiError = require('./utils/ApiError');
 
 const routes = require('./routes/v1');
 const routes2 = require('./routes/v2');
@@ -45,12 +47,15 @@ app.use(
 app.use('/v1', routes);
 app.use('/v2', routes2);
 
-app.get('/error', (req, res) => {
-	throw new ErrorHandler(500, 'Internal server error');
+// send back a 404 error for any unknown api request
+app.use((req, res, next) => {
+	next(new ApiError(httpStatus.NOT_FOUND, 'Not found'));
 });
 
-app.use((err, req, res) => {
-	handleError(err, res);
-});
+// convert error to ApiError, if needed
+app.use(errorConverter);
+
+// handle error
+app.use(errorHandler);
 
 module.exports = app;

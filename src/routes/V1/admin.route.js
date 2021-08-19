@@ -1,5 +1,6 @@
 const express = require('express');
 const adminRoute = express.Router();
+//const router = express.Router();
 
 var pool = require('../../config/db');
 
@@ -44,20 +45,46 @@ const { getPermissions, checkUsernameExists } = require('../../services/auth.ser
 
 const { isStockIdExist, insertToStock, insertItemHistoryTable } = require('../../services/stock.service');
 
-adminRoute.get('/view-products-count/:centerid', (req, res) => {
-	let center_id = req.params.centerid;
+const adminController = require('../../controllers/admin.controller');
 
-	let sql = `select count(*) as count from product p where 
-	p.center_id = '${center_id}' `;
+// adminRoute.get('/view-products-count/:centerid', (req, res) => {
+// 	let center_id = req.params.centerid;
 
-	pool.query(sql, function (err, data) {
-		if (err) {
-			return handleError(new ErrorHandler('500', `view-products-count/:centerid ${center_id}`, err), res);
-		} else {
-			return res.status(200).json(data);
-		}
-	});
-});
+// 	let sql = `select count(*) as count from product p where
+// 	p.center_id = '${center_id}' `;
+
+// 	pool.query(sql, function (err, data) {
+// 		if (err) {
+// 			return handleError(new ErrorHandler('500', `view-products-count/:centerid ${center_id}`, err), res);
+// 		} else {
+// 			return res.status(200).json(data);
+// 		}
+// 	});
+// });
+
+//Get company based on Id
+// router
+//   .route('/:id')
+//   .get(
+//     validate(companyValidation.getCompany),
+//     companyController.getById
+// );
+
+adminRoute.route('/view-products-count/:centerid').get(adminController.getProductsCount);
+
+// let center_id = req.params.centerid;
+
+// let sql = `select count(*) as count from product p where
+// p.center_id = '${center_id}' `;
+
+// pool.query(sql, function (err, data) {
+// 	if (err) {
+// 		return handleError(new ErrorHandler('500', `view-products-count/:centerid ${center_id}`, err), res);
+// 	} else {
+// 		return res.status(200).json(data);
+// 	}
+// });
+// });
 
 adminRoute.get('/view-product-info/:centerid/:productid', (req, res) => {
 	let center_id = req.params.centerid;
