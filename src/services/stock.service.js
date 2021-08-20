@@ -19,7 +19,6 @@ const insertItemHistoryTable = (
 	sale_return_det_id,
 	purchase_return_id,
 	purchase_return_det_id,
-	res,
 ) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
 
@@ -41,9 +40,7 @@ values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purch
 	return new Promise(function (resolve, reject) {
 		pool.query(query2, function (err, data) {
 			if (err) {
-				console.log('dinesh ' + JSON.stringify(err));
-				console.log('dinesh ' + query2);
-				return handleError(new ErrorHandler('500', 'Error insertItemHistoryTable in Stockjs', err), res);
+				return reject(err);
 			}
 			// success
 			resolve(data);
@@ -85,7 +82,7 @@ const updateStockViaId = (qty_to_update, product_id, stock_id, mode, res) => {
 	});
 };
 
-const isStockIdExist = (k, res) => {
+const isStockIdExist = (k) => {
 	todayYYMMDD = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD');
 	let query2 = `
 	select count(*) as count from stock where product_id = '${k.product_id}' and mrp  = '${k.mrp}' `;
@@ -93,7 +90,7 @@ const isStockIdExist = (k, res) => {
 	return new Promise(function (resolve, reject) {
 		pool.query(query2, function (err, data) {
 			if (err) {
-				return reject(new ErrorHandler('500', `Error checkStockIdPresent in Purchasejs. ${query2}`, err), res);
+				return reject(err);
 			} else {
 				resolve(data[0].count);
 			}
@@ -101,7 +98,7 @@ const isStockIdExist = (k, res) => {
 	});
 };
 
-const insertToStock = (product_id, mrp, available_stock, open_stock, res) => {
+const insertToStock = (product_id, mrp, available_stock, open_stock) => {
 	let upDate = new Date();
 	todayYYMMDD = toTimeZoneFrmt(upDate, 'Asia/Kolkata', 'YYYY-MM-DD');
 
@@ -109,10 +106,10 @@ const insertToStock = (product_id, mrp, available_stock, open_stock, res) => {
 	insert into stock (product_id, mrp, available_stock, open_stock, updateddate)
 	values ('${product_id}', '${mrp}', '${available_stock}', '${open_stock}' , '${todayYYMMDD}')`;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query2, function (err, data1) {
+	return new Promise((resolve, reject) => {
+		pool.query(query2, (err, data1) => {
 			if (err) {
-				return handleError(new ErrorHandler('500', 'Error insertToStock in stockjs', err), res);
+				return reject(err);
 			} else {
 				resolve(data1);
 			}

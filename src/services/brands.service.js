@@ -2,20 +2,24 @@ var pool = require('../config/db');
 
 const { toTimeZone, currentTimeInTimeZone } = require('../utils/utils');
 
-const insertBrand = (insertValues, callback) => {
+const insertBrand = async (insertValues) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let query = `  INSERT INTO brand (center_id, name, createdon, isactive ) VALUES (?, ?, '${today}', 'A')`;
 
 	let values = [insertValues.center_id, insertValues.name];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
 	});
 };
 
-const updateBrand = (updateValues, id, callback) => {
+const updateBrand = async (updateValues, id) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let query = ` 	update brand set center_id = '${updateValues.center_id}',
@@ -23,9 +27,13 @@ const updateBrand = (updateValues, id, callback) => {
 	id = '${id}'
 	`;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
+	return new Promise(function (resolve, reject) {
+		pool.query(query, function (err, data) {
+			if (err) {
+				reject(err);
+			}
+			resolve(data);
+		});
 	});
 };
 

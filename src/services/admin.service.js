@@ -10,12 +10,88 @@ const getProductsCount = async (center_id) => {
 	return new Promise((resolve, reject) => {
 		pool.query(query, (err, data) => {
 			if (err) {
-				reject(err);
+				return reject(err);
 			}
 			resolve(data[0]);
 		});
 	});
 };
+
+//:New
+const getProductInfo = async (center_id, product_id) => {
+	let query = `
+		select p.*, b.name as brand_name, b.id as brand_id  
+		from 
+		product p,
+		brand b 
+		where
+		p.brand_id = b.id and
+		p.id = '${product_id}' and
+		p.center_id = '${center_id}' `;
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
+	});
+};
+
+//:New
+const getStates = async () => {
+	let query = `
+	select * from state order by description `;
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
+	});
+};
+
+//:New
+const getTimezones = async () => {
+	let query = `
+	select * from timezones `;
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
+	});
+};
+
+// adminRoute.get('/get-states', (req, res) => {
+// 	let sql = `select * from state order by description`;
+
+// 	pool.query(sql, function (err, data) {
+// 		if (err) {
+// 			return handleError(new ErrorHandler('500', 'get-states', err), res);
+// 		} else {
+// 			return res.status(200).json(data);
+// 		}
+// 	});
+// });
+
+// adminRoute.get('/get-timezones', (req, res) => {
+// 	let sql = `select * from timezones `;
+
+// 	pool.query(sql, function (err, data) {
+// 		if (err) {
+// 			return handleError(new ErrorHandler('500', 'get-timezones', err), res);
+// 		} else {
+// 			return res.status(200).json(data);
+// 		}
+// 	});
+// });
 
 const isUserExist = async (insertValues) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
@@ -275,6 +351,9 @@ module.exports = {
 	updateCenterBankInfo,
 	updateBank,
 	updateBankDefaults,
-
+	//:New
 	getProductsCount,
+	getProductInfo,
+	getStates,
+	getTimezones,
 };

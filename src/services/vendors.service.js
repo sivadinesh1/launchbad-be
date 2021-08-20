@@ -2,7 +2,7 @@ var pool = require('../config/db');
 
 const { toTimeZone, currentTimeInTimeZone } = require('../utils/utils');
 
-const insertVendor = (insertValues, callback) => {
+const insertVendor = async (insertValues) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let query = `
@@ -29,13 +29,17 @@ const insertVendor = (insertValues, callback) => {
 		insertValues.email,
 	];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
 	});
 };
 
-const updateVendor = (updateValues, id, callback) => {
+const updateVendor = async (updateValues, id) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let query = `
@@ -48,9 +52,13 @@ const updateVendor = (updateValues, id, callback) => {
 	id = '${id}'
 	`;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
 	});
 };
 
@@ -75,8 +83,29 @@ const getSearchVendors = (centerid, searchstr, callback) => {
 	});
 };
 
+const getVendorDetails = async (center_id, vendor_id) => {
+	let query = `select v.*, s.code as code,
+	 s.description as state 
+	from vendor v, 
+	state s where 
+	s.id = v.state_id and
+	v.id = '${vendor_id}' and
+	v.center_id = '${center_id}' order by v.name`;
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
+	});
+};
+
 module.exports = {
 	insertVendor,
 	updateVendor,
 	getSearchVendors,
+
+	getVendorDetails,
 };

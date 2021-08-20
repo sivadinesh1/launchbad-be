@@ -5,9 +5,9 @@ const { toTimeZone, toTimeZoneFrmt, currentTimeInTimeZone, escapeText } = requir
 
 const { insertItemHistoryTable, insertToStock } = require('../services/stock.service');
 
-const insertProduct = async (insertValues, res) => {
-	let productId = await insertToProduct(insertValues, res);
-	let stockInsertRes = await insertToStock(productId, insertValues.mrp, insertValues.currentstock, insertValues.currentstock, res);
+const insertProduct = async (insertValues) => {
+	let productId = await insertToProduct(insertValues);
+	let stockInsertRes = await insertToStock(productId, insertValues.mrp, insertValues.currentstock, insertValues.currentstock);
 
 	let historyAddRes = await insertItemHistoryTable(
 		insertValues.center_id,
@@ -24,13 +24,12 @@ const insertProduct = async (insertValues, res) => {
 		'0', // sale_return_det_id
 		'0', // purchase_return_id
 		'0', // purchase_return_det_id
-		res,
 	);
 
 	return historyAddRes;
 };
 
-function insertToProduct(insertValues, res) {
+function insertToProduct(insertValues) {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let escapedDescription = escapeText(insertValues.description);
@@ -69,10 +68,10 @@ function insertToProduct(insertValues, res) {
 		insertValues.margin,
 	];
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, values, function (err, data) {
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
 			if (err) {
-				return handleError(new ErrorHandler('500', 'Error insertToProduct in Productjs', err), res);
+				return reject(err);
 			} else {
 				resolve(data.insertId);
 			}
@@ -128,7 +127,41 @@ const updateProduct = (updateValues, res) => {
 	});
 };
 
+const isProductExists = async (pcode, center_id) => {
+	let query = `
+	select * from product p where 
+ 	p.product_code = '${pcode}' and center_id = ${center_id}  `;
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
+	});
+};
+
 module.exports = {
 	insertProduct,
 	updateProduct,
+	isProductExists,
 };
+
+// adminRoute.get('/prod-exists/:pcode/:centerid', (req, res) => {
+// 	let pcode = req.params.pcode;
+// 	let center_id = req.params.centerid;
+
+// 	let sql = `select * from product p where
+// 	p.product_code = '${pcode}' and center_id = ${center_id} `;
+
+// 	pool.query(sql, function (err, data) {
+// 		if (err) {
+// 			return handleError(new ErrorHandler('500', `/prod-exists/:pcode ${pcode}`, err), res);
+// 		} else {
+// 			return res.status(200).json({
+// 				result: data,
+// 			});
+// 		}
+// 	});
+// });

@@ -3,9 +3,7 @@ var pool = require('../config/db');
 const { toTimeZone, currentTimeInTimeZone } = require('../utils/utils');
 
 // insert row in customer tbl
-const insertCustomer = (insertValues, callback) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-
+const insertCustomer = async (insertValues) => {
 	let taxSlabArr = [
 		{ gstslab: 0, gstvalue: insertValues.gstzero },
 		{ gstslab: 5, gstvalue: insertValues.gstfive },
@@ -14,6 +12,30 @@ const insertCustomer = (insertValues, callback) => {
 		{ gstslab: 28, gstvalue: insertValues.gsttwentyeight },
 	];
 
+	const data = await insertCustomerBlock(insertValues);
+
+	taxSlabArr.forEach((e) => {
+		let formObj = {
+			center_id: insertValues.center_id,
+			customer_id: data.insertId,
+			type: insertValues.disctype,
+			value: e.gstvalue,
+			gst_slab: e.gstslab,
+			startdate: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			enddate: '01-04-9999',
+			brand_id: 0,
+		};
+
+		const retVal = insertCustomerDiscount(formObj);
+	});
+
+	const finalReturnValue = await insertCustomerShippingAddressBlock(insertValues, data.insertId);
+
+	return finalReturnValue;
+};
+
+const insertCustomerBlock = async (insertValues) => {
+	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 	let query = `
 		INSERT INTO customer (center_id, name, address1, address2, address3, district, state_id, pin, 
 		gst, phone, mobile, mobile2, whatsapp, email, createdon, isactive)
@@ -37,55 +59,45 @@ const insertCustomer = (insertValues, callback) => {
 		insertValues.email,
 	];
 
-	pool.query(query, values, function (err, data) {
-		if (err) {
-			return callback(err);
-		} else {
-			taxSlabArr.forEach((e) => {
-				let formObj = {
-					center_id: insertValues.center_id,
-					customer_id: data.insertId,
-					type: insertValues.disctype,
-					value: e.gstvalue,
-					gst_slab: e.gstslab,
-					startdate: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
-					enddate: '01-04-9999',
-					brand_id: 0,
-				};
-
-				insertCustomerDiscount(formObj, (err, rows) => {
-					if (err) return handleError(new ErrorHandler('500', 'Error insertCustomerDiscount', err), res);
-				});
-			});
-
-			let query1 = `
-	INSERT INTO customer_shipping_address (customer_id, address1, address2, address3, district, state_id, pin, def_address, is_active)
-	VALUES (?, ?, ?, ?, ?, ?, ?, 'Y', 'A' ) `;
-			let values1 = [
-				data.insertId,
-
-				insertValues.address1,
-				insertValues.address2,
-				insertValues.district,
-				insertValues.district,
-				insertValues.state_id,
-				insertValues.pin,
-			];
-
-			pool.query(query1, values1, function (err, data) {
-				if (err) {
-					return callback(err);
-				} else {
-					// do nothing
-				}
-			});
-
-			return callback(null, { id: data.insertId });
-		}
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
+			if (err) {
+				return reject(err);
+			} else {
+				resolve(data);
+			}
+		});
 	});
 };
 
-const updateCustomer = (updateValues, id, callback) => {
+const insertCustomerShippingAddressBlock = async (insertValues, customer_id) => {
+	let query = `
+	INSERT INTO customer_shipping_address (customer_id, address1, address2, address3, district, state_id, pin, def_address, is_active)
+	VALUES (?, ?, ?, ?, ?, ?, ?, 'Y', 'A' ) `;
+
+	let values = [
+		customer_id,
+
+		insertValues.address1,
+		insertValues.address2,
+		insertValues.district,
+		insertValues.district,
+		insertValues.state_id,
+		insertValues.pin,
+	];
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
+			if (err) {
+				return reject(err);
+			} else {
+				resolve({ id: data.insertId });
+			}
+		});
+	});
+};
+
+const updateCustomer = (updateValues, id) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let query = `
@@ -98,14 +110,19 @@ const updateCustomer = (updateValues, id, callback) => {
 	id = '${id}'
 	`;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			} else {
+				resolve({ id: data.insertId });
+			}
+		});
 	});
 };
 
 // fetch rows from discount tbl
-const getCustomerDiscount = (centerid, customerid, callback) => {
+const getCustomerDiscount = async (centerid, customerid) => {
 	let query = ` select d.id as id, d.customer_id as customer_id, d.center_id as center_id, d.type, d.value, d.gst_slab, d.startdate, d.enddate,
 	c.name as customer_name
 	 from 
@@ -117,9 +134,14 @@ const getCustomerDiscount = (centerid, customerid, callback) => {
 
 	let values = [centerid, customerid];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
+			if (err) {
+				return reject(err);
+			} else {
+				resolve({ id: data.insertId });
+			}
+		});
 	});
 };
 
@@ -268,7 +290,7 @@ FROM
 };
 
 // insert row in discount tbl
-const insertCustomerDiscount = (insertValues, callback) => {
+const insertCustomerDiscount = async (insertValues) => {
 	let query = ` INSERT INTO discount (center_id, customer_id, type, value, gst_slab, startdate, enddate, brand_id)
   VALUES ( ?, ?, ?, ?, ?, ?, ?, ?) `;
 
@@ -283,9 +305,14 @@ const insertCustomerDiscount = (insertValues, callback) => {
 		insertValues.brand_id,
 	];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
+			if (err) {
+				return reject(err);
+			} else {
+				resolve('success');
+			}
+		});
 	});
 };
 
@@ -436,7 +463,7 @@ const insertDiscountsByBrands = (insertValues, callback) => {
 
 // SHIPPING ADDRESS
 // fetch rows from customer shipping address tbl
-const getCustomerShippingAddress = (customerid, callback) => {
+const getCustomerShippingAddress = (customerid) => {
 	let query = ` select csa.*, s.description as state_name
 from 
 customer_shipping_address csa,
@@ -447,29 +474,33 @@ customer_id = ? order by id desc `;
 
 	let values = [customerid];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
+			if (err) {
+				reject(err);
+			}
+			resolve(data);
+		});
 	});
 };
 
-const insertCustomerShippingAddress = async (insertValues, res, callback) => {
+const insertCustomerShippingAddress = async (insertValues) => {
 	let def_address = insertValues.def_address === true ? 'Y' : 'N';
 	let result = '';
 
 	if (def_address === 'Y') {
-		await updateAllAddress(insertValues, res);
-		result = await addCustomerShippingAddress(insertValues, def_address, res);
+		await updateAllAddress(insertValues);
+		result = await addCustomerShippingAddress(insertValues, def_address);
 
-		return callback(null, { id: result });
+		return { id: result };
 	} else {
-		result = await addCustomerShippingAddress(insertValues, def_address, res);
+		result = await addCustomerShippingAddress(insertValues, def_address);
 
-		return callback(null, { id: result });
+		return { id: result };
 	}
 };
 
-const addCustomerShippingAddress = (insertValues, def_address, res) => {
+const addCustomerShippingAddress = async (insertValues, def_address) => {
 	let query1 = `
 	INSERT INTO customer_shipping_address (customer_id, address1, address2, address3, district, state_id, pin, def_address, is_active)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'A' ) `;
@@ -487,22 +518,21 @@ const addCustomerShippingAddress = (insertValues, def_address, res) => {
 	return new Promise(function (resolve, reject) {
 		pool.query(query1, values1, function (err, data) {
 			if (err) {
-				return handleError(new ErrorHandler('500', 'Error addCustomerShippingAddress in Customerjs', err), res);
+				return reject(err);
 			} else {
 				return resolve(data.insertId);
-				// return resolve(null, { id: data.insertId });
 			}
 		});
 	});
 };
 
-const updateAllAddress = (insertValues, res) => {
+const updateAllAddress = async (insertValues) => {
 	let sql = `update customer_shipping_address set def_address = 'N' where customer_id = '${insertValues.customer_id}' `;
 
 	return new Promise(function (resolve, reject) {
 		pool.query(sql, function (err, data1) {
 			if (err) {
-				return handleError(new ErrorHandler('500', 'Error updateAllAddress in Customerjs', err), res);
+				return reject(err);
 			} else {
 				resolve('updated');
 			}
@@ -510,45 +540,51 @@ const updateAllAddress = (insertValues, res) => {
 	});
 };
 
-const updateCustomerShippingAddress = (updateValues, id, callback) => {
+const updateCustomerShippingAddress = async (updateValues, id) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	if (updateValues.def_address) {
-		let sql = `update customer_shipping_address set def_address = 'N' where customer_id = '${updateValues.customer_id}' `;
-
-		pool.query(sql, function (err, data1) {
-			if (err) return callback(err);
-			let query = `
-			update customer_shipping_address set
-			address1 = '${updateValues.address1}',address2 = '${updateValues.address2}',
-			district = '${updateValues.district}', state_id = '${updateValues.state_id}', pin = '${updateValues.pin}', def_address = '${
-				updateValues.def_address === true ? 'Y' : 'N'
-			}'
-			where
-			id = '${id}'
-			`;
-
-			pool.query(query, function (err, data) {
-				if (err) return callback(err);
-				return callback(null, data);
-			});
-		});
+		const data = await updateCSAByCustomerId(updateValues);
+		const result = await updateCSAById(updateValues, id);
+		return result;
 	} else {
-		let query = `
-		update customer_shipping_address set
-		address1 = '${updateValues.address1}',address2 = '${updateValues.address2}',
-		district = '${updateValues.district}', state_id = '${updateValues.state_id}', pin = '${updateValues.pin}', def_address = '${
-			updateValues.def_address === true ? 'Y' : 'N'
-		}'
-		where
-		id = '${id}'
-		`;
-
-		pool.query(query, function (err, data) {
-			if (err) return callback(err);
-			return callback(null, data);
-		});
+		const result = await updateCSAById(updateValues, id);
+		return result;
 	}
+};
+
+const updateCSAByCustomerId = async (updateValues) => {
+	let query = `update customer_shipping_address set def_address = 'N' where customer_id = '${updateValues.customer_id}' `;
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve('success');
+		});
+	});
+};
+
+const updateCSAById = async (updateValues, id) => {
+	let query = `
+	update customer_shipping_address set
+	address1 = '${updateValues.address1}',address2 = '${updateValues.address2}',
+	district = '${updateValues.district}', state_id = '${updateValues.state_id}', pin = '${updateValues.pin}', def_address = '${
+		updateValues.def_address === true ? 'Y' : 'N'
+	}'
+	where
+	id = '${id}'
+	`;
+
+	return new Promise((resolve, reject) => {
+		pool.query(query, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve('success');
+		});
+	});
 };
 
 const inactivateCSA = (id) => {
