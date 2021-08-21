@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { encryptPassword, currentTimeInTimeZone } = require('../utils/utils');
+const { encryptPassword, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
 //:New
 const getProductsCount = async (center_id) => {
@@ -44,14 +44,7 @@ const getStates = async () => {
 	let query = `
 	select * from state order by description `;
 
-	return new Promise((resolve, reject) => {
-		pool.query(query, (err, data) => {
-			if (err) {
-				return reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
 //:New
@@ -102,8 +95,6 @@ const isUserExist = async (insertValues) => {
 
 	return new Promise(function (resolve, reject) {
 		pool.query(sql, function (err, data) {
-			// todo dinesh err Error: ER_DUP_ENTRY: Duplicate entry '9999999993' for key 'username_UNIQUE'
-
 			if (err) {
 				reject(err);
 			}
@@ -117,6 +108,41 @@ const isUserExist = async (insertValues) => {
 	});
 };
 
+// let jsonObj = req.body;
+
+// let check = await isUserExist(jsonObj);
+// if (check === 'DUP_USERNAME') {
+// 	return res.status(200).json({ message: 'DUP_USERNAME' });
+// } else {
+// 	let id = await insertUser(jsonObj);
+
+// 	if (id !== null || id !== '' || id !== undefined) {
+// 		let userrole = await insertUserRole({
+// 			user_id: id,
+// 			role_id: req.body.role_id,
+// 		});
+
+// 		return res.status(200).json({ message: 'User Inserted' });
+// 	}
+// }
+const addUser = async (jsonObj) => {
+	const check = await isUserExist(jsonObj);
+	if (check === 'DUP_USERNAME') {
+		return { message: 'DUP_USERNAME' };
+	} else {
+		let id = await insertUser(jsonObj);
+
+		if (id !== null || id !== '' || id !== undefined) {
+			let userrole = await insertUserRole({
+				user_id: id,
+				role_id: req.body.role_id,
+			});
+
+			return { message: 'User Inserted' };
+		}
+	}
+};
+
 const insertUser = async (insertValues) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 	let hashed_password = await encryptPassword(insertValues.password);
@@ -125,16 +151,9 @@ const insertUser = async (insertValues) => {
 
 	let values = [insertValues.center_id, insertValues.username, hashed_password, insertValues.firstname, insertValues.username];
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, values, function (err, data) {
-			// todo dinesh err Error: ER_DUP_ENTRY: Duplicate entry '9999999993' for key 'username_UNIQUE'
+	const data = promisifyQuery(query, values);
 
-			if (err) {
-				reject(err);
-			}
-			resolve(data.insertId);
-		});
-	});
+	return data.insertId;
 };
 
 const insertUserRole = (insertValues) => {
@@ -246,6 +265,14 @@ const updateLogo = (center_id, logo_name, logo_url, position) => {
 	});
 };
 
+const addBank = async (insertValues) => {
+	insertBank(insertValues);
+	if (insertValues.isdefault) {
+		let response = await updateCenterBankInfo(insertValues);
+		return 'success';
+	}
+};
+
 const insertBank = async (insertValues) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
@@ -258,19 +285,53 @@ VALUES
 		'${insertValues.isdefault === true ? 'Y' : 'N'}',
 		'${today}', '${insertValues.createdby}') `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve('success');
-		});
-	});
+	const data = promisifyQuery(query);
+	return 'success';
 };
 
+// let insertValues = req.body;
+
+// // update BANK DEFAULT to N if default enabled
+// if (req.body.isdefault) {
+// 	let updateDefaults = await updateBankDefaults(insertValues.center_id);
+// }
+
+// // update bank details
+// let id = await updateBank(insertValues);
+
+// if (id === 'success') {
+// 	if (req.body.isdefault) {
+// 		// if default enabled, update center table
+// 		let response = await updateCenterBankInfo(insertValues);
+
+// 		if (response === 'success') {
+// 			return res.status(200).json({ message: 'success' });
+// 		} else {
+// 			return res.status(200).json({ message: 'Error' });
+// 		}
+// 	} else {
+// 		return res.status(200).json({ message: 'success' });
+// 	}
+// } else {
+// 	return res.status(200).json({ message: 'Error' });
+// }
+
 const updateBank = async (insertValues) => {
+	if (insertValues.isdefault) {
+		let updateDefaults = await updateBankDefaults(insertValues.center_id);
+	}
+
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
+	const result = updateBkInfo(insertValues);
+
+	if (insertValues.isdefault) {
+		let response = await updateCenterBankInfo(insertValues);
+	}
+
+	return 'success';
+};
+const updateBkInfo = (insertValues) => {
 	let query = `  update center_banks set
 	bankname = '${insertValues.bankname}',
 	accountname = '${insertValues.accountname}',
@@ -282,15 +343,7 @@ const updateBank = async (insertValues) => {
 	updatedby = '${insertValues.updatedby}' 
 	where id = '${insertValues.id}'
 	`;
-
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve('success');
-		});
-	});
+	return promisifyQuery(query);
 };
 
 const updateCenterBankInfo = (updateValues) => {
@@ -310,15 +363,7 @@ const updateCenterBankInfo = (updateValues) => {
 		updateValues.center_id,
 	];
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, values, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-
-			resolve('success');
-		});
-	});
+	return promisifyQuery(query, values);
 };
 
 const updateBankDefaults = async (center_id) => {
@@ -356,4 +401,6 @@ module.exports = {
 	getProductInfo,
 	getStates,
 	getTimezones,
+	addUser,
+	addBank,
 };

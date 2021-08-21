@@ -1,5 +1,6 @@
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
+const { responseForward } = require('../utils/utils');
 const catchAsync = require('../utils/catchAsync');
 const {
 	adminService,
@@ -15,33 +16,18 @@ const {
 const getProductsCount = catchAsync(async (req, res) => {
 	const data = await adminService.getProductsCount(req.params.centerid);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching products count');
-	}
-	return res.status(200).send(data);
+	return responseForward(data, 'getProductsCount', res);
 });
 
 const getProductInfo = catchAsync(async (req, res) => {
 	const data = await adminService.getProductInfo(req.params.centerid, req.params.productid);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching products count');
-	}
-	return res.status(200).send(data);
+	return responseForward(data, 'getProductInfo', res);
 });
 
 const addProduct = catchAsync(async (req, res) => {
 	const data = await productsService.insertProduct(req.body);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error adding new product');
-	}
-
-	if (data.affectedRows === 1) {
-		return res.status(200).json({
-			result: 'success',
-		});
-	}
+	return responseForward(data, 'addProduct', res);
 });
 
 const updateProduct = catchAsync(async (req, res) => {
@@ -86,202 +72,176 @@ const updateProduct = catchAsync(async (req, res) => {
 const getVendorDetails = catchAsync(async (req, res) => {
 	const data = await vendorsService.getVendorDetails(req.params.centerid, req.params.vendorid);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching vendor details');
-	}
-	return res.status(200).send(data);
+	return responseForward(data, 'getVendorDetails', res);
 });
 
 const getStates = catchAsync(async (req, res) => {
 	const data = await adminService.getStates();
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching States data');
-	}
-	return res.status(200).send(data);
+	return responseForward(data, 'getStates', res);
 });
 
 const getTimezones = catchAsync(async (req, res) => {
 	const data = await adminService.getTimezones();
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching Timezone data');
-	}
-	return res.status(200).send(data);
+	return responseForward(data, 'getTimezones', res);
 });
 
 const updateVendor = catchAsync(async (req, res) => {
 	const data = await vendorsService.updateVendor(req.body, req.params.id);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error while update vendor ');
-	}
-
-	return res.status(200).json({
-		result: 'success',
-	});
+	return responseForward(data, 'updateVendor', res);
 });
 
 const updateBrand = catchAsync(async (req, res) => {
 	const data = await brandsService.updateBrand(req.body, req.params.id);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error while update brand ');
-	}
-
-	return res.status(200).json({
-		result: 'success',
-	});
+	return responseForward(data, 'updateBrand', res);
 });
 
 const addVendor = catchAsync(async (req, res) => {
 	const data = await vendorsService.insertVendor(req.body);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error adding new vendor');
-	}
-
-	if (data.affectedRows === 1) {
-		return res.status(200).json({
-			result: 'success',
-		});
-	}
+	return responseForward(data, 'addVendor', res);
 });
 
 const addBrand = catchAsync(async (req, res) => {
 	const data = await brandsService.insertBrand(req.body);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error adding new brand');
-	}
-
-	if (data.affectedRows === 1) {
-		return res.status(200).json({
-			result: 'success',
-		});
-	}
+	return responseForward(data, 'addBrand', res);
 });
 
 const getCustomerDetails = catchAsync(async (req, res) => {
 	const data = await customersService.getCustomerDetails(req.params.centerid, req.params.customerid);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching customer details');
-	}
-
-	return res.status(200).json(data);
+	return responseForward(data, 'getCustomerDetails', res);
 });
 
 const addCustomer = catchAsync(async (req, res) => {
 	const data = await customersService.insertCustomer(req.body);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error adding new customer');
-	}
-	return res.status(200).json({
-		result: 'success',
-		id: data.id,
-	});
+	return responseForward(data, 'getCustomerDetails', res);
 });
 
 const updateCustomer = catchAsync(async (req, res) => {
 	const data = await customersService.updateCustomer(req.body, req.params.id);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error while updating customer ');
-	}
-
-	return res.status(200).json({
-		result: 'success',
-	});
+	return responseForward(data, 'updateCustomer', res);
 });
 
 const getCenterDetails = catchAsync(async (req, res) => {
 	const data = await centerService.getCenterDetails(req.params.centerid);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching center details');
-	}
-
-	return res.status(200).json(data);
+	return responseForward(data, 'getCenterDetails', res);
 });
 
 const updateCenter = catchAsync(async (req, res) => {
 	const data = await centerService.updateCenter(req);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error while updating customer ');
-	}
-
-	return res.status(200).json({
-		result: 'success',
-	});
+	return responseForward(data, 'updateCenter', res);
 });
 
 const isProductExists = catchAsync(async (req, res) => {
 	const data = await productsService.isProductExists(req.params.pcode, req.params.centerid);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching center details');
-	}
-
-	return res.status(200).json(data);
+	return responseForward(data, 'isProductExists', res);
 });
 
 const addCustomerShippingAddress = catchAsync(async (req, res) => {
 	const data = await customersService.insertCustomerShippingAddress(req.body);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error adding new customer');
-	}
-	return res.status(200).json({
-		result: 'success',
-	});
+	return responseForward(data, 'addCustomerShippingAddress', res);
 });
 
 const getCustomerShippingAddress = catchAsync(async (req, res) => {
 	const data = await customersService.getCustomerShippingAddress(req.params.customerid);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching center details');
-	}
-
-	return res.status(200).json(data);
+	return responseForward(data, 'getCustomerShippingAddress', res);
 });
 
 const updateCustomerShippingAddress = catchAsync(async (req, res) => {
 	const data = await customersService.updateCustomerShippingAddress(req.body, req.params.id);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error while updating customer shipping address ');
-	}
-
-	return res.status(200).json(data);
+	return responseForward(data, 'updateCustomerShippingAddress', res);
 });
-//
 
 const inactivateCSA = catchAsync(async (req, res) => {
 	const data = await customersService.inactivateCSA(req.body.id);
-
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error adding new brand');
-	}
-
-	if (data === 'UPDATED') {
-		return res.status(200).json({ message: 'Address Deleted.' });
-	} else {
-		return res.status(200).json({ message: 'Address Deletion Failed.' });
-	}
+	return responseForward(data, 'inactivateCSA', res);
 });
 
 const getCustomerDiscount = catchAsync(async (req, res) => {
 	const data = await customersService.getCustomerDiscount(req.params.centerid, req.params.customerid);
 
-	if (!data) {
-		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error fetching center details');
-	}
+	return responseForward(data, 'getCustomerDiscount', res);
+});
 
-	return res.status(200).json(data);
+const getAllCustomerDefaultDiscounts = catchAsync(async (req, res) => {
+	const data = await customersService.getAllCustomerDefaultDiscounts(req.params.centerid, req.params.customerid);
+
+	return responseForward(data, 'getAllCustomerDefaultDiscounts', res);
+});
+
+const getDiscountsByCustomer = catchAsync(async (req, res) => {
+	const data = await customersService.getDiscountsByCustomer(req.params.centerid, req.params.customerid);
+	return responseForward(data.ApiError, 'getDiscountsByCustomer', res);
+});
+
+const getDiscountsByCustomerByBrand = catchAsync(async (req, res) => {
+	const data = await customersService.getDiscountsByCustomerByBrand(req.params.centerid, req.params.customerid);
+	return responseForward(data, 'Error: getDiscountsByCustomerByBrand', res);
+});
+
+const updateDefaultCustomerDiscount = catchAsync(async (req, res) => {
+	const data = await customersService.updateDefaultCustomerDiscount(req.params.centerid, req.params.customerid);
+	return responseForward(data, 'Error: updateDefaultCustomerDiscount', res);
+});
+
+const updateCustomerDiscount = catchAsync(async (req, res) => {
+	const data = await customersService.updateCustomerDiscount(req.params.centerid, req.params.customerid);
+
+	return responseForward(data, 'Error: updateCustomerDiscount', res);
+});
+
+const insertDiscountsByBrands = catchAsync(async (req, res) => {
+	const data = await customersService.insertDiscountsByBrands(req.body);
+
+	return responseForward(data, 'Error: insertDiscountsByBrands', res);
+});
+
+const addUser = catchAsync(async (req, res) => {
+	const data = await adminService.addUser(req.body);
+
+	return responseForward(data, 'Error: addUser', res);
+});
+
+const updateUser = catchAsync(async (req, res) => {
+	const data = await adminService.updateUserStatus(req.body);
+
+	return responseForward(data, 'Error: updateUser', res);
+});
+
+const getUsers = catchAsync(async (req, res) => {
+	const data = await adminService.getUsers(req.params.centerid, req.params.status);
+
+	return responseForward(data, 'Error: getUsers', res);
+});
+
+const checkUsernameExists = catchAsync(async (req, res) => {
+	const data = await authService.checkUsernameExists(req.params.phone, req.params.centerid);
+
+	return responseForward(data, 'Error: checkUsernameExists', res);
+});
+
+const getOutstandingBalance = catchAsync(async (req, res) => {
+	const data = await adminService.getOutstandingBalance(req.body.center_id, req.body.limit);
+
+	return responseForward(data, 'Error: getOutstandingBalance', res);
+});
+
+const addBank = catchAsync(async (req, res) => {
+	const data = await adminService.addBank(req.body);
+
+	return responseForward(data, 'Error: addBank', res);
+});
+
+const updateBank = catchAsync(async (req, res) => {
+	const data = await adminService.updateBank(req.body);
+
+	return responseForward(data, 'Error: updateBank', res);
 });
 
 module.exports = {
@@ -308,12 +268,17 @@ module.exports = {
 	updateCustomerShippingAddress,
 	inactivateCSA,
 	getCustomerDiscount,
+	getAllCustomerDefaultDiscounts,
+	getDiscountsByCustomer,
+	getDiscountsByCustomerByBrand,
+	updateDefaultCustomerDiscount,
+	updateCustomerDiscount,
+	insertDiscountsByBrands,
+	addUser,
+	updateUser,
+	getUsers,
+	checkUsernameExists,
+	getOutstandingBalance,
+	addBank,
+	updateBank,
 };
-
-// adminRoute.get('/get-shipping-address/:customerid', (req, res) => {
-// 	// @from Customer file
-// 	getCustomerShippingAddress(`${req.params.customerid}`, (err, rows) => {
-// 		if (err) return handleError(new ErrorHandler('500', `/get-shipping-address/:customerid ${req.params.customerid}`, err), res);
-// 		return res.json(rows);
-// 	});
-// });

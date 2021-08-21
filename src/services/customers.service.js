@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
 // insert row in customer tbl
 const insertCustomer = async (insertValues) => {
@@ -97,7 +97,7 @@ const insertCustomerShippingAddressBlock = async (insertValues, customer_id) => 
 	});
 };
 
-const updateCustomer = (updateValues, id) => {
+const updateCustomer = async (updateValues, id) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let query = `
@@ -110,15 +110,7 @@ const updateCustomer = (updateValues, id) => {
 	id = '${id}'
 	`;
 
-	return new Promise((resolve, reject) => {
-		pool.query(query, (err, data) => {
-			if (err) {
-				return reject(err);
-			} else {
-				resolve({ id: data.insertId });
-			}
-		});
-	});
+	return promisifyQuery(query);
 };
 
 // fetch rows from discount tbl
@@ -146,7 +138,7 @@ const getCustomerDiscount = async (centerid, customerid) => {
 };
 
 // fetch rows for default (brandid as zero) customer discounts from discount tbl
-const getAllCustomerDefaultDiscounts = (centerid, customer_id, callback) => {
+const getAllCustomerDefaultDiscounts = async (centerid, customer_id) => {
 	let query = ` 
 	SELECT 
 	c.name, 'default' as 'brand_name',   d.type, d.brand_id as brand_id, 
@@ -178,14 +170,11 @@ FROM
 
 	let values = [centerid];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query, values);
 };
 
 // fetch rows for default (brandid as zero) customer discounts from discount tbl
-const getDiscountsByCustomer = (centerid, customerid, callback) => {
+const getDiscountsByCustomer = async (centerid, customerid) => {
 	let query = ` 
 	SELECT 
 	c.name,  '' as 'brand_name',  d.type, d.brand_id as brand_id, 
@@ -211,14 +200,16 @@ FROM
 
 	let values = [centerid, customerid, customerid, customerid];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query, values);
+
+	// pool.query(query, values, function (err, data) {
+	// 	if (err) return callback(err);
+	// 	return callback(null, data);
+	// });
 };
 
 // fetch rows for default (brandid as NON zero) customer discounts from discount tbl
-const getDiscountsByCustomerByBrand = (centerid, customerid, callback) => {
+const getDiscountsByCustomerByBrand = async (centerid, customerid) => {
 	let query = ` 
 	SELECT 
 	c.name,  b.name as 'brand_name',  d.type, d.brand_id as brand_id, 
@@ -248,10 +239,7 @@ FROM
 
 	let values = [centerid, customerid];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query, values);
 };
 
 // fetch rows for default (brandid as NON zero) customer discounts from discount tbl
@@ -317,24 +305,23 @@ const insertCustomerDiscount = async (insertValues) => {
 };
 
 // update rows in discount tbl // check
-const updateCustomerDiscount = (updateValues, callback) => {
-	updateValues.forEach((element) => {
-		let stdate = toTimeZoneFrmt(element.startdate, 'Asia/Kolkata', 'DD-MM-YYYY');
+const updateCustomerDiscount = async (updateValues) => {
+	return new Promise((resolve, reject) => {
+		updateValues.forEach((element) => {
+			let stdate = toTimeZoneFrmt(element.startdate, 'Asia/Kolkata', 'DD-MM-YYYY');
 
-		let query = ` update discount set type = '${element.type}', value = '${element.value}', 
+			let query = ` update discount set type = '${element.type}', value = '${element.value}', 
                   gst_slab = '${element.gst_slab}', startdate = '${stdate}', enddate = '${element.enddate}' 
                   where id = '${element.id}' `;
 
-		pool.query(query, function (err, data) {
-			if (err) return callback(err);
+			promisifyQuery(query, values);
 		});
+		resolve('1');
 	});
-
-	return callback(null, 1);
 };
 
 // update rows in discount tbl // check
-const updateDefaultCustomerDiscount = (updateValues, callback) => {
+const updateDefaultCustomerDiscount = async (updateValues) => {
 	let query = ` 
 	UPDATE discount
 	SET value = (case when gst_slab = 0 then '${updateValues.gstzero}'
@@ -352,15 +339,11 @@ const updateDefaultCustomerDiscount = (updateValues, callback) => {
 	customer_id = '${updateValues.customer_id}'
 	`;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-	});
-
-	return callback(null, 1);
+	return promisifyQuery(query);
 };
 
 // fetch rows from customer tbl & customer shipping addres tbl
-const getCustomerDetails = (centerid, customerid) => {
+const getCustomerDetails = async (centerid, customerid) => {
 	let query = `select c.*, s.code,  s.description,
 	csa.state_id as csa_state,
 	csa.address1 as csa_address1,
@@ -463,7 +446,7 @@ const insertDiscountsByBrands = (insertValues, callback) => {
 
 // SHIPPING ADDRESS
 // fetch rows from customer shipping address tbl
-const getCustomerShippingAddress = (customerid) => {
+const getCustomerShippingAddress = async (customerid) => {
 	let query = ` select csa.*, s.description as state_name
 from 
 customer_shipping_address csa,
@@ -587,7 +570,7 @@ const updateCSAById = async (updateValues, id) => {
 	});
 };
 
-const inactivateCSA = (id) => {
+const inactivateCSA = async (id) => {
 	let query = `
   update customer_shipping_address
 set is_active = 'I' where

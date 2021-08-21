@@ -1,6 +1,8 @@
-// const moment = require("moment");
+var pool = require('../config/db');
 const moment = require('moment-timezone');
 const bcrypt = require('bcrypt');
+const httpStatus = require('http-status');
+const ApiError = require('./ApiError');
 
 const number2text = (value) => {
 	// function number2text(value) {
@@ -122,6 +124,25 @@ const escapeText = (text) => {
 	return tempTxt;
 };
 
+const promisifyQuery = (query, values = '') => {
+	return new Promise((resolve, reject) => {
+		pool.query(query, values, (err, data) => {
+			if (err) {
+				return reject(err);
+			}
+			resolve(data);
+		});
+	});
+};
+
+const responseForward = (data, msg, res) => {
+	if (!data) {
+		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, msg);
+	}
+
+	return res.status(200).json(data);
+};
+
 module.exports = {
 	number2text,
 	toTimeZone,
@@ -129,4 +150,6 @@ module.exports = {
 	toTimeZoneFrmt,
 	encryptPassword,
 	escapeText,
+	promisifyQuery,
+	responseForward,
 };
