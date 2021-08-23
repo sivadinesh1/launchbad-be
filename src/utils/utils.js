@@ -135,12 +135,12 @@ const promisifyQuery = (query, values = '') => {
 	});
 };
 
-const responseForward = (data, msg, res) => {
+const responseForward = (data, msg, res, status = 200) => {
 	if (!data) {
 		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, msg);
 	}
 
-	return res.status(200).json(data);
+	return res.status(status).json(data);
 };
 
 module.exports = {

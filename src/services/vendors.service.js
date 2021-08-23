@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone } = require('../utils/utils');
+const { currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
 const insertVendor = async (insertValues) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
@@ -29,14 +29,7 @@ const insertVendor = async (insertValues) => {
 		insertValues.email,
 	];
 
-	return new Promise((resolve, reject) => {
-		pool.query(query, values, (err, data) => {
-			if (err) {
-				return reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query, values);
 };
 
 const updateVendor = async (updateValues, id) => {
@@ -63,7 +56,7 @@ const updateVendor = async (updateValues, id) => {
 };
 
 // fetch rows from customer tbl & customer shipping addres tbl
-const getSearchVendors = (centerid, searchstr, callback) => {
+const getSearchVendors = (centerid, searchstr) => {
 	let query = `
 	select v.id, v.center_id, v.name, v.address1, v.address2, v.district, 
 	v.pin, v.gst, v.phone, v.mobile, v.mobile2, v.whatsapp,  v.email, v.isactive, s.code as code
@@ -77,10 +70,7 @@ const getSearchVendors = (centerid, searchstr, callback) => {
 
 	let values = [centerid, searchstr];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
 const getVendorDetails = async (center_id, vendor_id) => {
@@ -102,10 +92,24 @@ const getVendorDetails = async (center_id, vendor_id) => {
 	});
 };
 
+const isVendorExists = async (name, center_id) => {
+	let query = `select * from vendor v where 
+	v.name = '${name}' and center_id = '${center_id}' `;
+
+	return promisifyQuery(query);
+};
+
+const deleteVendor = async (id) => {
+	let query = `update vendor set isactive = 'D' where id = '${id}' `;
+	return promisifyQuery(query);
+};
+
 module.exports = {
 	insertVendor,
 	updateVendor,
 	getSearchVendors,
 
 	getVendorDetails,
+	isVendorExists,
+	deleteVendor,
 };

@@ -1,18 +1,17 @@
-const fs = require('fs');
-
 // require dependencies
 const PDFDocument = require('pdfkit');
 
-const { number2text } = require('../../utils/utils');
+const { number2text } = require('../utils/utils');
 
 let line_x_start = 24;
 let line_x_end = 571;
 
-function createInvoice(saleMaster, saleDetails, customerDetails, centerDetails, path, res, print_type, print_ship_to) {
+function createCreditNote(saleMaster, saleDetails, customerDetails, centerDetails, path, credit_note_no, res) {
 	let centerdata = centerDetails[0];
 	let customerdata = customerDetails[0];
 	let salemasterdata = saleMaster[0];
 	let saledetailsdata = saleDetails;
+
 	res.contentType('application/pdf');
 
 	let doc = new PDFDocument({
@@ -24,24 +23,18 @@ function createInvoice(saleMaster, saleDetails, customerDetails, centerDetails, 
 	});
 
 	// first check if print_type is an array
-	if (Array.isArray(print_type)) {
-		// loop through the different print types and add pages and send response
-		print_type.forEach((e) => {
-			doc.addPage();
-			doc.font('Helvetica');
-			generateHeader(doc, centerdata, e);
-			generateCustomerInformation(doc, customerdata, salemasterdata, print_ship_to);
 
-			if (print_ship_to) {
-				generateShippingInformation(doc, customerdata, salemasterdata);
-			}
+	// loop through the different print types and add pages and send response
 
-			generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, e, customerdata, print_ship_to);
-			generateFooterSummary(doc, centerdata);
+	doc.addPage();
+	doc.font('Helvetica');
+	generateHeader(doc, centerdata, 'Credit Note');
+	generateCustomerInformation(doc, customerdata, salemasterdata, credit_note_no);
 
-			//		doc[counter].pipe(fs.createWriteStream(path));
-		});
-	}
+	generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 'Credit Note', customerdata);
+	generateFooterSummary(doc, centerdata);
+
+	//		doc[counter].pipe(fs.createWriteStream(path));
 
 	//	var stream = doc.pipe(blobStream());
 	// stream.on("finish", function() {
@@ -107,15 +100,11 @@ function generateHeader(doc, centerdata, print_type) {
 	doc.moveDown();
 }
 
-function generateCustomerInformation(doc, customerdata, salemasterdata, print_ship_to) {
+function generateCustomerInformation(doc, customerdata, salemasterdata, credit_note_no) {
 	// first line before customer section
 	generateHr(doc, line_x_start, line_x_end, 109);
 
-	if (print_ship_to) {
-		doc.fillColor('#000000').fontSize(13).text('Registered Office', 260, 117);
-	} else {
-		doc.fillColor('#000000').fontSize(13).font('Helvetica-Bold').text('To', 34, 117).font('Helvetica');
-	}
+	doc.fillColor('#000000').fontSize(13).font('Helvetica-Bold').text('To', 34, 117).font('Helvetica');
 
 	let invoice_type = salemasterdata.sale_type === 'gstinvoice' ? 'GST INVOICE' : 'STOCK ISSUE';
 
@@ -138,77 +127,10 @@ function generateCustomerInformation(doc, customerdata, salemasterdata, print_sh
 		.fontSize(10)
 		.text('BILL Date    : ' + salemasterdata.invoice_date, 460, 160);
 
-	const customerInformationTop = 136;
-
-	if (customerdata.name === 'Walk In') {
-		doc
-			.fillColor('#000000')
-			.fontSize(10)
-			.font('Helvetica-Bold')
-			.text(salemasterdata.retail_customer_name, 40, customerInformationTop)
-			.font('Helvetica')
-			.text(salemasterdata.retail_customer_address, 40, 151)
-			.text(salemasterdata.retail_customer_phone, 40, 171);
-	} else {
-		if (print_ship_to) {
-			doc
-				.fillColor('#000000')
-				.fontSize(10)
-				.font('Helvetica-Bold')
-				.text(customerdata.name, 270, customerInformationTop)
-				.font('Helvetica')
-				.text(customerdata.address1, 270, 151);
-		} else {
-			doc
-				.fillColor('#000000')
-				.fontSize(10)
-				.font('Helvetica-Bold')
-				.text(customerdata.name, 40, customerInformationTop)
-				.font('Helvetica')
-				.text(customerdata.address1, 40, 151);
-		}
-	}
-
-	if (customerdata.district !== '') {
-		if (print_ship_to) {
-			doc.text(customerdata.address2 + ', District: ' + customerdata.district, 270, 166);
-		} else {
-			doc.text(customerdata.address2 + ', District: ' + customerdata.district, 40, 166);
-		}
-	} else {
-		if (print_ship_to) {
-			doc.text(customerdata.address2, 270, 166);
-		} else {
-			doc.text(customerdata.address2, 40, 166);
-		}
-	}
-	if (print_ship_to) {
-		doc
-			.fillColor('#000000')
-			.text('State: ' + customerdata.description + ' Pin: ' + customerdata.pin, 270, 181)
-			.font('Helvetica-Bold')
-			.text('Phone: ' + customerdata.mobile + ' GSTIN: ' + customerdata.gst, 270, 196)
-			.font('Helvetica')
-			.moveDown();
-	} else {
-		doc
-			.fillColor('#000000')
-			.text('State: ' + customerdata.description + ' Pin: ' + customerdata.pin, 40, 181)
-			.font('Helvetica-Bold')
-			.text('Phone: ' + customerdata.mobile + ' GSTIN: ' + customerdata.gst, 40, 196)
-			.font('Helvetica')
-			.moveDown();
-	}
-
-	// line end of customer section
-	generateHr(doc, line_x_start, line_x_end, 210);
-}
-
-function generateShippingInformation(doc, customerdata, salemasterdata) {
-	// first line before customer section
-	generateHr(doc, line_x_start, line_x_end, 109);
-
-	doc.fillColor('#000000').fontSize(12).text('Ship To', 24, 117);
+	doc
+		.fillColor('#000000')
+		.fontSize(10)
+		.text('CREDIT NOTE #: ' + credit_note_no, 460, 175);
 
 	const customerInformationTop = 136;
 
@@ -228,18 +150,18 @@ function generateShippingInformation(doc, customerdata, salemasterdata) {
 			.font('Helvetica-Bold')
 			.text(customerdata.name, 40, customerInformationTop)
 			.font('Helvetica')
-			.text(customerdata.csa_address1, 40, 151);
+			.text(customerdata.address1, 40, 151);
 	}
 
-	if (customerdata.csa_district !== '') {
-		doc.text(customerdata.csa_address2 + ', District: ' + customerdata.csa_district, 40, 166);
+	if (customerdata.district !== '') {
+		doc.text(customerdata.address2 + ', District: ' + customerdata.district, 40, 166);
 	} else {
-		doc.text(customerdata.csa_address2, 40, 166);
+		doc.text(customerdata.address2, 40, 166);
 	}
 
 	doc
 		.fillColor('#000000')
-		.text('State: ' + customerdata.csa_description + ' Pin: ' + customerdata.pin, 40, 181)
+		.text('State: ' + customerdata.description + ' Pin: ' + customerdata.pin, 40, 181)
 		.font('Helvetica-Bold')
 		.text('Phone: ' + customerdata.mobile + ' GSTIN: ' + customerdata.gst, 40, 196)
 		.font('Helvetica')
@@ -249,7 +171,7 @@ function generateShippingInformation(doc, customerdata, salemasterdata) {
 	generateHr(doc, line_x_start, line_x_end, 210);
 }
 
-function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, print_type, customerdata, print_ship_to) {
+function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, print_type, customerdata) {
 	let i;
 	let invoiceTableTop = 216;
 	let x_start = 24;
@@ -457,7 +379,7 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 			k.description,
 			k.product_code,
 			k.hsncode,
-			k.qty,
+			k.return_qty,
 			k.unit,
 			k.mrp,
 			k.disc_percent,
@@ -482,11 +404,8 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 			// for each new page this adds the center and customer data
 			generateHeader(doc, centerdata, print_type);
 			generateHr(doc, line_x_start, line_x_end, 107);
-			generateCustomerInformation(doc, customerdata, salemasterdata, print_ship_to);
+			generateCustomerInformation(doc, customerdata, salemasterdata, credit_note_no);
 
-			if (print_ship_to) {
-				generateShippingInformation(doc, customerdata, salemasterdata);
-			}
 			generateTableRow(
 				doc,
 				invoiceTableTop,
@@ -1427,7 +1346,7 @@ function roundOffFn(value, param) {
 }
 
 module.exports = {
-	createInvoice,
+	createCreditNote,
 };
 
 // Array.from(Array(120)).forEach(function (k, idx) {

@@ -3,6 +3,7 @@ module.exports.adminService = require('./admin.service');
 module.exports.authService = require('./auth.service');
 module.exports.brandsService = require('./brands.service');
 module.exports.centerService = require('./center.service');
+module.exports.generalService = require('./general.service');
 module.exports.customersService = require('./customers.service');
 module.exports.dashboardService = require('./dashboard.service');
 module.exports.enquiryService = require('./enquiry.sevice');

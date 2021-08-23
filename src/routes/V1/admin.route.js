@@ -66,7 +66,7 @@ router.route('/get-users/:centerid/:status').get(adminController.getUsers);
 
 router.route('/usename-exists/:phone/:centerid').get(adminController.checkUsernameExists);
 
-router.route('/get-outstanding-balance').get(adminController.getOutstandingBalance);
+router.route('/get-outstanding-balance').post(adminController.getOutstandingBalance);
 
 router.route('/add-bank').post(adminController.addBank);
 

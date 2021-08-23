@@ -99,9 +99,10 @@ const updateBrand = catchAsync(async (req, res) => {
 
 const addVendor = catchAsync(async (req, res) => {
 	const data = await vendorsService.insertVendor(req.body);
-	return responseForward(data, 'addVendor', res);
+	return responseForward(data, 'addVendor', res, httpStatus.CREATED);
 });
-
+// console.info(status[500]);
+// console.info(status[status.INTERNAL_SERVER_ERROR]);
 const addBrand = catchAsync(async (req, res) => {
 	const data = await brandsService.insertBrand(req.body);
 	return responseForward(data, 'addBrand', res);

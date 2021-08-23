@@ -1,10 +1,76 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
 
 const moment = require('moment');
 
 const { handleError, ErrorHandler } = require('../config/error');
+
+// ***** NEW ******* //
+
+const addPaymentReceived = async (requestBody) => {
+	var today = new Date();
+	today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	const cloneReq = { ...requestBody };
+	const [customer, center_id, accountarr] = Object.values(requestBody);
+
+	let index = 0;
+
+	for (const k of accountarr) {
+		await updatePymtSequenceGenerator(center_id);
+
+		let pymtNo = await getPymtSequenceNo(cloneReq);
+
+		// add payment master
+		let newPK = await addPaymentMaster(cloneReq, pymtNo, k, res);
+
+		// (3) - updates pymt details
+		let process = processItems(cloneReq, newPK, k.sale_ref_id, k.receivedamount);
+
+		if (index == accountarr.length - 1) {
+			return res.status(200).json('success');
+		}
+		index++;
+	}
+};
+
+function processItems(cloneReq, newPK, sale_ref_id, receivedamount) {
+	let sql = `INSERT INTO payment_detail(pymt_ref_id, sale_ref_id, applied_amount) VALUES
+		( '${newPK}', '${sale_ref_id}', '${receivedamount}' )`;
+
+	let pymtdetailsTblPromise = new Promise(function (resolve, reject) {
+		pool.query(sql, function (err, data) {
+			if (err) {
+				reject(err);
+			} else {
+				// check if there is any credit balance for the customer, if yes, first apply that
+
+				addPaymentLedgerRecord(cloneReq, newPK, receivedamount, sale_ref_id, (err, data) => {
+					if (err) {
+						let errTxt = err.message;
+					} else {
+						// todo
+					}
+				});
+
+				resolve(data);
+			}
+		});
+	});
+}
+
+// 	getLedgerByCustomers(req.params.centerid, req.params.customerid, (err, data) => {
+// 		if (err) {
+// 			return handleError(
+// 				new ErrorHandler('500', `/get-ledger-customer/:centerid/:customerid ${req.params.centerid} ${req.params.customerid}`, err),
+// 				res,
+// 			);
+// 		} else {
+// 			return res.status(200).json(data);
+// 		}
+// 	});
+
+// ***** OLD **** //
 
 const addSaleLedgerRecord = (insertValues, invoice_ref_id, callback) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
@@ -223,7 +289,14 @@ const getPymtSequenceNo = (cloneReq) => {
 	});
 };
 
-const getPaymentsByCustomers = (center_id, customer_id, from_date, to_date, searchtype, invoiceno, callback) => {
+const getPaymentsByCustomers = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let customer_id = requestBody.customerid;
+	let searchtype = requestBody.searchtype;
+	let invoiceno = requestBody.invoiceno;
+
 	let query = ` select p.*, pd.applied_amount as applied_amount, s.invoice_no as invoice_no, 
 	s.invoice_date as invoice_date, s.net_total as invoice_amount,  pm.pymt_mode_name as pymt_mode from 
         payment p,
@@ -254,15 +327,15 @@ const getPaymentsByCustomers = (center_id, customer_id, from_date, to_date, sear
 
 	query = query + ` order by id desc  `;
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getPaymentsOverviewByCustomers = (center_id, customer_id, from_date, to_date, searchtype, invoiceno, res) => {
+const getPaymentsOverviewByCustomers = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let customer_id = requestBody.customerid;
+	let searchtype = requestBody.searchtype;
 	let query = ` select p.*, 
 	pm.pymt_mode_name as pymt_mode 
  from 
@@ -286,17 +359,10 @@ const getPaymentsOverviewByCustomers = (center_id, customer_id, from_date, to_da
 
 	query = query + ` order by id desc  `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				return handleError(new ErrorHandler('500', `getPaymentsOverviewByCustomers in accounts.js QUERY ${query}`, err), res);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
-const getPymtTransactionByCustomers = (center_id, customer_id, callback) => {
+const getPymtTransactionByCustomers = (center_id, customer_id) => {
 	let query = ` 
 	select 
 	p.id as id, p.center_id as center_id, p.customer_id as customer_id,
@@ -321,15 +387,17 @@ const getPymtTransactionByCustomers = (center_id, customer_id, callback) => {
 		p.center_id = '${center_id}' and p.customer_id = '${customer_id}'
 	order by last_updated desc `;
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getPaymentsByCenter = (center_id, from_date, to_date, customer_id, searchtype, invoiceno, callback) => {
+const getPaymentsByCenter = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let customer_id = requestBody.customerid;
+	let searchtype = requestBody.searchtype;
+	let invoiceno = requestBody.invoiceno;
+
 	let query = `
 	select 
 	c.name as customer_name,
@@ -379,15 +447,15 @@ const getPaymentsByCenter = (center_id, from_date, to_date, customer_id, searcht
 
 	query = query + ` order by str_to_date(pymt_date, '%d-%m-%YYYY') desc  `;
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getPaymentsOverviewByCenter = (center_id, from_date, to_date, customer_id, searchtype, invoiceno, res) => {
+const getPaymentsOverviewByCenter = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let customer_id = requestBody.customerid;
+	let searchtype = requestBody.searchtype;
 	let query = `
 	select 
 	c.name as customer_name,
@@ -429,17 +497,10 @@ const getPaymentsOverviewByCenter = (center_id, from_date, to_date, customer_id,
 
 	query = query + ` order by str_to_date(pymt_date, '%d-%m-%YYYY') desc  `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				return handleError(new ErrorHandler('500', `getPaymentsOverviewByCenter in accounts.js QUERY ${query}`, err), res);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
-const getPymtTransactionsByCenter = (center_id, callback) => {
+const getPymtTransactionsByCenter = (center_id) => {
 	let query = `
 	select 
 	c.name as customer_name,
@@ -464,15 +525,10 @@ where
 	
 	`;
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getLedgerByCustomers = (center_id, customer_id, callback) => {
+const getLedgerByCustomers = async (center_id, customer_id) => {
 	let query = ` select l.center_id, l.customer_id, l.ledger_detail, l.credit_amt, l.debit_amt, l.balance_amt, l.ledger_date,
 	(select s.invoice_no from sale s where s.id = l.invoice_ref_id) as invoice_ref_id,
 	(select p.payment_no from payment p where p.id = l.payment_ref_id) as payment_ref_id
@@ -480,15 +536,17 @@ const getLedgerByCustomers = (center_id, customer_id, callback) => {
 	 where 
 	 l.center_id =  '${center_id}' and l.customer_id = '${customer_id}' 	 and ledger_detail != 'Invoice Reversal' order by l.id desc  `;
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getSaleInvoiceByCustomers = (center_id, customer_id, from_date, to_date, searchtype, invoiceno, callback) => {
+const getSaleInvoiceByCustomers = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let customer_id = requestBody.customerid;
+	let searchtype = requestBody.searchtype;
+	let invoiceno = requestBody.invoiceno;
+
 	let query = `	select s.id as sale_id, s.center_id as center_id, s.customer_id as customer_id, s.invoice_no as invoice_no, 
 	s.invoice_date as invoice_date, 
 	abs(datediff(STR_TO_DATE(s.invoice_date,'%d-%m-%Y'), CURDATE())) as aging_days,
@@ -537,16 +595,17 @@ const getSaleInvoiceByCustomers = (center_id, customer_id, from_date, to_date, s
 
 	query = query + ` order by str_to_date(s.invoice_date, '%d-%m-%YYYY') desc  `;
 
-	// stock issue should also be pulled out, check
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getSaleInvoiceByCenter = (center_id, from_date, to_date, customer_id, searchtype, invoiceno, callback) => {
+const getSaleInvoiceByCenter = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let customer_id = requestBody.customerid;
+	let searchtype = requestBody.searchtype;
+	let invoiceno = requestBody.invoiceno;
+
 	let query = `	select s.id as sale_id, s.center_id as center_id, s.customer_id as customer_id, 
 	s.invoice_no as invoice_no, s.invoice_date as invoice_date, 
 	abs(datediff(STR_TO_DATE(s.invoice_date,'%d-%m-%Y'), CURDATE())) as aging_days,
@@ -593,12 +652,7 @@ const getSaleInvoiceByCenter = (center_id, from_date, to_date, customer_id, sear
 		query = query + ` and s.invoice_no like '%${invoiceno}%' `;
 	}
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
 const updateCustomerCredit = (balanceamount, center_id, customer_id) => {
@@ -682,35 +736,21 @@ const updateCustomerLastPaidDate = (customer_id, last_paid_date) => {
 };
 
 const bankList = (center_id) => {
-	let sql = `select * from center_banks where center_id = ${center_id} order by bankname `;
+	let query = `select * from center_banks where center_id = ${center_id} order by bankname `;
 
-	return new Promise((resolve, reject) => {
-		pool.query(sql, function (err, data) {
-			if (err) {
-				reject({ status: 'error', response: err });
-			}
-			resolve({ status: 'success', response: data });
-		});
-	});
+	return promisifyQuery(query);
 };
 
 const paymentBankRef = (center_id, ref, id, mode) => {
-	let sql = '';
+	let query = '';
 
 	if (mode === 'payment') {
-		sql = `select count(*) as count from payment where center_id = '${center_id}' and bank_ref = '${ref}' and customer_id = '${id}' `;
+		query = `select count(*) as count from payment where center_id = '${center_id}' and bank_ref = '${ref}' and customer_id = '${id}' `;
 	} else if (mode === 'vendorpayment') {
-		sql = `select count(*) as count from vendor_payment where center_id = '${center_id}' and bank_ref = '${ref}' and vendor_id = '${id}' `;
+		query = `select count(*) as count from vendor_payment where center_id = '${center_id}' and bank_ref = '${ref}' and vendor_id = '${id}' `;
 	}
 
-	return new Promise((resolve, reject) => {
-		pool.query(sql, function (err, data) {
-			if (err) {
-				reject({ status: 'error', response: err });
-			}
-			resolve({ status: 'success', response: data });
-		});
-	});
+	return promisifyQuery(query);
 };
 
 const lastPaymentRecord = (center_id, customer_id) => {
@@ -757,6 +797,108 @@ const lastVendorPaymentRecord = (center_id, vendor_id) => {
 	});
 };
 
+const addBulkPaymentReceived = async (requestBody) => {
+	const cloneReq = { ...requestBody };
+
+	const [customer, center_id, accountarr, invoicesplit, balanceamount] = Object.values(requestBody);
+
+	let index = 0;
+
+	for (const k of accountarr) {
+		await updatePymtSequenceGenerator(center_id);
+
+		let pymtNo = await getPymtSequenceNo(cloneReq);
+
+		// add payment master
+		let newPK = await addPaymentMaster(cloneReq, pymtNo, k, res);
+
+		// (3) - updates pymt details
+		let process = processBulkItems(cloneReq, newPK, invoicesplit);
+
+		if (index == accountarr.length - 1) {
+			if (req.body.creditsused === 'YES') {
+				updateCustomerCreditMinus(requestBody.creditusedamount, cloneReq.centerid, cloneReq.customer.id, (err, data1) => {
+					if (err) {
+						let errTxt = err.message;
+					} else {
+						// todo nothing
+					}
+				});
+			}
+
+			// apply the excess amount to custome credit
+			// applicable only if balanceamount < 0
+			if (balanceamount < 0) {
+				updateCustomerCredit(balanceamount, cloneReq.centerid, cloneReq.customer.id, (err, data1) => {
+					if (err) {
+						let errTxt = err.message;
+					} else {
+						// todo nothing
+					}
+				});
+			}
+			return { result: 'success' };
+		}
+		index++;
+	}
+};
+
+function processBulkItems(cloneReq, newPK, invoicesplit) {
+	invoicesplit.forEach((e) => {
+		let sql = `INSERT INTO payment_detail(pymt_ref_id, sale_ref_id, applied_amount) VALUES
+		( '${newPK}', '${e.id}', '${e.applied_amount}' )`;
+
+		let pymtdetailsTblPromise = new Promise(function (resolve, reject) {
+			pool.query(sql, function (err, data) {
+				if (err) {
+					reject(err);
+				} else {
+					// check if there is any credit balance for the customer, if yes, first apply that
+
+					addPaymentLedgerRecord(cloneReq, newPK, e.applied_amount, e.id, (err, data2) => {
+						if (err) {
+							let errTxt = err.message;
+						} else {
+							// do nothing
+						}
+					});
+					resolve(data);
+				}
+			});
+		});
+	});
+}
+
+// dinesh to redo
+const isPaymentBankRef = async (requestBody) => {
+	let center_id = requestBody.centerid;
+	let bank_ref = requestBody.bankref;
+	let customer_id = requestBody.customerid;
+
+	let result = await paymentBankRef(center_id, bank_ref, customer_id, 'payment');
+
+	let result1 = await lastPaymentRecord(center_id, customer_id);
+
+	return {
+		result: result.response,
+		result1: result1.response,
+	};
+};
+
+const vendorPaymentBankRef = async (requestBody) => {
+	let center_id = requestBody.centerid;
+	let bank_ref = requestBody.bankref;
+	let vendor_id = requestBody.vendorid;
+
+	let result = await paymentBankRef(center_id, bank_ref, vendor_id, 'vendorpayment');
+	let result1 = await lastVendorPaymentRecord(center_id, vendor_id);
+
+	return {
+		result: result.response,
+		result1: result1.response,
+	};
+};
+
 module.exports = {
 	addSaleLedgerRecord,
 	addPaymentMaster,
@@ -782,4 +924,10 @@ module.exports = {
 	lastVendorPaymentRecord,
 	getPaymentsOverviewByCustomers,
 	getPaymentsOverviewByCenter,
+
+	// new
+	addPaymentReceived,
+	addBulkPaymentReceived,
+	isPaymentBankRef,
+	vendorPaymentBankRef,
 };

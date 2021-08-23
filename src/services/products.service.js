@@ -1,7 +1,7 @@
 var pool = require('../config/db');
 
 const { handleError, ErrorHandler } = require('../config/error');
-const { toTimeZone, toTimeZoneFrmt, currentTimeInTimeZone, escapeText } = require('../utils/utils');
+const { toTimeZone, toTimeZoneFrmt, currentTimeInTimeZone, escapeText, promisifyQuery } = require('../utils/utils');
 
 const { insertItemHistoryTable, insertToStock } = require('../services/stock.service');
 
@@ -68,35 +68,8 @@ function insertToProduct(insertValues) {
 		insertValues.margin,
 	];
 
-	return new Promise((resolve, reject) => {
-		pool.query(query, values, (err, data) => {
-			if (err) {
-				return reject(err);
-			} else {
-				resolve(data.insertId);
-			}
-		});
-	});
+	return promisifyQuery(query);
 }
-
-// function insertToStock(productId, insertValues, res) {
-// 	let upDate = new Date();
-// 	todayYYMMDD = toTimeZoneFrmt(upDate, 'Asia/Kolkata', 'YYYY-MM-DD');
-
-// 	let query2 = `
-// 	insert into stock (product_id, mrp, available_stock, open_stock, updateddate)
-// 	values ('${productId}', '${insertValues.mrp}', '${insertValues.currentstock}', '${insertValues.currentstock}' , '${todayYYMMDD}')`;
-
-// 	return new Promise(function (resolve, reject) {
-// 		pool.query(query2, function (err, data1) {
-// 			if (err) {
-// 				return handleError(new ErrorHandler('500', 'Error insertToStock in Productjs', err), res);
-// 			} else {
-// 				resolve(data1);
-// 			}
-// 		});
-// 	});
-// }
 
 const updateProduct = (updateValues, res) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
@@ -116,15 +89,7 @@ const updateProduct = (updateValues, res) => {
 			where
 			id = '${updateValues.product_id}'
 	`;
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				return handleError(new ErrorHandler('500', `QUERY: ${query} Error updateProduct in Productjs`, err), res);
-			} else {
-				resolve('success');
-			}
-		});
-	});
+	return promisifyQuery(query);
 };
 
 const isProductExists = async (pcode, center_id) => {
@@ -132,14 +97,7 @@ const isProductExists = async (pcode, center_id) => {
 	select * from product p where 
  	p.product_code = '${pcode}' and center_id = ${center_id}  `;
 
-	return new Promise((resolve, reject) => {
-		pool.query(query, (err, data) => {
-			if (err) {
-				return reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
 module.exports = {
@@ -147,21 +105,3 @@ module.exports = {
 	updateProduct,
 	isProductExists,
 };
-
-// adminRoute.get('/prod-exists/:pcode/:centerid', (req, res) => {
-// 	let pcode = req.params.pcode;
-// 	let center_id = req.params.centerid;
-
-// 	let sql = `select * from product p where
-// 	p.product_code = '${pcode}' and center_id = ${center_id} `;
-
-// 	pool.query(sql, function (err, data) {
-// 		if (err) {
-// 			return handleError(new ErrorHandler('500', `/prod-exists/:pcode ${pcode}`, err), res);
-// 		} else {
-// 			return res.status(200).json({
-// 				result: data,
-// 			});
-// 		}
-// 	});
-// });

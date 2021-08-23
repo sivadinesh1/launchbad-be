@@ -380,7 +380,7 @@ const getCustomerDetails = async (centerid, customerid) => {
 };
 
 // fetch rows from customer tbl & customer shipping addres tbl
-const getSearchCustomers = (centerid, searchstr, callback) => {
+const getSearchCustomers = (centerid, searchstr) => {
 	let query = `
 	select c.id, c.center_id, c.name, c.address1, c.address2, c.address3, c.district, s.code, s.description,
 	c.pin, c.gst, c.phone, c.mobile, c.mobile2, c.whatsapp,  c.email, c.isactive,
@@ -407,10 +407,7 @@ s1.code as csa_code
 
 	let values = [centerid, searchstr];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query, values);
 };
 
 // insert row in customer tbl
@@ -587,6 +584,13 @@ id = ${id}
 	});
 };
 
+const isCustomerExists = async (name, center_id) => {
+	let query = `select * from customer c where 
+	c.name = '${name}' and center_id = ${center_id} `;
+
+	return promisifyQuery(query);
+};
+
 module.exports = {
 	getCustomerDiscount,
 	insertCustomerDiscount,
@@ -606,4 +610,5 @@ module.exports = {
 	insertCustomerShippingAddress,
 	getCustomerShippingAddress,
 	inactivateCSA,
+	isCustomerExists,
 };
