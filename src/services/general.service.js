@@ -135,7 +135,7 @@ const getAllActiveCustomersByCenter = async (center_id) => {
 	customer c,
 	state s
 	where 
-	c.state_id = s.id and isactive = 'A' and center_id = ${centerid} 	order by name `;
+	c.state_id = s.id and isactive = 'A' and center_id = ${center_id} 	order by name `;
 	return promisifyQuery(query);
 };
 

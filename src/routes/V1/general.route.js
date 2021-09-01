@@ -2,12 +2,6 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-const { handleError, ErrorHandler } = require('../../config/error');
-
-const { getAllBrands, getBrandsMissingDiscountsByCustomer } = require('../../services/brands.service');
-
-var pool = require('../../config/db');
-
 const generalController = require('../../controllers/general.controller');
 
 router.route('/search-product-information').post(generalController.searchProductInformation);

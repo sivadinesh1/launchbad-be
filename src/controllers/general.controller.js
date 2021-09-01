@@ -112,7 +112,7 @@ const updateTaxRate = catchAsync(async (req, res) => {
 });
 
 const getAllPaymentModes = catchAsync(async (req, res) => {
-	const data = await generalService.getAllPaymentModes(eq.params.center_id, req.params.status);
+	const data = await generalService.getAllPaymentModes(req.params.center_id, req.params.status);
 	return responseForward(data, 'getAllPaymentModes', res);
 });
 
