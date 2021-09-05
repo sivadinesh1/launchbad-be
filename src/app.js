@@ -3,7 +3,10 @@ const cors = require('cors');
 const httpStatus = require('http-status');
 const { errorConverter, errorHandler } = require('./middleware/error');
 
-const logger = require('./config/log4js');
+const config = require('./config/config');
+const morgan = require('./config/morgan');
+const keys = require('./config/keys');
+
 const ApiError = require('./utils/ApiError');
 
 const routes = require('./routes/v1');
@@ -20,9 +23,6 @@ var corsOptions = {
 	origin: '*',
 	optionsSuccessStatus: 200,
 };
-
-// logger is actual logging
-app.use(logger.express);
 
 app.use(function (req, res, next) {
 	res.header('Access-Control-Allow-Origin', '*');

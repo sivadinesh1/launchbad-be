@@ -1,4 +1,4 @@
-const { logger } = require('./log4js');
+const logger = require('./logger');
 
 class ErrorHandler extends Error {
 	constructor(statusCode, message, errString) {

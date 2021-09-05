@@ -3,7 +3,7 @@ const dashboardRouter = express.Router();
 
 const mysql = require('mysql');
 const moment = require('moment');
-const logger = require('../../config/log4js');
+const logger = require('../../config/logger');
 
 const { handleError, ErrorHandler } = require('../../config/error');
 

@@ -56,6 +56,20 @@ const login = async (requestBody) => {
 	return await passwordMatch(password, user);
 };
 
+// /**
+//  * Login with username and password
+//  * @param {string} email
+//  * @param {string} password
+//  * @returns {Promise<User>}
+//  */
+// const loginUserWithEmailAndPassword = async (email, password) => {
+//   const user = await userService.getUserByEmail(email);
+//   if (!user || !(await user.isPasswordMatch(password))) {
+//     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
+//   }
+//   return user;
+// };
+
 const passwordMatch = async (receivedpassword, user) => {
 	if (await bcrypt.compare(receivedpassword, user[0].userpass)) {
 		return {
@@ -68,6 +82,11 @@ const passwordMatch = async (receivedpassword, user) => {
 		return { result: 'INVALID_CREDENTIALS' };
 	}
 };
+
+// userSchema.methods.isPasswordMatch = async function (password) {
+//   const user = this;
+//   return bcrypt.compare(password, user.password);
+// };
 
 module.exports = {
 	getPermissions,
