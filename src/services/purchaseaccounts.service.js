@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
@@ -129,7 +129,7 @@ const updateVendorBalanceAmount = (vendor_id) => {
 	});
 };
 
-const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, searchtype, invoiceno, callback) => {
+const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, searchtype, invoiceno) => {
 	let query = `	select p.id as purchase_id, 
 	p.center_id as center_id, 
 	p.vendor_id as vendor_id, 
@@ -183,12 +183,7 @@ const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, se
 		query = query + ` and p.invoice_no like '%${invoiceno}%' `;
 	}
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
 const updateVendorPymtSequenceGenerator = (center_id) => {
@@ -362,7 +357,14 @@ const updateVendorLastPaidDate = (vendor_id, last_paid_date) => {
 	});
 };
 
-const getVendorPaymentsByCenter = (center_id, from_date, to_date, vendor_id, searchtype, invoiceno, callback) => {
+const getVendorPaymentsByCenter = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let vendor_id = requestBody.vendorid;
+	let searchtype = requestBody.searchtype;
+	let invoiceno = requestBody.invoiceno;
+
 	let query = `
 	select 
 	c.name as vendor_name,
@@ -410,15 +412,17 @@ const getVendorPaymentsByCenter = (center_id, from_date, to_date, vendor_id, sea
 
 	query = query + ` order by pymt_date desc  `;
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getPurchaseInvoiceByVendors = (center_id, vendor_id, from_date, to_date, searchtype, invoiceno, callback) => {
+const getPurchaseInvoiceByVendors = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let vendor_id = requestBody.vendorid;
+	let searchtype = requestBody.searchtype;
+	let invoiceno = requestBody.invoiceno;
+
 	let query = `	select s.id as purchase_id, s.center_id as center_id, s.vendor_id as vendor_id, s.invoice_no as invoice_no, 
 	s.invoice_date as invoice_date, 
 	abs(datediff(STR_TO_DATE(s.invoice_date,'%d-%m-%Y'), CURDATE())) as aging_days,
@@ -467,15 +471,17 @@ const getPurchaseInvoiceByVendors = (center_id, vendor_id, from_date, to_date, s
 	}
 
 	// stock issue should also be pulled out, check
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getPaymentsByVendors = (center_id, vendor_id, from_date, to_date, searchtype, invoiceno, callback) => {
+const getPaymentsByVendors = (requestBody) => {
+	let center_id = requestBody.centerid;
+	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+	let vendor_id = requestBody.vendorid;
+	let searchtype = requestBody.searchtype;
+	let invoiceno = requestBody.invoiceno;
+
 	let query = ` select p.*, pd.applied_amount as applied_amount, s.invoice_no as invoice_no, 
 	s.invoice_date as invoice_date, s.net_total as invoice_amount,  pm.pymt_mode_name as pymt_mode from 
         vendor_payment p,
@@ -506,12 +512,7 @@ const getPaymentsByVendors = (center_id, vendor_id, from_date, to_date, searchty
 
 	query = query + ` order by id desc  `;
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
 const getPymtTransactionByVendors = (center_id, vendor_id, callback) => {
@@ -547,7 +548,7 @@ const getPymtTransactionByVendors = (center_id, vendor_id, callback) => {
 	});
 };
 
-const getLedgerByVendors = (center_id, vendor_id, callback) => {
+const getLedgerByVendors = (center_id, vendor_id) => {
 	let query = ` select l.center_id, l.vendor_id, l.ledger_detail, l.credit_amt, l.debit_amt, l.balance_amt, l.ledger_date,
 	(select s.invoice_no from purchase s where s.id = l.purchase_ref_id) as purchase_ref_id,
 	(select p.vendor_payment_no from vendor_payment p where p.id = l.payment_ref_id) as payment_ref_id
@@ -555,13 +556,134 @@ const getLedgerByVendors = (center_id, vendor_id, callback) => {
 	 where 
 	 l.center_id =  '${center_id}' and l.vendor_id = '${vendor_id}' order by l.id desc  `;
 
-	pool.query(query, function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
+
+const addVendorPaymentReceived = async (requestBody) => {
+	var today = new Date();
+	today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+
+	const cloneReq = { ...requestBody };
+
+	const [vendor, center_id, accountarr] = Object.values(requestBody);
+
+	let index = 0;
+
+	for (const k of accountarr) {
+		await updateVendorPymtSequenceGenerator(center_id);
+
+		let pymtNo = await getVendorPymtSequenceNo(cloneReq);
+
+		// add payment master
+		let newPK = await addVendorPaymentMaster(cloneReq, pymtNo, k, res);
+
+		// (3) - updates pymt details
+		let process = processItems(cloneReq, newPK, k.purchase_ref_id, k.receivedamount);
+
+		if (index == accountarr.length - 1) {
+			return { result: 'success' };
+		}
+		index++;
+	}
+};
+
+function processItems(cloneReq, newPK, purchase_ref_id, receivedamount) {
+	let sql = `INSERT INTO vendor_payment_detail(vend_pymt_ref_id, purchase_ref_id, applied_amount) VALUES
+		( '${newPK}', '${purchase_ref_id}', '${receivedamount}' )`;
+
+	let pymtdetailsTblPromise = new Promise(function (resolve, reject) {
+		pool.query(sql, function (err, data) {
+			if (err) {
+				reject(err);
+			} else {
+				// check if there is any credit balance for the vendor, if yes, first apply that
+
+				addVendorPaymentLedgerRecord(cloneReq, newPK, receivedamount, purchase_ref_id, (err, data) => {
+					if (err) {
+						let errTxt = err.message;
+					} else {
+						// todo
+					}
+				});
+
+				resolve(data);
+			}
+		});
+	});
+}
+
+const addBulkVendorPaymentReceived = async (requestBody) => {
+	const cloneReq = { ...requestBody };
+
+	const [vendor, center_id, accountarr, invoicesplit, balanceamount] = Object.values(requestBody);
+
+	let index = 0;
+
+	for (const k of accountarr) {
+		await updateVendorPymtSequenceGenerator(center_id);
+
+		let pymtNo = await getVendorPymtSequenceNo(cloneReq);
+
+		// add payment master
+		let newPK = await addVendorPaymentMaster(cloneReq, pymtNo, k, res);
+
+		//dinesh check
+		// (3) - updates pymt details
+		let process = processBulkItems(cloneReq, newPK, invoicesplit);
+
+		if (index == accountarr.length - 1) {
+			if (req.body.creditsused === 'YES') {
+				updateVendorCreditMinus(req.body.creditusedamount, cloneReq.centerid, cloneReq.vendor.id, (err, data1) => {
+					if (err) {
+						let errTxt = err.message;
+					} else {
+						// todo nothing
+					}
+				});
+			}
+
+			// apply the excess amount to vendor credit
+			// applicable only if balanceamount < 0
+			if (balanceamount < 0) {
+				updateVendorCredit(balanceamount, cloneReq.centerid, cloneReq.vendor.id, (err, data1) => {
+					if (err) {
+						let errTxt = err.message;
+					} else {
+						// todo nothing
+					}
+				});
+			}
+			return { result: 'success' };
+		}
+		index++;
+	}
+};
+
+function processBulkItems(cloneReq, newPK, invoicesplit) {
+	invoicesplit.forEach((e) => {
+		let sql = `INSERT INTO vendor_payment_detail(vend_pymt_ref_id, purchase_ref_id, applied_amount) VALUES
+		( '${newPK}', '${e.id}', '${e.applied_amount}' )`;
+
+		let pymtdetailsTblPromise = new Promise(function (resolve, reject) {
+			pool.query(sql, function (err, data) {
+				if (err) {
+					reject(err);
+				} else {
+					// check if there is any credit balance for the vendor, if yes, first apply that
+
+					addVendorPaymentLedgerRecord(cloneReq, newPK, e.applied_amount, e.id, (err, data2) => {
+						if (err) {
+							let errTxt = err.message;
+						} else {
+							// do nothing
+						}
+					});
+					resolve(data);
+				}
+			});
+		});
+	});
+}
 
 module.exports = {
 	addPurchaseLedgerRecord,
@@ -580,4 +702,5 @@ module.exports = {
 	getPurchaseInvoiceByVendors,
 	getPaymentsByVendors,
 	getLedgerByVendors,
+	addBulkVendorPaymentReceived,
 };

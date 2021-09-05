@@ -1,8 +1,11 @@
 var pool = require('../../config/db');
 
 const { handleError, ErrorHandler } = require('../../config/error');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../../utils/utils');
 
-const getProductInventoryReport = (center_id, product_code, product_id, callback) => {
+const getProductInventoryReport = (requestBody) => {
+	const [center_id, product_code, product_id] = Object.values(requestBody);
+
 	let query = ` select ih.id, module, p.id as product_id, p.product_code as product_code, p.description as product_description,
   p.mrp as mrp,
   b.name as brand_name,  ih.module,
@@ -52,13 +55,12 @@ const getProductInventoryReport = (center_id, product_code, product_id, callback
 	// product_ref_id = '${product_id}'
 	// lateer include this to the search, as of now, fetch all
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getProductInventoryReportShort = (center_id, product_code, product_id, callback) => {
+const getProductInventoryReportShort = (requestBody) => {
+	const [center_id, product_code, product_id] = Object.values(requestBody);
+
 	let query = ` select ih.id, module, p.id as product_id, p.product_code as product_code, p.description as product_description,
   p.mrp as mrp,
   b.name as brand_name,  ih.module,
@@ -108,13 +110,12 @@ const getProductInventoryReportShort = (center_id, product_code, product_id, cal
 	// product_ref_id = '${product_id}'
 	// lateer include this to the search, as of now, fetch all
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const fullStockReport = (center_id, mrp_split, res) => {
+const fullStockReport = (requestBody) => {
+	const [center_id, mrp_split] = Object.values(requestBody);
+
 	let query = '';
 
 	if (mrp_split === true) {
@@ -154,17 +155,11 @@ const fullStockReport = (center_id, mrp_split, res) => {
       s.product_id, s.mrp, s.available_stock `;
 	}
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				return handleError(new ErrorHandler('500', `fullStockReport ${query} `, err), res);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
 module.exports = {
 	getProductInventoryReport,
 	fullStockReport,
+	getProductInventoryReportShort,
 };

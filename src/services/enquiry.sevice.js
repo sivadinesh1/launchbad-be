@@ -557,19 +557,19 @@ const getBackOrder = async (centerid) => {
 };
 
 const searchEnquiries = async (requestBody) => {
-	let center_id = req.body.centerid;
-	let status = req.body.status;
-	let customer_id = req.body.customerid;
-	let from_date = req.body.fromdate;
-	let to_date = req.body.todate;
-	let order = req.body.order;
+	let center_id = requestBody.centerid;
+	let status = requestBody.status;
+	let customer_id = requestBody.customerid;
+	let from_date = requestBody.fromdate;
+	let to_date = requestBody.todate;
+	let order = requestBody.order;
 
 	if (from_date !== '') {
-		from_date = toTimeZone(req.body.fromdate, 'Asia/Kolkata');
+		from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	}
 
 	if (to_date !== '') {
-		to_date = toTimeZone(req.body.todate, 'Asia/Kolkata');
+		to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	}
 
 	let custsql = `and e.customer_id = '${customer_id}' `;

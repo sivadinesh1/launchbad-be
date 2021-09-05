@@ -112,7 +112,7 @@ const getAllClients = async () => {
 	return promisifyQuery(query);
 };
 
-const getAllActiveVendors = async () => {
+const getAllActiveVendors = async (centerid) => {
 	let query = `select v.id, v.center_id, v.name, v.address1, v.address2, v.address3, v.district, s.id as state_id, s.code, s.description as state,
 	v.pin, v.gst, v.phone, v.mobile, v.mobile2, v.whatsapp, v.email, v.isactive, v.credit_amt,
 	v.balance_amt, 
@@ -127,7 +127,7 @@ const getAllActiveVendors = async () => {
 };
 
 const getAllActiveCustomersByCenter = async (center_id) => {
-	let sql = `select c.id, c.center_id, c.name, c.address1, c.address2, c.district, s.id as state_id, s.code, s.description,
+	let query = `select c.id, c.center_id, c.name, c.address1, c.address2, c.district, s.id as state_id, s.code, s.description,
 	c.pin, c.gst, c.phone, c.mobile, c.mobile2, c.whatsapp, c.email, 
 	c.isactive, c.credit_amt as credit_amt, c.balance_amt as balance_amt, 
 	DATE_FORMAT(c.last_paid_date, '%d-%b-%Y') as last_paid_date

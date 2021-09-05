@@ -1,8 +1,8 @@
-var pool = require('../config/db');
-
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
 
 const { insertItemHistoryTable, updateStock } = require('../services/stock.service');
+
+const { updatePymtSequenceGenerator, getPymtSequenceNo } = require('../services/accounts.service');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
@@ -17,13 +17,8 @@ const insertSaleReturns = (smd) => {
                   VALUES ('${smd.sale_id}', '${smd.customer_id}', '${today}', '${smd.center_id}' , '${smd.to_return_amount}', 
                   '${smd.to_receive_items}', 'NR', 'R', 'A')  `;
 
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject('Error inserting sale returns' + JSON.stringify(err));
-			} else {
-				resolve(data.insertId);
-			}
-		});
+		let data = promisifyQuery(query);
+		return data.insertId;
 	});
 };
 
@@ -60,7 +55,7 @@ const insertSaleReturnDetail = async (srd, sale_return_id, smd, res) => {
 };
 
 const insertSaleDetailReturn = (srd, sale_return_id, smd) => {
-	let sql = ` INSERT INTO sale_return_detail(sale_return_id, sale_id, sale_detail_id, return_qty, 
+	let query = ` INSERT INTO sale_return_detail(sale_return_id, sale_id, sale_detail_id, return_qty, 
               reason, disc_percent, tax, mrp,
               igst, cgst, sgst, orig_sold_qty, taxable_value, total_value, hsncode, unit)
               VALUES
@@ -69,52 +64,31 @@ const insertSaleDetailReturn = (srd, sale_return_id, smd) => {
               '${srd.mrp}', '${srd.igst}', '${srd.cgst}', '${srd.sgst}', 
               '${srd.qty}', '${srd.taxable_value}', '${srd.total_value}', '${srd.hsncode}', '${srd.unit}' ) `;
 
-	return new Promise((resolve, reject) => {
-		pool.query(sql, function (err, data) {
-			if (err) {
-				reject('Error while inserting sale details return table');
-			} else {
-				resolve(data.insertId);
-			}
-		});
-	});
+	let data = promisifyQuery(query);
+	return data.insertId;
 };
 
 const updateSaleDetail = (smd) => {
 	// returned = received_now & sale_detail_id = id
 	let sql = ` update sale_detail set returned = returned + '${smd.received_now}' where id = '${smd.id}' `;
-	return new Promise((resolve, reject) => {
-		pool.query(sql, function (err, data) {
-			if (err) {
-				reject('Error while updating sale details with returns' + JSON.stringify(err));
-			} else {
-				resolve('success');
-			}
-		});
-	});
+	let data = promisifyQuery(query);
+	return 'success';
 };
 
 const createCreditNote = (credit_note_no, credit_note_total_amount, refund_status) => {
-	let sql = ` INSERT INTO credit_note(credit_note_no, credit_note_total_amount, refund_status)
+	let query = ` INSERT INTO credit_note(credit_note_no, credit_note_total_amount, refund_status)
               VALUES
 							( '${credit_note_no}', '${credit_note_total_amount}', '${refund_status}' ) `;
 
-	return new Promise((resolve, reject) => {
-		pool.query(sql, function (err, data) {
-			if (err) {
-				reject('Error while inserting createCreditNote ');
-			} else {
-				resolve(data.insertId);
-			}
-		});
-	});
+	let data = promisifyQuery(query);
+	return data.insertId;
 };
 
 // format and send sequence #
 function getSequenceCrNote(center_id) {
-	let invNoQry = '';
+	let query = '';
 
-	invNoQry = ` select concat("CN-",'${currentTimeInTimeZone('Asia/Kolkata', 'YY')}', "/", '${currentTimeInTimeZone(
+	query = ` select concat("CN-",'${currentTimeInTimeZone('Asia/Kolkata', 'YY')}', "/", '${currentTimeInTimeZone(
 		'Asia/Kolkata',
 		'MM',
 	)}', "/", lpad(cr_note_seq, 5, "0")) as crNoteNo from financialyear 
@@ -122,37 +96,24 @@ function getSequenceCrNote(center_id) {
 				center_id = '${center_id}' and  
 				CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(invNoQry, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data[0].crNoteNo);
-		});
-	});
+	let data = promisifyQuery(query);
+	return data[0].crNoteNo;
 }
 
 // Update Sequence in financial Year tbl when its fresh sale insert
 function updateCRSequenceGenerator(center_id) {
-	let qryUpdateSqnc = '';
+	let query = '';
 
-	qryUpdateSqnc = `
+	query = `
 		update financialyear set cr_note_seq = cr_note_seq + 1 where 
 		center_id = '${center_id}' and  
 		CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(qryUpdateSqnc, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 }
 
 function updateCRAmntToCustomer(sale_id, credit_amt) {
-	let qryUpdateSqnc = `
+	let query = `
 		update customer c, sale s
 		set 
 		c.credit_amt = c.credit_amt + ${credit_amt}
@@ -160,33 +121,19 @@ function updateCRAmntToCustomer(sale_id, credit_amt) {
 		s.customer_id = c.id and
 		s.id = '${sale_id}' `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(qryUpdateSqnc, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 }
 
 function updateCrNoteIdInSaleReturnTable(cr_note_id, sale_return_id) {
-	let qryUpdateSqnc = `
+	let query = `
 	update sale_return set cr_note_id = ${cr_note_id}
 	where id = 	${sale_return_id}	 `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(qryUpdateSqnc, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 }
 
 const getSaleReturnDetails = (center_id, sale_return_id, res) => {
-	let sql = ` select p.id, p.product_code, p.description, srd.* from 
+	let query = ` select p.id, p.product_code, p.description, srd.* from 
 	sale_return_detail srd,
 	product p,
 	sale_detail sd
@@ -196,19 +143,256 @@ const getSaleReturnDetails = (center_id, sale_return_id, res) => {
 	srd.sale_return_id = '${sale_return_id}'
 		`;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(sql, function (err, data) {
-			if (err) {
-				return handleError(
-					new ErrorHandler('500', `/get-sale-return-details/:center_id/:salre_return_id QUERY: ${sql} params ${center_id} ${sale_return_id}`, err),
-					res,
-				);
-			} else {
-				resolve(data);
-			}
-		});
+	return promisifyQuery(query);
+};
+
+const getReturns = (center_id) => {
+	let query = ` select c.name as customer_name, s.invoice_no as invoice_no,
+  sum(sd.returned) as returned, sr.return_date as returned_date
+  from 
+  customer c,
+  sale s,
+  sale_return sr,
+  sale_detail sd
+  where
+  sr.sale_id = s.id and
+  c.id = s.customer_id and
+  sd.sale_id = s.id and
+  sr.center_id = ${center_id}
+  group by 
+  customer_name,
+  invoice_no, returned_date `;
+
+	return promisifyQuery(query);
+};
+
+const saleReturnPaymentMaster = (center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, pymt_date) => {
+	let query = `
+		insert into payment ( center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, pymt_date, pymt_mode_ref_id, pymt_ref)
+		VALUES ( '${center_id}', '${customer_id}', '${payment_no}', '${payment_now_amt}',
+     '${advance_amt_used}', '${pymt_date}', (select id from payment_mode where center_id = '${center_id}' and pymt_mode_name = 'Credit Note'), 'Credit Note' ) `;
+
+	return promisifyQuery(query);
+};
+
+const searchSaleReturn = async (requestBody) => {
+	let center_id = requestBody.centerid;
+
+	let customer_id = requestBody.customerid;
+	let from_date = requestBody.fromdate;
+	let to_date = requestBody.todate;
+
+	let search_type = requestBody.searchtype;
+	let search_by = requestBody.searchby;
+
+	let sql = '';
+	let query = '';
+
+	if (search_type === 'all') {
+		if (from_date !== '') {
+			from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata') + ' 00:00:00';
+		}
+
+		if (to_date !== '') {
+			to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata') + ' 23:59:00';
+		}
+
+		let custsql = `and s.customer_id = '${customer_id}' `;
+
+		sql = `select c.name, sr.id as sale_return_id, sr.sale_id as sale_id,  s.invoice_no as invoice_no, s.invoice_date as invoice_date,
+		sr.return_date as return_date,
+		sr.cr_note_id as cr_note_id, cn.credit_note_no, sr.center_id as center_id, sr.to_return_amount as to_return_amount, sr.amount_returned as amount_returned, 
+		sr.refund_status as refund_status, 
+		(CASE
+			WHEN sr.refund_status = 'P' THEN 'Pending'
+			WHEN sr.refund_status = 'PR' THEN 'Partially Refunded'
+			WHEN sr.refund_status = 'R' THEN 'Refunded'
+			END
+			) AS refund_status_x,
+		sr.to_receive_items as to_receive_items, sr.received_items as received_items, 
+		sr.receive_status as receive_status, 
+		(CASE
+			WHEN sr.receive_status = 'R' THEN 'Received'
+			WHEN sr.receive_status = 'PR' THEN 'Partially Received'
+			WHEN sr.receive_status = 'NR' THEN 'Not Received'
+			END
+			) AS receive_status_x,
+		sr.return_status as return_status,
+		(CASE
+			WHEN sr.return_status = 'C' THEN 'Close'
+			WHEN sr.return_status = 'A' THEN 'Approved'
+			END
+			) AS return_status_x
+		
+		from 
+		sale_return sr
+		LEFT outer JOIN credit_note cn
+					ON cn.id = sr.cr_note_id, 
+		sale s,
+		customer c
+		where
+		c.id = s.customer_id and
+		sr.sale_id = s.id and
+		sr.center_id = '${center_id}' and
+		
+		
+				str_to_date(sr.return_date,  '%d-%m-%Y %T') between
+						str_to_date('${from_date}',  '%d-%m-%Y %T') and
+						str_to_date('${to_date}',  '%d-%m-%Y %T') 
+						
+						 `;
+
+		if (customer_id !== 'all') {
+			sql = sql + custsql;
+		}
+
+		sql = sql + ' order by sr.return_date desc ';
+	} else if (search_type !== 'all') {
+		query = ` 
+		select c.name, sr.id as sale_return_id, sr.sale_id as sale_id, s.invoice_no as invoice_no, s.invoice_date as invoice_date,
+		sr.return_date as return_date,
+		sr.cr_note_id as cr_note_id, cn.credit_note_no, sr.center_id as center_id, sr.to_return_amount as to_return_amount, sr.amount_returned as amount_returned, 
+		sr.refund_status as refund_status, 
+		(CASE
+			WHEN sr.refund_status = 'P' THEN 'Pending'
+			WHEN sr.refund_status = 'PR' THEN 'Partially Refunded'
+			WHEN sr.refund_status = 'R' THEN 'Refunded'
+			END
+			) AS refund_status_x,
+		sr.to_receive_items as to_receive_items, sr.received_items as received_items, 
+		sr.receive_status as receive_status, 
+		(CASE
+			WHEN sr.receive_status = 'R' THEN 'Received'
+			WHEN sr.receive_status = 'PR' THEN 'Partially Received'
+			END
+			) AS receive_status_x,
+		sr.return_status as return_status,
+		(CASE
+			WHEN sr.return_status = 'C' THEN 'Close'
+			WHEN sr.return_status = 'A' THEN 'Approved'
+			END
+			) AS return_status_x
+		
+		from 
+		sale_return sr
+		LEFT outer JOIN credit_note cn
+					ON cn.id = sr.cr_note_id, 
+		sale s,
+		customer c
+		where
+		c.id = s.customer_id and
+		sr.sale_id = s.id and
+		sr.center_id = '${center_id}' and `;
+
+		if (search_type === 'byinvoice') {
+			query = query + ` s.invoice_no = '${search_by.trim()}' order by sr.return_date desc `;
+		} else if (search_type === 'bycreditnote') {
+			query = query + ` cn.credit_note_no = '${search_by.trim()}' order by sr.return_date desc `;
+		}
+	}
+
+	return promisifyQuery(search_type === 'all' ? sql : query);
+};
+
+const updateSaleReturnsReceived = async (requestBody) => {
+	let returnArr = requestBody;
+
+	let count = 0;
+
+	for (const k of returnArr) {
+		let query = `			
+					update sale_return_detail T1, sale_return T2
+					set 
+					T1.received_qty = T1.received_qty + ${k.received_now},
+					T2.received_items = T2.received_items + ${k.received_now},
+					T2.receive_status = IF(T2.to_receive_items = (T2.received_items + ${k.received_now}), 'R', T2.receive_status),
+					T2.return_status = IF(T2.to_receive_items = (T2.received_items + ${k.received_now}), 'C', T2.return_status)
+					where 
+					T1.sale_return_id = T2.id and
+					T1.id = '${k.id}'				
+					`;
+
+		let data = promisifyQuery(query);
+
+		count++;
+		if (count === returnArr.length) {
+			res.json({
+				result: 'success',
+			});
+		}
+	}
+};
+
+const showReceiveButton = async (center_id, sale_return_id) => {
+	let query = `
+			select count(*) as cnt from sale_return_detail 
+			where 
+			return_qty > received_qty and  
+			sale_return_id = ${sale_return_id} `;
+
+	return promisifyQuery(query);
+};
+
+/*
+Sale return & Create Credit Note + update credit_amt in customer table
+Steps: 
+1. insert sale_return
+2. update sale_details on how many returned 
+3. insert sale_return_detail table with details of what is returned and at what price
+4. Increase the stock
+*/
+
+const addSaleReturn = async (requestBody) => {
+	var today = new Date();
+	today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY');
+
+	let reqObject = requestBody;
+
+	let smd = reqObject[1]; // sale master data
+	let srd = reqObject[0]; // salre return details
+
+	const sale_return_id = await insertSaleReturns(smd);
+
+	const job_completed = await insertSaleReturnDetail(srd, sale_return_id, smd, res);
+
+	updateCRSequenceGenerator(smd.center_id);
+	let fetchCRNoteNo = await getSequenceCrNote(smd.center_id);
+
+	let cr_note_id_created = await createCreditNote(fetchCRNoteNo, smd.to_return_amount, 'R');
+	updateCrNoteIdInSaleReturnTable(cr_note_id_created, sale_return_id);
+
+	// dinesh - delete this logic
+	//let cr_note_updated = await updateCRAmntToCustomer(smd.sale_id, smd.to_return_amount);
+
+	// add a payment entry
+	await updatePymtSequenceGenerator(smd.center_id);
+
+	let cloneReq = {
+		centerid: smd.center_id,
+		bank_id: 0,
+		accountarr: [{ receivedamount: smd.to_return_amount, receiveddate: today }],
+	};
+	let pymtNo = await getPymtSequenceNo(cloneReq);
+
+	// add payment master
+	// nst saleReturnPaymentMaster = (center_id, customer_id, payment_no,
+	// 	payment_now_amt, advance_amt_used, pymt_date ) => {
+	let newPK = await saleReturnPaymentMaster(smd.center_id, smd.customer_id, pymtNo, smd.to_return_amount, '0', today, res);
+
+	// (3) - updates pymt details
+	let process = await processItems(newPK.insertId, smd.sale_id, sale_return_id, smd.to_return_amount);
+
+	Promise.all([sale_return_id, job_completed, fetchCRNoteNo, cr_note_id_created, process]).then((result) => {
+		return res.json('success');
 	});
 };
+
+function processItems(newPK, sale_ref_id, sale_return_ref_id, receivedamount) {
+	let sql = `INSERT INTO payment_detail(pymt_ref_id, sale_ref_id, sale_return_ref_id, applied_amount) VALUES
+		( '${newPK}', '${sale_ref_id}', '${sale_return_ref_id}', '${receivedamount}'  )`;
+
+	return promisifyQuery(query);
+}
 
 module.exports = {
 	insertSaleReturns,
@@ -222,4 +406,10 @@ module.exports = {
 	getSequenceCrNote,
 	updateCrNoteIdInSaleReturnTable,
 	getSaleReturnDetails,
+	getReturns,
+	saleReturnPaymentMaster,
+	searchSaleReturn,
+	updateSaleReturnsReceived,
+	showReceiveButton,
+	addSaleReturn,
 };

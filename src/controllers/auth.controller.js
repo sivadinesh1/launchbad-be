@@ -2,16 +2,7 @@ const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { responseForward } = require('../utils/utils');
 const catchAsync = require('../utils/catchAsync');
-const {
-	adminService,
-	customersService,
-	productsService,
-	vendorsService,
-	brandsService,
-	authService,
-	stockService,
-	centerService,
-} = require('../services');
+const { authService } = require('../services');
 
 const updateCenterForSuperAdmin = catchAsync(async (req, res) => {
 	const data = await authService.updateCenterForSuperAdmin(req.body.center_id);

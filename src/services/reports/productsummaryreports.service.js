@@ -1,6 +1,9 @@
 var pool = require('../../config/db');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../../utils/utils');
 
-const getProductSummaryReport = (center_id, start, end, callback) => {
+const getProductSummaryReport = (requestBody) => {
+	const [center_id, start, end] = Object.values(requestBody);
+
 	let query = `
   select p.id as id, c.name as center_name, b.name as brandname, p.product_code as code, p.description as description, p.hsncode as hsncode, p.unit as unit, p.packetsize as packetsize, p.unit_price as unit_price, 
 s.available_stock as available_stock, s.mrp as mrp, p.taxrate as tax_rate, 
@@ -20,10 +23,7 @@ order by p.id
 limit ${start}, ${end}
   `;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
 module.exports = {

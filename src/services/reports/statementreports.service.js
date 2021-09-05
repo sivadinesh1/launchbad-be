@@ -1,6 +1,11 @@
 var pool = require('../../config/db');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../../utils/utils');
 
-const getStatement = (center_id, customer_id, start_date, end_date, sale_type) => {
+const getStatement = (requestBody) => {
+	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
+	let start_date = toTimeZoneFrmt(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
+	let end_date = toTimeZoneFrmt(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
+
 	let query = `
 		select STR_TO_DATE(a.ref_date , '%d-%m-%Y') ref_date_f, a.name,a.place ,a.type, a.refn , a.									invoice_amount , a.Received_Amount, a.id as id
 		From (
@@ -55,17 +60,14 @@ const getStatement = (center_id, customer_id, start_date, end_date, sale_type) =
 
 	query = query + ` )a order by a.name , ref_date_f `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
-const getVendorStatement = (center_id, vendor_id, start_date, end_date) => {
+const getVendorStatement = (requestBody) => {
+	const [center_id, vendor_id, start, end] = Object.values(requestBody);
+	let start_date = toTimeZoneFrmt(start, 'Asia/Kolkata', 'YYYY-MM-DD') + ' 00:00:00';
+	let end_date = toTimeZoneFrmt(end, 'Asia/Kolkata', 'YYYY-MM-DD') + ' 23:59:59';
+
 	let query = ` 
   select 
 any_value(l.center_id) as center_id, 
@@ -86,17 +88,17 @@ any_value((select p.vendor_payment_no from vendor_payment p where p.id = l.payme
   
   `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
-const getItemWiseSale = (center_id, brand_id, start_date, end_date, sale_type, start, end) => {
+const getItemWiseSale = (requestBody) => {
+	let center_id = requestBody.center_id;
+	let brand_id = requestBody.brand_id;
+	let sale_type = requestBody.sale_type;
+
+	let start_date = toTimeZone(requestBody.startdate, 'Asia/Kolkata') + ' 00:00:00';
+	let end_date = toTimeZone(requestBody.enddate, 'Asia/Kolkata') + ' 23:59:59';
+
 	let query = ` 
 		select 
 			p2.product_code , 
@@ -140,17 +142,14 @@ const getItemWiseSale = (center_id, brand_id, start_date, end_date, sale_type, s
 	
 	`;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
-const getReceivablesClosingBalance = (center_id, customer_id, start_date, end_date, sale_type) => {
+const getReceivablesClosingBalance = (requestBody) => {
+	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
+
+	let start_date = toTimeZoneFrmt(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
+	let end_date = toTimeZoneFrmt(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
 	let query = `
 						select id, name , district, sum(invcd +  pymnt_rcvd*-1) as balance
 						From 
@@ -200,17 +199,14 @@ const getReceivablesClosingBalance = (center_id, customer_id, start_date, end_da
 
 		 `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
-const getReceivablesOpeningBalance = (center_id, customer_id, start_date, end_date, sale_type) => {
+const getReceivablesOpeningBalance = (requestBody) => {
+	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
+	let start_date = toTimeZoneFrmt(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
+	let end_date = toTimeZoneFrmt(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
+
 	let query = `
 						select id, name , district, sum(invcd +  pymnt_rcvd*-1) as balance
 						From 
@@ -260,14 +256,7 @@ const getReceivablesOpeningBalance = (center_id, customer_id, start_date, end_da
 
 		 `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
 module.exports = {

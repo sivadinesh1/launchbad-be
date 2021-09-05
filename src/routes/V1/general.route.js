@@ -17,7 +17,7 @@ router.route('/inventory/all').post(generalController.getAllInventory);
 
 router.route('/all-clients').post(generalController.getAllClients);
 
-router.route('/all-active-vendors').get(generalController.getAllActiveVendors);
+router.route('/all-active-vendors/:centerid').get(generalController.getAllActiveVendors);
 
 router.route('/all-active-brands/:centerid/:status').get(generalController.getAllActiveBrands);
 
