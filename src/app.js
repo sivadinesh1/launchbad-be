@@ -14,6 +14,11 @@ const routes2 = require('./routes/v2');
 
 const app = express();
 
+if (config.env !== 'test') {
+	app.use(morgan.successHandler);
+	app.use(morgan.errorHandler);
+}
+
 app.use(express.static('public'));
 app.use(express.static('upload'));
 
