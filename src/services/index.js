@@ -20,4 +20,5 @@ module.exports.inventoryReportsService = require('./reports/inventoryreports.ser
 module.exports.productSummaryReportsService = require('./reports/productsummaryreports.service');
 module.exports.statementReportsService = require('./reports/statementreports.service');
 
+module.exports.userService = require('./user.service');
 module.exports.userV2Servic = require('./userV2.service');

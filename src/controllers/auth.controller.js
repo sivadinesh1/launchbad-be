@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { responseForward } = require('../utils/utils');
 const catchAsync = require('../utils/catchAsync');
-const { authService } = require('../services');
+const { authService, userService } = require('../services');
 
 const updateCenterForSuperAdmin = catchAsync(async (req, res) => {
 	const data = await authService.updateCenterForSuperAdmin(req.body.center_id);
@@ -50,12 +50,20 @@ const fetchAccessLogs = catchAsync(async (req, res) => {
 	res.sendFile(filePath);
 });
 
+const fetchUser = catchAsync(async (req, res) => {
+	console.log('dinesh!!');
+	const data = await userService.findOne(req.params.id);
+
+	return responseForward(data, 'fetchUser', res);
+});
+
 module.exports = {
 	updateCenterForSuperAdmin,
 	login,
 	fetchPermissions,
 	fetchLogs,
 	fetchAccessLogs,
+	fetchUser,
 };
 
 // let center_id = req.body.center_id;

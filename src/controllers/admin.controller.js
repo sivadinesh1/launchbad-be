@@ -11,6 +11,7 @@ const {
 	authService,
 	stockService,
 	centerService,
+	userService,
 } = require('../services');
 
 const getProductsCount = catchAsync(async (req, res) => {
@@ -210,7 +211,7 @@ const addUser = catchAsync(async (req, res) => {
 });
 
 const updateUser = catchAsync(async (req, res) => {
-	const data = await adminService.updateUserStatus(req.body);
+	const data = await userService.updateUserStatus(req.body);
 
 	return responseForward(data, 'Error: updateUser', res);
 });

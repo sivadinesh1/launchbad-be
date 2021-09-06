@@ -15,4 +15,6 @@ router.route('/fetch-permissions/:centerid/:roleid').get(authController.fetchPer
 router.route('/logs').get(authController.fetchLogs);
 router.route('/access-logs').get(authController.fetchAccessLogs);
 
+router.route('/user/:id').get(authController.fetchUser);
+
 module.exports = router;

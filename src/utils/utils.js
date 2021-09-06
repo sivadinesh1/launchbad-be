@@ -143,6 +143,11 @@ const responseForward = (data, msg, res, status = 200) => {
 	return res.status(status).json(data);
 };
 
+const bigIntToString = (data) => {
+	const result = JSON.stringify(data, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
+	return JSON.parse(result);
+};
+
 module.exports = {
 	number2text,
 	toTimeZone,
@@ -152,4 +157,5 @@ module.exports = {
 	escapeText,
 	promisifyQuery,
 	responseForward,
+	bigIntToString,
 };

@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// // DEV_DATABASE_URL="postgres://postgres:tesla@127.0.0.1:5432/redapple"
+// let connstring = ""
+
+
+datasource db {
+  provider = "mysql"
+  url      = "mysql://root:tesla@127.0.0.1:3306/reddotdb"
+}
+
+model role {
+  id          BigInt      @id
+  name        String?     @db.VarChar(50)
+  description String?     @db.VarChar(50)
+  user_role   user_role[]
+}
+
+
+model user_role {
+  // id      BigInt  @default(autoincrement())
+  role_id BigInt
+  user_id BigInt
+  role    role   @relation(fields: [role_id], references: [id])
+  users   users  @relation(fields: [user_id], references: [id])
+
+  @@id([role_id, user_id])
+}
+
+model users {
+  id              BigInt      @id @default(autoincrement())
+  centerid        BigInt?       
+  username        String?     @db.VarChar(45)
+  userpass        String?     @db.VarChar(255)
+  mobilenumber    String?     @db.VarChar(20)
+  email           String?     @db.VarChar(150)
+  firstname       String?     @db.VarChar(45)
+  lastName        String?     @db.VarChar(45)
+  profileimgurl   String?     @db.VarChar(150)
+  gender          String?     @db.VarChar(10)
+  dob             String?     @db.VarChar(50)
+  status          String?     @db.VarChar(20)
+  address         String?     @db.VarChar(350)
+  createdby       BigInt?     
+  createddatetime DateTime?   @db.Timestamp(6)
+  updatedby       BigInt?     
+  updateddatetime DateTime?   @db.Timestamp(6)
+  user_role       user_role[]
+  @@unique([username], name: "username_UNIQUE")
+}
+
+
+model state {
+  id          BigInt      @id
+  code        String?     @db.VarChar(20)
+  description String?     @db.VarChar(50)
+  
+}
+
+
+model timezones {
+  id          BigInt      @id
+  timezone    String?     @db.VarChar(20)
+  description String?     @db.VarChar(100)
+  offset      String?     @db.VarChar(100)
+}

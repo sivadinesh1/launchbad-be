@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 
 const { promisifyQuery } = require('../utils/utils');
 
+const { insertUser } = require('./user.service');
+
 const getPermissions = async (center_id, role_id) => {
 	let query = ` select p.* from permissions p
 	where
