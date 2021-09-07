@@ -12,15 +12,15 @@ datasource db {
 }
 
 model role {
-  id          BigInt      @id
-  name        String?     @db.VarChar(50)
+  id          BigInt      @id @default(autoincrement())
+  name        String?     @db.VarChar(255)
   description String?     @db.VarChar(50)
   user_role   user_role[]
 }
 
 
 model user_role {
-  // id      BigInt  @default(autoincrement())
+  
   role_id BigInt
   user_id BigInt
   role    role   @relation(fields: [role_id], references: [id])
@@ -53,7 +53,7 @@ model users {
 
 
 model state {
-  id          BigInt      @id
+  id          BigInt      @id @default(autoincrement())
   code        String?     @db.VarChar(20)
   description String?     @db.VarChar(50)
   
@@ -61,8 +61,103 @@ model state {
 
 
 model timezones {
-  id          BigInt      @id
-  timezone    String?     @db.VarChar(20)
+  id          BigInt      @id @default(autoincrement())
+  timezone    String?     @db.VarChar(100)
   description String?     @db.VarChar(100)
   offset      String?     @db.VarChar(100)
 }
+
+
+model center_banks {
+  id          BigInt      @id @default(autoincrement())
+  center_id    BigInt?
+  bankname    String?     @db.VarChar(100)
+  accountname String?     @db.VarChar(150)
+  accountno   String?     @db.VarChar(50)
+  ifsccode    String?     @db.VarChar(50)
+  branch      String?     @db.VarChar(50)
+  createddate DateTime?   @db.Timestamp(6)
+  createdby   BigInt?
+  updateddate DateTime?   @db.Timestamp(6)
+  updatedby   BigInt?
+  isdefault   String?     @db.VarChar(1)
+}
+
+
+
+model center {
+  id          BigInt      @id @default(autoincrement())
+  company_id  BigInt?
+  name        String?     @db.VarChar(150)
+  address1    String?     @db.VarChar(50)
+  address2    String?     @db.VarChar(50)
+  address3    String?     @db.VarChar(50)
+  state_id    BigInt?
+  pin         String?     @db.VarChar(50)
+  district    String?     @db.VarChar(50)
+  country     String?     @db.VarChar(50)
+  location    String?     @db.VarChar(50)
+  gst         String?     @db.VarChar(50)
+  bankname    String?     @db.VarChar(100)
+  accountname String?     @db.VarChar(150)
+  accountno   String?     @db.VarChar(50)
+  ifsccode    String?     @db.VarChar(50)
+  branch      String?     @db.VarChar(50)
+  phone       String?     @db.VarChar(50)
+  mobile      String?     @db.VarChar(50)
+  mobile2     String?     @db.VarChar(50)
+  whatsapp    String?     @db.VarChar(50)
+  email       String?     @db.VarChar(50)
+  tagline     String?     @db.VarChar(100)
+  logo_name   String?     @db.VarChar(100)
+  logo_url    String?     @db.VarChar(200)
+  side_logo_name String?  @db.VarChar(100)
+  side_logo_url String?   @db.VarChar(200)
+}
+
+
+model product {
+  id              BigInt      @id @default(autoincrement())
+  center_id	      BigInt?
+  brand_id	      BigInt     
+  product_code	  String?	    @db.VarChar(50)
+  description	    String?	    @db.VarChar(100)
+  unit	          String?	    @db.VarChar(50)
+  packetsize	    Int?	   
+  hsncode	        String?	    @db.VarChar(50)
+  currentstock	  String?     @db.VarChar(50)
+  unit_price	    String?	    @db.VarChar(50)
+  mrp	            String?	    @db.VarChar(50)
+  purchase_price	String?	    @db.VarChar(50)
+  salesprice	    String?	    @db.VarChar(50)
+  rackno	        String?	    @db.VarChar(50)
+  location	      String?	    @db.VarChar(50)
+  maxdiscount	    String?	    @db.VarChar(50)
+  alternatecode	  String?	    @db.VarChar(50)
+  taxrate	        Decimal?	  @db.Decimal(10,2)
+  minqty	        BigInt?
+  itemdiscount	  String?	    @db.VarChar(50)
+  reorderqty	    BigInt?
+  avgpurprice	    Decimal?	  @db.Decimal(10,2)
+  avgsaleprice	  Decimal?	  @db.Decimal(10,2)
+  margin	        Decimal?	  @db.Decimal(10,2)
+  createdon	      DateTime?   @db.Timestamp(6)
+  updatedon	      DateTime?   @db.Timestamp(6)
+  createdby	      BigInt?
+  updatedby       BigInt?
+  brand           brand      @relation(fields: [brand_id], references: [id])
+  
+}
+
+
+model brand {
+  id              BigInt      @id @default(autoincrement())
+  center_id	      BigInt?
+  name            String?	    @db.VarChar(150)
+  isactive        String?	    @db.VarChar(1)
+  createdon	      DateTime?   @db.Timestamp(6)
+  product         product[]   
+}
+
+
+

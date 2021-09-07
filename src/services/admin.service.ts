@@ -5,41 +5,49 @@ const { encryptPassword, currentTimeInTimeZone, promisifyQuery, bigIntToString }
 
 const { insertUser, insertUserRole, checkUserExist } = require('../services/user.service');
 
-//:New
-const getProductsCount = async (center_id: any) => {
-	let query = `select count(*) as count from product p where 
-		p.center_id = '${center_id}' `;
-
-	return new Promise((resolve, reject) => {
-		pool.query(query, (err: any, data: any) => {
-			if (err) {
-				return reject(err);
-			}
-			resolve(data[0]);
-		});
+export const getProductsCount = async (center_id: any) => {
+	const result = await prisma.product.count({
+		where: {
+			center_id: Number(center_id),
+		},
 	});
+
+	return result;
 };
 
 //:New
-const getProductInfo = async (center_id: any, product_id: any) => {
-	let query = `
-		select p.*, b.name as brand_name, b.id as brand_id  
-		from 
-		product p,
-		brand b 
-		where
-		p.brand_id = b.id and
-		p.id = '${product_id}' and
-		p.center_id = '${center_id}' `;
+// const getProductInfo = async (center_id: any, product_id: any) => {
+// 	let query = `
+// 		select p.*, b.name as brand_name, b.id as brand_id
+// 		from
+// 		product p,
+// 		brand b
+// 		where
+// 		p.brand_id = b.id and
+// 		p.id = '${product_id}' and
+// 		p.center_id = '${center_id}' `;
 
-	return new Promise((resolve, reject) => {
-		pool.query(query, (err: any, data: any) => {
-			if (err) {
-				return reject(err);
-			}
-			resolve(data);
-		});
+// 	return new Promise((resolve, reject) => {
+// 		pool.query(query, (err: any, data: any) => {
+// 			if (err) {
+// 				return reject(err);
+// 			}
+// 			resolve(data);
+// 		});
+// 	});
+// };
+
+export const getProductInfo = async (center_id: any, product_id: any) => {
+	const result = await prisma.product.findMany({
+		where: {
+			id: Number(product_id),
+			center_id: Number(center_id),
+		},
+		include: {
+			brand: true,
+		},
 	});
+	return bigIntToString(result);
 };
 
 export const getStates = async () => {
@@ -76,28 +84,6 @@ const addUser = async (jsonObj: any) => {
 			return { message: 'User Inserted' };
 		}
 	}
-};
-
-const getUsers = (center_id: any, status: any) => {
-	let query = `
-  select u.*, r.id as role_id, r.name as role, r.description as description from 
-users u,
-role r,
-user_role ur
-where
-u.id = ur.user_id and
-ur.role_id = r.id and
-u.centerid = '${center_id}' and status = '${status}'
-  `;
-
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err: any, data: any) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
 };
 
 const getOutstandingBalance = (center_id: any, limit: any) => {
@@ -153,26 +139,28 @@ const updateLogo = (center_id: any, logo_name: any, logo_url: any, position: any
 };
 
 const addBank = async (insertValues: any) => {
-	insertBank(insertValues);
+	let addBank = await insertBank(insertValues);
 	if (insertValues.isdefault) {
 		let response = await updateCenterBankInfo(insertValues);
-		return 'success';
 	}
+	return 'success';
 };
 
 const insertBank = async (insertValues: any) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-
-	let query = `  INSERT INTO center_banks(center_id, bankname, accountname, accountno, ifsccode, branch,
-		isdefault,
-		createddate, createdby)
-VALUES
-	( '${insertValues.center_id}', '${insertValues.bankname}', '${insertValues.accountname}', 
-		'${insertValues.accountno}', '${insertValues.ifsccode}', '${insertValues.branchdetails}', 
-		'${insertValues.isdefault === true ? 'Y' : 'N'}',
-		'${today}', '${insertValues.createdby}') `;
-
-	const data = promisifyQuery(query);
+	const result = await prisma.center_banks.create({
+		data: {
+			center_id: Number(insertValues.center_id),
+			bankname: insertValues.bankname,
+			accountname: insertValues.accountname,
+			accountno: insertValues.accountno,
+			ifsccode: insertValues.ifsccode,
+			branch: insertValues.branchdetails,
+			isdefault: insertValues.isdefault === true ? 'Y' : 'N',
+			createddate: new Date(today),
+			createdby: insertValues.createdby,
+		},
+	});
 	return 'success';
 };
 
@@ -191,65 +179,86 @@ const updateBank = async (insertValues: any) => {
 
 	return 'success';
 };
-const updateBkInfo = (insertValues: any) => {
+
+export const updateBkInfo = async (updateValues: any) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-	let query = `  update center_banks set
-	bankname = '${insertValues.bankname}',
-	accountname = '${insertValues.accountname}',
-	accountno = '${insertValues.accountno}',
-	ifsccode = '${insertValues.ifsccode}',
-	branch = '${insertValues.branchdetails}',
-	isdefault = '${insertValues.isdefault === true ? 'Y' : 'N'}',
-	updateddate = '${today}',
-	updatedby = '${insertValues.updatedby}' 
-	where id = '${insertValues.id}'
-	`;
-	return promisifyQuery(query);
-};
+	let id = updateValues.id;
 
-const updateCenterBankInfo = (updateValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let bankname = updateValues.bankname;
+	let accountname = updateValues.accountname;
+	let accountno = updateValues.accountno;
+	let ifsccode = updateValues.ifsccode;
+	let branch = updateValues.branchdetails;
+	let isdefault = updateValues.isdefault === true ? 'Y' : 'N';
+	let updatedby = updateValues.updatedby;
+	let updateddate = new Date(today);
 
-	let query = `  update center set  bankname = ?,
-	accountname = ?, accountno = ?, ifsccode = ?, branch = ?
-	where
-	id = ? `;
-
-	let values = [
-		`${updateValues.bankname}, IFSC: ${updateValues.ifsccode}`,
-		updateValues.accountname,
-		updateValues.accountno,
-		updateValues.ifsc,
-		updateValues.branchdetails,
-		updateValues.center_id,
-	];
-
-	return promisifyQuery(query, values);
-};
-
-const updateBankDefaults = async (center_id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-
-	let query = `  update center_banks set
-	isdefault = 'N'
-	where center_id = '${center_id}'
-	`;
-
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err: any, data: any) {
-			if (err) {
-				reject(err);
-			}
-			resolve('success');
-		});
+	const result = await prisma.center_banks.update({
+		where: {
+			id: Number(id),
+		},
+		data: {
+			bankname: bankname,
+			accountname: accountname,
+			accountno: accountno,
+			ifsccode: ifsccode,
+			branch: branch,
+			isdefault: isdefault,
+			updatedby: updatedby,
+			updateddate: updateddate,
+		},
 	});
+
+	return bigIntToString(result);
+};
+
+export const updateCenterBankInfo = async (updateValues: any) => {
+	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let id = updateValues.center_id;
+	let bankname = `${updateValues.bankname}, IFSC: ${updateValues.ifsccode}`;
+	let accountname = updateValues.accountname;
+	let accountno = updateValues.accountno;
+	let ifsccode = updateValues.ifsc;
+	let branch = updateValues.branchdetails;
+
+	const result = await prisma.center.update({
+		where: {
+			id: Number(id),
+		},
+		data: {
+			bankname: bankname,
+			accountname: accountname,
+			accountno: accountno,
+			ifsccode: ifsccode,
+			branch: branch,
+		},
+	});
+
+	return bigIntToString(result);
+};
+
+export const updateBankDefaults = async (updateValues: any) => {
+	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let center_id = updateValues.center_id;
+	let status = updateValues.status;
+
+	const result = await prisma.center_banks.updateMany({
+		where: {
+			center_id: Number(center_id),
+		},
+		data: {
+			isdefault: 'N',
+		},
+	});
+
+	return bigIntToString(result);
 };
 
 module.exports = {
 	insertUser,
 
 	insertUserRole,
-	getUsers,
+
 	getOutstandingBalance,
 	checkUserExist,
 	updateLogo,

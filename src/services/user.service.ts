@@ -93,8 +93,51 @@ export const updateUserStatus = async (updateValues: any) => {
 	return bigIntToString(result);
 };
 
+export const getUsers = async (center_id: any, status: any) => {
+	const result = await prisma.users.findMany({
+		where: {
+			centerid: Number(center_id),
+			status: status,
+		},
+		include: {
+			user_role: {
+				include: {
+					role: true, // Include role categories
+				},
+			},
+		},
+		orderBy: {
+			firstname: 'asc',
+		},
+	});
+	return bigIntToString(result);
+};
+
+// const getUsers = (center_id: any, status: any) => {
+// 	let query = `
+//   select u.*, r.id as role_id, r.name as role, r.description as description from
+// users u,
+// role r,
+// user_role ur
+// where
+// u.id = ur.user_id and
+// ur.role_id = r.id and
+// u.centerid = '${center_id}' and status = '${status}'
+//   `;
+
+// 	return new Promise(function (resolve, reject) {
+// 		pool.query(query, function (err: any, data: any) {
+// 			if (err) {
+// 				reject(err);
+// 			}
+// 			resolve(data);
+// 		});
+// 	});
+// };
+
 module.exports = {
 	updateUserStatus,
+	getUsers,
 };
 
 // const updateUserStatus = (updateValues: any) => {

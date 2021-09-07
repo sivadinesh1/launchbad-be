@@ -217,7 +217,7 @@ const updateUser = catchAsync(async (req, res) => {
 });
 
 const getUsers = catchAsync(async (req, res) => {
-	const data = await adminService.getUsers(req.params.centerid, req.params.status);
+	const data = await userService.getUsers(req.params.centerid, req.params.status);
 
 	return responseForward(data, 'Error: getUsers', res);
 });
