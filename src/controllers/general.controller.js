@@ -66,6 +66,12 @@ const isCustomerExists = catchAsync(async (req, res) => {
 	return responseForward(data, 'isCustomerExists', res);
 });
 
+const isBrandExists = catchAsync(async (req, res) => {
+	const data = await brandsService.isBrandExists(req.params.name, req.params.center_id);
+
+	return responseForward(data, 'isBrandExists', res);
+});
+
 const deleteBrand = catchAsync(async (req, res) => {
 	const data = await brandsService.deleteBrand(req.params.id);
 	return responseForward(data, 'deleteBrand', res);
@@ -128,6 +134,7 @@ module.exports = {
 	getAllActiveBrands,
 	isVendorExists,
 	isCustomerExists,
+	isBrandExists,
 	deleteBrand,
 	deleteEnquiry,
 	deleteVendor,

@@ -53,66 +53,69 @@ model users {
 
 
 model state {
-  id          BigInt      @id @default(autoincrement())
-  code        String?     @db.VarChar(20)
-  description String?     @db.VarChar(50)
+  id            BigInt      @id @default(autoincrement())
+  code          String?     @db.VarChar(20)
+  description   String?     @db.VarChar(50)
+  center        center[]
   
 }
 
 
 model timezones {
-  id          BigInt      @id @default(autoincrement())
-  timezone    String?     @db.VarChar(100)
-  description String?     @db.VarChar(100)
-  offset      String?     @db.VarChar(100)
+  id            BigInt      @id @default(autoincrement())
+  timezone      String?     @db.VarChar(100)
+  description   String?     @db.VarChar(100)
+  offset        String?     @db.VarChar(100)
 }
 
 
 model center_banks {
-  id          BigInt      @id @default(autoincrement())
-  center_id    BigInt?
-  bankname    String?     @db.VarChar(100)
-  accountname String?     @db.VarChar(150)
-  accountno   String?     @db.VarChar(50)
-  ifsccode    String?     @db.VarChar(50)
-  branch      String?     @db.VarChar(50)
-  createddate DateTime?   @db.Timestamp(6)
-  createdby   BigInt?
-  updateddate DateTime?   @db.Timestamp(6)
-  updatedby   BigInt?
-  isdefault   String?     @db.VarChar(1)
+  id            BigInt      @id @default(autoincrement())
+  center_id     BigInt?
+  bankname      String?     @db.VarChar(100)
+  accountname   String?     @db.VarChar(150)
+  accountno     String?     @db.VarChar(50)
+  ifsccode      String?     @db.VarChar(50)
+  branch        String?     @db.VarChar(50)
+  createddate   DateTime?   @db.Timestamp(6)
+  createdby     BigInt?
+  updateddate   DateTime?   @db.Timestamp(6)
+  updatedby     BigInt?
+  isdefault     String?     @db.VarChar(1)
 }
 
 
 
 model center {
-  id          BigInt      @id @default(autoincrement())
-  company_id  BigInt?
-  name        String?     @db.VarChar(150)
-  address1    String?     @db.VarChar(50)
-  address2    String?     @db.VarChar(50)
-  address3    String?     @db.VarChar(50)
-  state_id    BigInt?
-  pin         String?     @db.VarChar(50)
-  district    String?     @db.VarChar(50)
-  country     String?     @db.VarChar(50)
-  location    String?     @db.VarChar(50)
-  gst         String?     @db.VarChar(50)
-  bankname    String?     @db.VarChar(100)
-  accountname String?     @db.VarChar(150)
-  accountno   String?     @db.VarChar(50)
-  ifsccode    String?     @db.VarChar(50)
-  branch      String?     @db.VarChar(50)
-  phone       String?     @db.VarChar(50)
-  mobile      String?     @db.VarChar(50)
-  mobile2     String?     @db.VarChar(50)
-  whatsapp    String?     @db.VarChar(50)
-  email       String?     @db.VarChar(50)
-  tagline     String?     @db.VarChar(100)
-  logo_name   String?     @db.VarChar(100)
-  logo_url    String?     @db.VarChar(200)
-  side_logo_name String?  @db.VarChar(100)
-  side_logo_url String?   @db.VarChar(200)
+  id              BigInt      @id @default(autoincrement())
+  company_id      BigInt?
+  name            String?     @db.VarChar(150)
+  address1        String?     @db.VarChar(50)
+  address2        String?     @db.VarChar(50)
+  address3        String?     @db.VarChar(50)
+  state_id        BigInt
+  pin             String?     @db.VarChar(50)
+  district        String?     @db.VarChar(50)
+  country         String?     @db.VarChar(50)
+  location        String?     @db.VarChar(50)
+  gst             String?     @db.VarChar(50)
+  bankname        String?     @db.VarChar(100)
+  accountname     String?     @db.VarChar(150)
+  accountno       String?     @db.VarChar(50)
+  ifsccode        String?     @db.VarChar(50)
+  branch          String?     @db.VarChar(50)
+  phone           String?     @db.VarChar(50)
+  mobile          String?     @db.VarChar(50)
+  mobile2         String?     @db.VarChar(50)
+  whatsapp        String?     @db.VarChar(50)
+  email           String?     @db.VarChar(50)
+  tagline         String?     @db.VarChar(100)
+  logo_name       String?     @db.VarChar(100)
+  logo_url        String?     @db.VarChar(200)
+  side_logo_name  String?     @db.VarChar(100)
+  side_logo_url   String?     @db.VarChar(200)
+
+  state           state      @relation(fields: [state_id], references: [id])
 }
 
 
@@ -161,3 +164,97 @@ model brand {
 
 
 
+model customer {
+  id                BigInt      @id @default(autoincrement())
+  center_id	        BigInt?
+  state_id	        BigInt?
+  name	            String?	    @db.VarChar(150)
+  address1	        String?	    @db.VarChar(50)
+  address2	        String?	    @db.VarChar(50)
+  address3	        String?	    @db.VarChar(50)
+  district	        String?	    @db.VarChar(50)
+  pin	              String?	    @db.VarChar(50) 
+  gst	              String?	    @db.VarChar(50)
+  phone	            String?	    @db.VarChar(50)
+  whatsapp	        String?	    @db.VarChar(50)
+  mobile	          String?	    @db.VarChar(50)
+  mobile2	          String?	    @db.VarChar(50)
+  email	            String?	    @db.VarChar(50)
+  createdon	        DateTime?   @db.Timestamp(6)
+  isactive	        String?	    @db.VarChar(1)
+  contact	          String?	    @db.VarChar(50)
+  tin	              String?	    @db.VarChar(50)
+  panno	            String?	    @db.VarChar(50)
+  credit_amt	      Decimal?	  @db.Decimal(10,2)
+  balance_amt	      Decimal?	  @db.Decimal(10,2)
+  last_paid_date    Decimal?	  @db.Decimal(10,2)
+  sale              sale[]
+}
+
+
+model sale {
+  id                      BigInt      @id @default(autoincrement())
+  center_id	              BigInt?
+  customer_id	            BigInt
+  invoice_no	            String?	    @db.VarChar(50)
+  invoice_date	          String?	    @db.VarChar(50)
+  lr_no	                  String?	    @db.VarChar(50)
+  lr_date	                String?	    @db.VarChar(50)
+  received_date	          String?	    @db.VarChar(50)
+  sales_type	            String?	    @db.VarChar(50)
+  order_no	              String?	    @db.VarChar(50)
+  order_date	            String?	    @db.VarChar(50)
+  total_qty               BigInt?
+  no_of_items	            Int?
+  taxable_value           Decimal?	  @db.Decimal(10,2)
+  cgst                    Decimal?	  @db.Decimal(10,2)
+  sgst                    Decimal?	  @db.Decimal(10,2)
+  igst                    Decimal?	  @db.Decimal(10,2)
+  total_value	            Decimal?	  @db.Decimal(15,2)
+  transport_charges	      Int?	
+  unloading_charges       Int?
+  misc_charges            Int?
+  net_total               Decimal?	  @db.Decimal(15,2)
+  no_of_boxes             Int?
+  status                  String?	    @db.VarChar(1)
+  sale_datetime           String?	    @db.VarChar(50)
+  revision                BigInt?
+  tax_applicable          String?	    @db.VarChar(50)
+  stock_issue_ref         String?	    @db.VarChar(150)
+  stock_issue_date_ref    String?	    @db.VarChar(50)
+  roundoff                Decimal?	  @db.Decimal(10,2)
+  retail_customer_name    String?	    @db.VarChar(150)
+  retail_customer_address String?	    @db.VarChar(150)
+  retail_customer_phone   String?	    @db.VarChar(50)
+  print_count             Int?
+  inv_gen_mode            String?	    @db.VarChar(1)
+  customer                customer    @relation(fields: [customer_id], references: [id])
+}
+
+
+model discount {
+  id                      BigInt      @id @default(autoincrement())
+  center_id	              BigInt?
+  customer_id	            BigInt
+  type                    String?	    @db.VarChar(50)
+  value                   Decimal?	  @db.Decimal(5,2)
+  gst_slab                Int?	   
+  startdate               String?	    @db.VarChar(50)
+  enddate                 String?	    @db.VarChar(50)
+  brand_id                BigInt?
+  
+}	
+
+model permissions {
+  id                      BigInt      @id @default(autoincrement())
+  center_id	              BigInt?
+  role_id                 BigInt
+  operation               String?	    @db.VarChar(50)
+  resource                String?	    @db.VarChar(120)
+  is_access               String?	    @db.VarChar(1)
+}
+
+model payment_mode {
+  id                      BigInt      @id @default(autoincrement())
+  
+}

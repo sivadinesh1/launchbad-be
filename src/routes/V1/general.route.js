@@ -25,6 +25,7 @@ router.route('/vendor-exists/:name/:center_id').get(generalController.isVendorEx
 
 router.route('/customer-exists/:name/:centerid').get(generalController.isCustomerExists);
 
+router.route('/brand-exists/:name/:center_id').get(generalController.isBrandExists);
 router.route('/brand-delete/:id').get(generalController.deleteBrand);
 
 router.route('/enquiry-delete/:id').get(generalController.deleteEnquiry);

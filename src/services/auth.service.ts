@@ -1,19 +1,19 @@
 const bcrypt = require('bcrypt');
+import prisma from '../config/prisma';
 
-const { promisifyQuery } = require('../utils/utils');
+const { promisifyQuery, bigIntToString } = require('../utils/utils');
 
-const { insertUser } = require('./user.service');
-
-const getPermissions = async (center_id, role_id) => {
-	let query = ` select p.* from permissions p
-	where
-	p.center_id = '${center_id}' and
-	p.role_id = '${role_id}' `;
-
-	return promisifyQuery(query);
+export const getPermissions = async (center_id: any, role_id: any) => {
+	const result = await prisma.permissions.findMany({
+		where: {
+			center_id: center_id,
+			role_id: role_id,
+		},
+	});
+	return bigIntToString(result);
 };
 
-const checkUsernameExists = async (username) => {
+const checkUsernameExists = async (username: any) => {
 	let query = `
   select u.id as userid, u.username, u.userpass as userpass, u.firstname, r.name as role, r.id as role_id, c.id as center_id, c.name as center_name, cm.id as company_id,
 	cm.name as company_name, s.code, p.name as plan_name
@@ -42,13 +42,13 @@ const checkUsernameExists = async (username) => {
 	return promisifyQuery(query);
 };
 
-const updateCenterForSuperAdmin = (center_id) => {
+const updateCenterForSuperAdmin = (center_id: any) => {
 	let query = `  update users set centerid = ${center_id} where username = 9999999990 `;
 
 	return promisifyQuery(query);
 };
 
-const login = async (requestBody) => {
+const login = async (requestBody: any) => {
 	const [username, password] = Object.values(requestBody);
 	let user = await checkUsernameExists(username);
 
@@ -72,7 +72,7 @@ const login = async (requestBody) => {
 //   return user;
 // };
 
-const passwordMatch = async (receivedpassword, user) => {
+const passwordMatch = async (receivedpassword: any, user: any) => {
 	if (await bcrypt.compare(receivedpassword, user[0].userpass)) {
 		return {
 			result: 'success',
@@ -84,11 +84,6 @@ const passwordMatch = async (receivedpassword, user) => {
 		return { result: 'INVALID_CREDENTIALS' };
 	}
 };
-
-// userSchema.methods.isPasswordMatch = async function (password) {
-//   const user = this;
-//   return bcrypt.compare(password, user.password);
-// };
 
 module.exports = {
 	getPermissions,

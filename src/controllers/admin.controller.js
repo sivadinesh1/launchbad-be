@@ -133,7 +133,7 @@ const getCenterDetails = catchAsync(async (req, res) => {
 });
 
 const updateCenter = catchAsync(async (req, res) => {
-	const data = await centerService.updateCenter(req);
+	const data = await centerService.updateCenter(req.body);
 	return responseForward(data, 'updateCenter', res);
 });
 

@@ -1,7 +1,6 @@
 import prisma from '../config/prisma';
-var pool = require('../config/db');
 
-const { encryptPassword, currentTimeInTimeZone, promisifyQuery, bigIntToString } = require('../utils/utils');
+const { currentTimeInTimeZone, bigIntToString } = require('../utils/utils');
 
 const { insertUser, insertUserRole, checkUserExist } = require('../services/user.service');
 
@@ -14,28 +13,6 @@ export const getProductsCount = async (center_id: any) => {
 
 	return result;
 };
-
-//:New
-// const getProductInfo = async (center_id: any, product_id: any) => {
-// 	let query = `
-// 		select p.*, b.name as brand_name, b.id as brand_id
-// 		from
-// 		product p,
-// 		brand b
-// 		where
-// 		p.brand_id = b.id and
-// 		p.id = '${product_id}' and
-// 		p.center_id = '${center_id}' `;
-
-// 	return new Promise((resolve, reject) => {
-// 		pool.query(query, (err: any, data: any) => {
-// 			if (err) {
-// 				return reject(err);
-// 			}
-// 			resolve(data);
-// 		});
-// 	});
-// };
 
 export const getProductInfo = async (center_id: any, product_id: any) => {
 	const result = await prisma.product.findMany({
@@ -86,56 +63,86 @@ const addUser = async (jsonObj: any) => {
 	}
 };
 
-const getOutstandingBalance = (center_id: any, limit: any) => {
-	let query = ` 
-	select c.*,
-	count(s.id) as inv_count
-	 from 
-	customer as c,
-	sale as s
-	where 
-	c.id = s.customer_id and
-	c.center_id = '${center_id}'
-		and c.balance_amt != 0 
-		group by c.id
-		order by c.balance_amt desc 	 `;
+export const getOutstandingBalance = async (center_id: any, limit: any) => {
+	let result1: any = await getBalanceByCustomer(center_id, limit);
+	let result2: any = await getInvoiceCountByCustomer(center_id, limit);
 
-	if (limit !== 0) {
-		query = query + ` limit ${limit}`;
+	for (const r1 of result1) {
+		for (const r2 of result2) {
+			if (r2.customer_id === r1.id) {
+				r1.count = r2._count.id;
+				break; // first occurance
+			}
+		}
 	}
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err: any, data: any) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return bigIntToString(result1);
 };
 
-const updateLogo = (center_id: any, logo_name: any, logo_url: any, position: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+const getBalanceByCustomer = async (center_id: any, limit: any) => {
+	let result: any = await prisma.customer.groupBy({
+		by: ['name', 'id', 'balance_amt'],
 
-	let query = '';
-
-	if (position === 'main') {
-		query = ` update center set logo_name = '${logo_name}', logo_url = '${logo_url}' 
-		where id = ${center_id} `;
-	} else if (position === 'side') {
-		query = ` update center set side_logo_name = '${logo_name}', side_logo_url = '${logo_url}' 
-		where id = ${center_id} `;
-	}
-
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err: any, data: any) {
-			if (err) {
-				reject(err);
-			}
-
-			resolve('success');
-		});
+		where: {
+			center_id: Number(center_id),
+			balance_amt: { not: 0 },
+		},
+		orderBy: { balance_amt: 'desc' },
 	});
+
+	return bigIntToString(result);
+};
+
+const getInvoiceCountByCustomer = async (center_id: any, limit: any) => {
+	const result = await prisma.sale.groupBy({
+		by: ['customer_id'],
+		_count: {
+			id: true,
+		},
+
+		where: {
+			center_id: Number(center_id),
+		},
+		orderBy: { customer_id: 'asc' },
+	});
+	return bigIntToString(result);
+};
+
+const updateLogo = async (center_id: any, logo_name: any, logo_url: any, position: any) => {
+	if (position === 'main') {
+		await updateMainLogo(center_id, logo_name, logo_url);
+	} else if (position === 'side') {
+		await updateSideLogo(center_id, logo_name, logo_url);
+	}
+	return 'success';
+};
+
+export const updateMainLogo = async (center_id: any, logo_name: any, logo_url: any) => {
+	const result = await prisma.center.update({
+		where: {
+			id: Number(center_id),
+		},
+		data: {
+			logo_name: logo_name,
+			logo_url: logo_url,
+		},
+	});
+
+	return bigIntToString(result);
+};
+
+export const updateSideLogo = async (center_id: any, logo_name: any, logo_url: any) => {
+	const result = await prisma.center.update({
+		where: {
+			id: Number(center_id),
+		},
+		data: {
+			side_logo_name: logo_name,
+			side_logo_url: logo_url,
+		},
+	});
+
+	return bigIntToString(result);
 };
 
 const addBank = async (insertValues: any) => {
@@ -255,12 +262,7 @@ export const updateBankDefaults = async (updateValues: any) => {
 };
 
 module.exports = {
-	insertUser,
-
-	insertUserRole,
-
 	getOutstandingBalance,
-	checkUserExist,
 	updateLogo,
 	insertBank,
 	updateCenterBankInfo,
