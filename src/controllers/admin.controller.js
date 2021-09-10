@@ -188,14 +188,8 @@ const getDiscountsByCustomerByBrand = catchAsync(async (req, res) => {
 });
 
 const updateDefaultCustomerDiscount = catchAsync(async (req, res) => {
-	const data = await customersService.updateDefaultCustomerDiscount(req.params.centerid, req.params.customerid);
+	const data = await customersService.updateDefaultCustomerDiscount(req.body);
 	return responseForward(data, 'Error: updateDefaultCustomerDiscount', res);
-});
-
-const updateCustomerDiscount = catchAsync(async (req, res) => {
-	const data = await customersService.updateCustomerDiscount(req.params.centerid, req.params.customerid);
-
-	return responseForward(data, 'Error: updateCustomerDiscount', res);
 });
 
 const insertDiscountsByBrands = catchAsync(async (req, res) => {
@@ -274,7 +268,7 @@ module.exports = {
 	getDiscountsByCustomer,
 	getDiscountsByCustomerByBrand,
 	updateDefaultCustomerDiscount,
-	updateCustomerDiscount,
+
 	insertDiscountsByBrands,
 	addUser,
 	updateUser,

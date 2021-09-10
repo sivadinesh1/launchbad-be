@@ -31,7 +31,7 @@ model user_role {
 
 model users {
   id              BigInt      @id @default(autoincrement())
-  centerid        BigInt?       
+  centerid        BigInt       
   username        String?     @db.VarChar(45)
   userpass        String?     @db.VarChar(255)
   mobilenumber    String?     @db.VarChar(20)
@@ -48,6 +48,7 @@ model users {
   updatedby       BigInt?     
   updateddatetime DateTime?   @db.Timestamp(6)
   user_role       user_role[]
+  center          center      @relation(fields: [centerid], references: [id])
   @@unique([username], name: "username_UNIQUE")
 }
 
@@ -57,6 +58,8 @@ model state {
   code          String?     @db.VarChar(20)
   description   String?     @db.VarChar(50)
   center        center[]
+  vendor        vendor[]
+  customer_shipping_address customer_shipping_address[]
   
 }
 
@@ -88,7 +91,7 @@ model center_banks {
 
 model center {
   id              BigInt      @id @default(autoincrement())
-  company_id      BigInt?
+  company_id      BigInt
   name            String?     @db.VarChar(150)
   address1        String?     @db.VarChar(50)
   address2        String?     @db.VarChar(50)
@@ -114,9 +117,55 @@ model center {
   logo_url        String?     @db.VarChar(200)
   side_logo_name  String?     @db.VarChar(100)
   side_logo_url   String?     @db.VarChar(200)
-
+  users           users[]
+  subscriptions   subscriptions[]
   state           state      @relation(fields: [state_id], references: [id])
+  company         company    @relation(fields: [company_id], references: [id])
 }
+
+model company {
+  id              BigInt      @id @default(autoincrement())
+  name            String?     @db.VarChar(150)
+  address1        String?     @db.VarChar(50)
+  address2        String?     @db.VarChar(50)
+  address3        String?     @db.VarChar(50)
+  district        String?     @db.VarChar(50)
+  state_id        BigInt?
+  country         String?     @db.VarChar(50)
+  location        String?     @db.VarChar(50)
+  gst             String?     @db.VarChar(50)
+  bankname        String?     @db.VarChar(100)
+  accountno       String?     @db.VarChar(50)
+  ifsccode        String?     @db.VarChar(50)
+  branch          String?     @db.VarChar(50)
+  addressbnk      String?     @db.VarChar(50)
+  addbankname     String?     @db.VarChar(50)
+  addaccountno    String?     @db.VarChar(50)
+  addifsccode     String?     @db.VarChar(50)
+  addaddressank   String?     @db.VarChar(50)
+  center          center[]
+}
+
+model subscriptions {
+  id                                BigInt      @id @default(autoincrement())
+  center_id                         BigInt
+  plan_id                           BigInt
+  subscription_start_timestamp      DateTime?   @db.Timestamp(6)
+  subscription_end_timestamp        DateTime?   @db.Timestamp(6)
+  subscription_purchased_timestamp  DateTime?   @db.Timestamp(6)
+  is_active                         String?     @db.VarChar(20)
+  center                            center        @relation(fields: [center_id], references: [id])
+  plans                            plans        @relation(fields: [plan_id], references: [id])
+}
+
+model plans {
+id                                BigInt      @id @default(autoincrement())
+name                              String?     @db.VarChar(200)
+price_per_month                   Decimal?    @db.Decimal(12,2)
+is_active                         String?     @db.VarChar(20)
+subscriptions                     subscriptions[]
+}
+
 
 
 model product {
@@ -180,7 +229,7 @@ model customer {
   mobile	          String?	    @db.VarChar(50)
   mobile2	          String?	    @db.VarChar(50)
   email	            String?	    @db.VarChar(50)
-  createdon	        DateTime?   @db.Timestamp(6)
+  createdon	        String?     @db.VarChar(50)
   isactive	        String?	    @db.VarChar(1)
   contact	          String?	    @db.VarChar(50)
   tin	              String?	    @db.VarChar(50)
@@ -189,6 +238,7 @@ model customer {
   balance_amt	      Decimal?	  @db.Decimal(10,2)
   last_paid_date    Decimal?	  @db.Decimal(10,2)
   sale              sale[]
+  discount        discount[]
 }
 
 
@@ -242,7 +292,7 @@ model discount {
   startdate               String?	    @db.VarChar(50)
   enddate                 String?	    @db.VarChar(50)
   brand_id                BigInt?
-  
+  customer                customer    @relation(fields: [customer_id], references: [id])
 }	
 
 model permissions {
@@ -254,7 +304,43 @@ model permissions {
   is_access               String?	    @db.VarChar(1)
 }
 
-model payment_mode {
+model vendor {
   id                      BigInt      @id @default(autoincrement())
-  
+  center_id                BigInt?
+  name                    String?	    @db.VarChar(150)
+  address1                String?	    @db.VarChar(150)
+  address2                String?	    @db.VarChar(150)
+  address3                String?	    @db.VarChar(150)
+  district                String?	    @db.VarChar(50)
+  state_id                BigInt?
+  pin                     String?	    @db.VarChar(50)
+  gst                    String?	    @db.VarChar(50)
+  phone                   String?	    @db.VarChar(50)
+  mobile                  String?	    @db.VarChar(50)
+  mobile2                 String?	    @db.VarChar(50)
+  whatsapp                String?	    @db.VarChar(50)
+  email                   String?	    @db.VarChar(50)
+  createdon               String?     @db.VarChar(50)
+  isactive                String?	    @db.VarChar(1)
+  panno                   String?	    @db.VarChar(50)
+  credit_amt              Decimal?	  @db.Decimal(12,2)
+  balance_amt             Decimal?	  @db.Decimal(12,2)
+  last_paid_date          DateTime?   @db.Timestamp(6)
+  state                   state?      @relation(fields: [state_id], references: [id])
 }
+
+
+model customer_shipping_address {
+  id                      BigInt      @id @default(autoincrement())
+  customer_id             BigInt
+  state_id                BigInt
+  address1                String?	    @db.VarChar(150)
+  address2                String?	    @db.VarChar(150)
+  address3                String?	    @db.VarChar(150)
+  district                String?	    @db.VarChar(100)
+  pin                     String?	    @db.VarChar(50)
+  def_address             String?	    @db.VarChar(1)
+  is_active               String?	    @db.VarChar(1)
+  state                   state?      @relation(fields: [state_id], references: [id])
+}
+

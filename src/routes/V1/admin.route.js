@@ -50,11 +50,9 @@ router.route('/all-customer-default-discounts/:centerid/:customerid').get(adminC
 
 router.route('/discounts-customer/:centerid/:customerid').get(adminController.getDiscountsByCustomer);
 
-router.route('/discounts-customer/:centerid/:customerid').get(adminController.getDiscountsByCustomerByBrand);
+router.route('/discounts-customer-brands/:centerid/:customerid').get(adminController.getDiscountsByCustomerByBrand);
 
 router.route('/update-default-customer-discount').put(adminController.updateDefaultCustomerDiscount);
-
-router.route('/update-customer-discount').put(adminController.updateCustomerDiscount);
 
 router.route('/add-discounts-brand').post(adminController.insertDiscountsByBrands);
 

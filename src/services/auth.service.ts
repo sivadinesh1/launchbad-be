@@ -6,55 +6,70 @@ const { promisifyQuery, bigIntToString } = require('../utils/utils');
 export const getPermissions = async (center_id: any, role_id: any) => {
 	const result = await prisma.permissions.findMany({
 		where: {
-			center_id: center_id,
-			role_id: role_id,
+			center_id: Number(center_id),
+			role_id: Number(role_id),
 		},
 	});
 	return bigIntToString(result);
 };
 
-const checkUsernameExists = async (username: any) => {
-	let query = `
-  select u.id as userid, u.username, u.userpass as userpass, u.firstname, r.name as role, r.id as role_id, c.id as center_id, c.name as center_name, cm.id as company_id,
-	cm.name as company_name, s.code, p.name as plan_name
-	from
-	users u,
-	user_role ur,
-	role r,
-	center c,
-	state s,
-	company cm,
-	plans p,
-	subscriptions subs
-	where
-	subs.plan_id = p.id and
-	subs.center_id = u.centerid and
-	subs.is_active = 'Y' and
+export const checkUsernameExists = async (username: any, center_id: any) => {
+	const result = await prisma.users.findMany({
+		where: {
+			username: username,
+		},
+		select: {
+			id: true,
+			centerid: true,
+			username: true,
+			userpass: true,
 
-	s.id = c.state_id and
-	u.id = ur.user_id and
-	ur.role_id = r.id and
-	u.centerid = c.id and
-	cm.id = c.company_id and
-	username='${username}'
-	 `;
+			user_role: {
+				include: {
+					role: true, // Include role categories
+				},
+			},
+			center: {
+				include: {
+					company: true,
+					subscriptions: {
+						where: {
+							AND: [{ is_active: 'Y' }],
+						},
+						include: {
+							plans: true,
+						},
+					},
+				},
+			},
+		},
+	});
 
-	return promisifyQuery(query);
+	return bigIntToString(result[0]);
 };
 
-const updateCenterForSuperAdmin = (center_id: any) => {
+export const updateCenterForSuperAdmin = (center_id: any) => {
 	let query = `  update users set centerid = ${center_id} where username = 9999999990 `;
 
 	return promisifyQuery(query);
 };
 
-const login = async (requestBody: any) => {
+export const login = async (requestBody: any) => {
 	const [username, password] = Object.values(requestBody);
-	let user = await checkUsernameExists(username);
+	let { centerid: center_id, userpass, ...user } = await checkUsernameExists(username, '');
+
+	console.log('user', JSON.stringify(user));
 
 	if (user !== null && user.length === 0) {
 		return { result: 'USER_NOT_FOUND' };
 	}
+
+	if (await bcrypt.compare(password, userpass)) {
+		return { result: 'success', role: user.user_role[0].role.name, role_id: user.user_role[0].role_id, center_id, username };
+	} else {
+		return { result: 'INVALID_CREDENTIALS' };
+	}
+
 	return await passwordMatch(password, user);
 };
 
@@ -91,3 +106,13 @@ module.exports = {
 	updateCenterForSuperAdmin,
 	login,
 };
+
+// const data = await prisma.profile.findMany({
+//   select: {
+//     id: true,
+//     name: true,
+//     configuration_country: 'country' // work like an 'as'
+//  }
+// })
+
+// const { column_name: alias_name } = await prisma.test.findMany();

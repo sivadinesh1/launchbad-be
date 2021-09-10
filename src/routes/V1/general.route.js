@@ -23,7 +23,7 @@ router.route('/all-active-brands/:centerid/:status').get(generalController.getAl
 
 router.route('/vendor-exists/:name/:center_id').get(generalController.isVendorExists);
 
-router.route('/customer-exists/:name/:centerid').get(generalController.isCustomerExists);
+router.route('/customer-exists/:name/:center_id').get(generalController.isCustomerExists);
 
 router.route('/brand-exists/:name/:center_id').get(generalController.isBrandExists);
 router.route('/brand-delete/:id').get(generalController.deleteBrand);
