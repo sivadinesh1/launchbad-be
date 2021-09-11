@@ -53,7 +53,7 @@ const addMoreEnquiryDetails = catchAsync(async (req, res) => {
 });
 
 const openEnquiries = catchAsync(async (req, res) => {
-	const data = await enquiryService.openEnquiries(req.params.centerid, req.params.status);
+	const data = await enquiryService.openEnquiries(req.user.center_id, req.params.status);
 
 	return responseForward(data, 'openEnquiries', res);
 });
@@ -77,7 +77,7 @@ const getCustomerData = catchAsync(async (req, res) => {
 });
 
 const getEnquiredProductData = catchAsync(async (req, res) => {
-	let centerid = req.params.centerid;
+	let centerid = req.user.center_id;
 	let customerid = req.params.customerid;
 	let enqid = req.params.enqid;
 	let orderdate = req.params.invdt;
@@ -87,7 +87,7 @@ const getEnquiredProductData = catchAsync(async (req, res) => {
 });
 
 const getBackOrder = catchAsync(async (req, res) => {
-	const data = await enquiryService.getBackOrder(req.params.centerid);
+	const data = await enquiryService.getBackOrder(req.user.center_id);
 
 	return responseForward(data, 'getBackOrder', res);
 });

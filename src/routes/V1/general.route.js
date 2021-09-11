@@ -1,50 +1,51 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const { auth } = require('../../middleware/auth');
 
 const generalController = require('../../controllers/general.controller');
 
-router.route('/search-product-information').post(generalController.searchProductInformation);
+router.route('/search-product-information').post(auth('getUsers'), generalController.searchProductInformation);
 
-router.route('/search-product').post(generalController.searchProduct);
-router.route('/search-customer').post(generalController.searchCustomer);
+router.route('/search-product').post(auth('getUsers'), generalController.searchProduct);
+router.route('/search-customer').post(auth('getUsers'), generalController.searchCustomer);
 
-router.route('/search-vendor').post(generalController.searchVendors);
+router.route('/search-vendor').post(auth('getUsers'), generalController.searchVendors);
 
-router.route('/search-brand').post(generalController.searchBrand);
+router.route('/search-brand').post(auth('getUsers'), generalController.searchBrand);
 
-router.route('/inventory/all').post(generalController.getAllInventory);
+router.route('/inventory/all').post(auth('getUsers'), generalController.getAllInventory);
 
-router.route('/all-clients').post(generalController.getAllClients);
+router.route('/all-clients').post(auth('getUsers'), generalController.getAllClients);
 
-router.route('/all-active-vendors/:centerid').get(generalController.getAllActiveVendors);
+router.route('/all-active-vendors').get(auth('getUsers'), generalController.getAllActiveVendors);
 
-router.route('/all-active-brands/:centerid/:status').get(generalController.getAllActiveBrands);
+router.route('/all-active-brands/:status').get(auth('getUsers'), generalController.getAllActiveBrands);
 
-router.route('/vendor-exists/:name/:center_id').get(generalController.isVendorExists);
+router.route('/vendor-exists/:name').get(auth('getUsers'), generalController.isVendorExists);
 
-router.route('/customer-exists/:name/:center_id').get(generalController.isCustomerExists);
+router.route('/customer-exists/:name').get(auth('getUsers'), generalController.isCustomerExists);
 
-router.route('/brand-exists/:name/:center_id').get(generalController.isBrandExists);
-router.route('/brand-delete/:id').get(generalController.deleteBrand);
+router.route('/brand-exists/:name').get(auth('getUsers'), generalController.isBrandExists);
+router.route('/brand-delete/:id').get(auth('getUsers'), generalController.deleteBrand);
 
-router.route('/enquiry-delete/:id').get(generalController.deleteEnquiry);
+router.route('/enquiry-delete/:id').get(auth('getUsers'), generalController.deleteEnquiry);
 
-router.route('/vendor-delete/:id').get(generalController.deleteVendor);
+router.route('/vendor-delete/:id').get(auth('getUsers'), generalController.deleteVendor);
 
-router.route('/brands-missing-discounts/:centerid/:status/:customerid').get(generalController.getBrandsMissingDiscountsByCustomer);
+router.route('/brands-missing-discounts/:status/:customerid').get(auth('getUsers'), generalController.getBrandsMissingDiscountsByCustomer);
 
-router.route('/all-active-customers/:centerid').get(generalController.getAllActiveCustomersByCenter);
+router.route('/all-active-customers').get(auth('getUsers'), generalController.getAllActiveCustomersByCenter);
 
-router.route('/add-parts-details-enquiry').post(generalController.addPartsDetailsEnquiry);
+router.route('/add-parts-details-enquiry').post(auth('getUsers'), generalController.addPartsDetailsEnquiry);
 
-router.route('/get-enquiry/:enquiryid').get(generalController.getEnquiryById);
+router.route('/get-enquiry/:enquiryid').get(auth('getUsers'), generalController.getEnquiryById);
 
-router.route('/get-customer-details/:enquiryid').get(generalController.getCustomerDetailsById);
+router.route('/get-customer-details/:enquiryid').get(auth('getUsers'), generalController.getCustomerDetailsById);
 
-router.route('/update-taxrate').post(generalController.updateTaxRate);
+router.route('/update-taxrate').post(auth('getUsers'), generalController.updateTaxRate);
 
-router.route('/all-pymt-modes/:center_id/:status').get(generalController.getAllPaymentModes);
+router.route('/all-pymt-modes/:status').get(auth('getUsers'), generalController.getAllPaymentModes);
 
 module.exports = router;
 

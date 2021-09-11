@@ -1,6 +1,8 @@
 var pool = require('../config/db');
 
-const getInquirySummary = (center_id, from_date, to_date, callback) => {
+const { currentTimeInTimeZone, bigIntToString, promisifyQuery } = require('../utils/utils');
+
+const getInquirySummary = (center_id, from_date, to_date) => {
 	let query = ` select 
   IFNULL(SUM(CASE WHEN e.estatus = 'O' THEN 1 ELSE 0 END), 0) AS 'new',
   IFNULL(SUM(CASE WHEN e.estatus = 'D' THEN 1 ELSE 0 END), 0) AS 'draft',
@@ -16,13 +18,10 @@ str_to_date(DATE_FORMAT(enquiry_date,'%d-%m-%YYYY') , '%d-%m-%YYYY') between
 str_to_date('${from_date}', '%d-%m-%YYYY') and
 str_to_date('${to_date}', '%d-%m-%YYYY')  `;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getSalesSummary = (center_id, from_date, to_date, callback) => {
+const getSalesSummary = (center_id, from_date, to_date) => {
 	let query = ` select 
   IFNULL(SUM(CASE WHEN s.status = 'C' THEN 1 ELSE 0 END), 0) AS 'completed',
   IFNULL(SUM(CASE WHEN s.status = 'D' THEN 1 ELSE 0 END), 0) AS 'draft'
@@ -35,13 +34,10 @@ str_to_date('${from_date}', '%d-%m-%YYYY') and
 str_to_date('${to_date}', '%d-%m-%YYYY')      
  `;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getPurchaseSummary = (center_id, from_date, to_date, callback) => {
+const getPurchaseSummary = (center_id, from_date, to_date) => {
 	let query = ` select 
   IFNULL(SUM(CASE WHEN p.status = 'C' THEN 1 ELSE 0 END), 0) AS 'completed',
   IFNULL(SUM(CASE WHEN p.status = 'D' THEN 1 ELSE 0 END), 0) AS 'draft'
@@ -54,13 +50,10 @@ str_to_date('${from_date}', '%d-%m-%YYYY') and
 str_to_date('${to_date}', '%d-%m-%YYYY')          
  `;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getSaleTotal = (center_id, from_date, to_date, callback) => {
+const getSaleTotal = (center_id, from_date, to_date) => {
 	let query = ` 
 
   select 
@@ -75,26 +68,20 @@ str_to_date('${to_date}', '%d-%m-%YYYY')
           
  `;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getCenterSummary = (center_id, from_date, to_date, callback) => {
+const getCenterSummary = (center_id, from_date, to_date) => {
 	let query = ` select tbl1.active_customers, tbl2.active_vendors from (
     select count(*) as 'active_customers' from customer where isactive = 'A' and center_id = '${center_id}' ) as tbl1,
     (
     select count(*) as 'active_vendors' from vendor where isactive = 'A' and center_id = '${center_id}'
     ) as tbl2 `;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getReceivablesOutstanding = (center_id, from_date, to_date, callback) => {
+const getReceivablesOutstanding = (center_id, from_date, to_date) => {
 	let query = ` select customer_id, (sum(credit_amt) - sum(debit_amt)) as balance from 
   ledger l
   where
@@ -103,13 +90,10 @@ const getReceivablesOutstanding = (center_id, from_date, to_date, callback) => {
   customer_id
    `;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const getPaymentsByCustomers = (center_id, from_date, to_date, callback) => {
+const getPaymentsByCustomers = (center_id, from_date, to_date) => {
 	let query = ` select c.name as customer_name, p.payment_now_amt
   from 
   payment p,
@@ -122,13 +106,10 @@ const getPaymentsByCustomers = (center_id, from_date, to_date, callback) => {
   str_to_date('${to_date}', '%d-%m-%YYYY')    
    `;
 
-	pool.query(query, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query);
 };
 
-const topClients = (center_id, limit) => {
+const topClients = (requestBody) => {
 	let query = `
 		select c.name as customer_name, s.customer_id as id, sum(net_total) as sum_total,
 		count(s.id) as inv_count
@@ -137,20 +118,13 @@ const topClients = (center_id, limit) => {
 			customer c
 		where
 			c.id = s.customer_id and
-			s.center_id = '${center_id}'
+			s.center_id = '${requestBody.center_id}'
 			group by customer_id 
 		order by
 			sum_total desc
-			limit ${limit} `;
+			limit ${requestBody.limit} `;
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			resolve(data);
-		});
-	});
+	return promisifyQuery(query);
 };
 
 module.exports = {

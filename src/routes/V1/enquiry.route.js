@@ -16,7 +16,7 @@ router.route('/insert-enquiry-details').post(enquiryController.insertEnquiryDeta
 
 router.route('/add-more-enquiry-details').post(enquiryController.addMoreEnquiryDetails);
 
-router.route('/open-enquiries/:centerid/:status').get(enquiryController.openEnquiries);
+router.route('/open-enquiries/:status').get(enquiryController.openEnquiries);
 
 router.route('/get-enquiry-details/:enqid').get(enquiryController.getEnquiryDetails);
 
@@ -26,7 +26,7 @@ router.route('/get-customer-data/:enqid').get(enquiryController.getCustomerData)
 
 router.route('/get-enquired-product-data').get(enquiryController.getEnquiredProductData);
 
-router.route('/back-order/:centerid').get(enquiryController.getBackOrder);
+router.route('/back-order').get(enquiryController.getBackOrder);
 
 router.route('/search-enquiries').post(enquiryController.searchEnquiries);
 

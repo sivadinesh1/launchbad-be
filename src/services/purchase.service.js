@@ -4,7 +4,7 @@ const { handleError, ErrorHandler } = require('../config/error');
 
 const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
-const insertPurchaseDetails = async (requestBody) => {
+export const insertPurchaseDetails = async (requestBody) => {
 	const cloneReq = { ...requestBody };
 
 	let newPK = await purchaseMasterEntry(cloneReq);

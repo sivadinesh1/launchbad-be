@@ -15,13 +15,13 @@ const {
 } = require('../services');
 
 const getProductsCount = catchAsync(async (req, res) => {
-	const data = await adminService.getProductsCount(req.params.centerid);
+	const data = await adminService.getProductsCount(req.user.center_id);
 
 	return responseForward(data, 'getProductsCount', res);
 });
 
 const getProductInfo = catchAsync(async (req, res) => {
-	const data = await adminService.getProductInfo(req.params.centerid, req.params.productid);
+	const data = await adminService.getProductInfo(req.user.center_id, req.params.productid);
 
 	return responseForward(data, 'getProductInfo', res);
 });
@@ -71,7 +71,7 @@ const updateProduct = catchAsync(async (req, res) => {
 });
 
 const getVendorDetails = catchAsync(async (req, res) => {
-	const data = await vendorsService.getVendorDetails(req.params.centerid, req.params.vendorid);
+	const data = await vendorsService.getVendorDetails(req.user.center_id, req.params.vendorid);
 
 	return responseForward(data, 'getVendorDetails', res);
 });
@@ -110,7 +110,7 @@ const addBrand = catchAsync(async (req, res) => {
 });
 
 const getCustomerDetails = catchAsync(async (req, res) => {
-	const data = await customersService.getCustomerDetails(req.params.centerid, req.params.customerid);
+	const data = await customersService.getCustomerDetails(req.user.center_id, req.params.customerid);
 
 	return responseForward(data, 'getCustomerDetails', res);
 });
@@ -127,7 +127,7 @@ const updateCustomer = catchAsync(async (req, res) => {
 });
 
 const getCenterDetails = catchAsync(async (req, res) => {
-	const data = await centerService.getCenterDetails(req.params.centerid);
+	const data = await centerService.getCenterDetails(req.user.center_id);
 
 	return responseForward(data, 'getCenterDetails', res);
 });
@@ -138,7 +138,7 @@ const updateCenter = catchAsync(async (req, res) => {
 });
 
 const isProductExists = catchAsync(async (req, res) => {
-	const data = await productsService.isProductExists(req.params.pcode, req.params.centerid);
+	const data = await productsService.isProductExists(req.params.pcode, req.user.center_id);
 
 	return responseForward(data, 'isProductExists', res);
 });
@@ -166,24 +166,24 @@ const inactivateCSA = catchAsync(async (req, res) => {
 });
 
 const getCustomerDiscount = catchAsync(async (req, res) => {
-	const data = await customersService.getCustomerDiscount(req.params.centerid, req.params.customerid);
+	const data = await customersService.getCustomerDiscount(req.user.center_id, req.params.customerid);
 
 	return responseForward(data, 'getCustomerDiscount', res);
 });
 
 const getAllCustomerDefaultDiscounts = catchAsync(async (req, res) => {
-	const data = await customersService.getAllCustomerDefaultDiscounts(req.params.centerid, req.params.customerid);
+	const data = await customersService.getAllCustomerDefaultDiscounts(req.user.center_id, req.params.customerid);
 
 	return responseForward(data, 'getAllCustomerDefaultDiscounts', res);
 });
 
 const getDiscountsByCustomer = catchAsync(async (req, res) => {
-	const data = await customersService.getDiscountsByCustomer(req.params.centerid, req.params.customerid);
+	const data = await customersService.getDiscountsByCustomer(req.user.center_id, req.params.customerid);
 	return responseForward(data.ApiError, 'getDiscountsByCustomer', res);
 });
 
 const getDiscountsByCustomerByBrand = catchAsync(async (req, res) => {
-	const data = await customersService.getDiscountsByCustomerByBrand(req.params.centerid, req.params.customerid);
+	const data = await customersService.getDiscountsByCustomerByBrand(req.user.center_id, req.params.customerid);
 	return responseForward(data, 'Error: getDiscountsByCustomerByBrand', res);
 });
 
@@ -211,19 +211,19 @@ const updateUser = catchAsync(async (req, res) => {
 });
 
 const getUsers = catchAsync(async (req, res) => {
-	const data = await userService.getUsers(req.params.centerid, req.params.status);
+	const data = await userService.getUsers(req.user.center_id, req.params.status);
 
 	return responseForward(data, 'Error: getUsers', res);
 });
 
 const checkUsernameExists = catchAsync(async (req, res) => {
-	const data = await authService.checkUsernameExists(req.params.phone, req.params.centerid);
+	const data = await authService.checkUsernameExists(req.params.phone, req.user.center_id);
 
 	return responseForward(data, 'Error: checkUsernameExists', res);
 });
 
 const getOutstandingBalance = catchAsync(async (req, res) => {
-	const data = await adminService.getOutstandingBalance(req.body.center_id, req.body.limit);
+	const data = await adminService.getOutstandingBalance(req.user.center_id, req.body.limit);
 
 	return responseForward(data, 'Error: getOutstandingBalance', res);
 });

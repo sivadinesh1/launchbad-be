@@ -6,7 +6,7 @@ const { authService, userService } = require('../services');
 const { MAX_AGE, setTokenCookie, getTokenCookie } = require('../utils/auth-cookies');
 
 const updateCenterForSuperAdmin = catchAsync(async (req, res) => {
-	const data = await authService.updateCenterForSuperAdmin(req.body.center_id);
+	const data = await authService.updateCenterForSuperAdmin(req.user.center_id);
 
 	return responseForward(data, 'updateCenterForSuperAdmin', res);
 });
@@ -30,7 +30,7 @@ const login = catchAsync(async (req, res) => {
 });
 
 const fetchPermissions = catchAsync(async (req, res) => {
-	const data = await authService.getPermissions(req.params.centerid, req.params.roleid);
+	const data = await authService.getPermissions(req.user.center_id, req.params.roleid);
 
 	return responseForward(data, 'fetchPermissions', res);
 });
@@ -65,7 +65,7 @@ const fetchAccessLogs = catchAsync(async (req, res) => {
 
 const fetchUser = catchAsync(async (req, res) => {
 	console.log('dinesh!!');
-	const data = await userService.findOne(req.params.id);
+	const data = await userService.findOne(req.user.id);
 
 	return responseForward(data, 'fetchUser', res);
 });

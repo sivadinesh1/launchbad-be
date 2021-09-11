@@ -5,7 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const { returnsService } = require('../services');
 
 const getReturns = catchAsync(async (req, res) => {
-	const data = await returnsService.getReturns(req.params.center_id);
+	const data = await returnsService.getReturns(req.user.center_id);
 	return responseForward(data, 'getReturns', res);
 });
 
@@ -15,7 +15,7 @@ const searchSaleReturn = catchAsync(async (req, res) => {
 });
 
 const getSaleReturnDetails = catchAsync(async (req, res) => {
-	const data = await returnsService.getSaleReturnDetails(req.params.center_id, req.params.salre_return_id);
+	const data = await returnsService.getSaleReturnDetails(req.user.center_id, req.params.salre_return_id);
 	return responseForward(data, 'getSaleReturnDetails', res);
 });
 
@@ -25,7 +25,7 @@ const updateSaleReturnsReceived = catchAsync(async (req, res) => {
 });
 
 const showReceiveButton = catchAsync(async (req, res) => {
-	const data = await returnsService.showReceiveButton(req.params.center_id, req.params.sale_return_id);
+	const data = await returnsService.showReceiveButton(req.user.center_id, req.params.sale_return_id);
 	return responseForward(data, 'showReceiveButton', res);
 });
 

@@ -5,7 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const { uploadService } = require('../services');
 
 const uploadLogo = catchAsync(async (req, res) => {
-	const data = await uploadService.uploadLogo(req.params.centerid);
+	const data = await uploadService.uploadLogo(req.user.center_id);
 	return responseForward(data, 'uploadLogo', res);
 });
 

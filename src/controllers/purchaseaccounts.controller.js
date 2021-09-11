@@ -48,7 +48,7 @@ const getPaymentsByVendors = catchAsync(async (req, res) => {
 });
 
 const getLedgerByVendors = catchAsync(async (req, res) => {
-	const data = await purchaseaccountsService.getLedgerByVendors(req.params.centerid, req.params.vendorid);
+	const data = await purchaseaccountsService.getLedgerByVendors(req.user.center_id, req.params.vendorid);
 	return responseForward(data, 'getLedgerByVendors', res);
 });
 

@@ -11,7 +11,7 @@ const addPaymentReceived = catchAsync(async (req, res) => {
 });
 
 const getLedgerByCustomers = catchAsync(async (req, res) => {
-	const data = await accountsService.getLedgerByCustomers(req.params.centerid, req.params.customerid);
+	const data = await accountsService.getLedgerByCustomers(req.user.center_id, req.params.customerid);
 
 	return responseForward(data, 'getLedgerByCustomers', res);
 });
@@ -41,7 +41,7 @@ const getPaymentsOverviewByCustomers = catchAsync(async (req, res) => {
 });
 
 const getPymtTransactionByCustomers = catchAsync(async (req, res) => {
-	const data = await accountsService.getPymtTransactionByCustomers(req.params.centerid, req.params.customerid);
+	const data = await accountsService.getPymtTransactionByCustomers(req.user.center_id, req.params.customerid);
 
 	return responseForward(data, 'getPymtTransactionByCustomers', res);
 });
@@ -59,7 +59,7 @@ const getPaymentsOverviewByCenter = catchAsync(async (req, res) => {
 });
 
 const getPymtTransactionsByCenter = catchAsync(async (req, res) => {
-	const data = await accountsService.getPymtTransactionsByCenter(req.params.centerid);
+	const data = await accountsService.getPymtTransactionsByCenter(req.user.center_id);
 
 	return responseForward(data, 'getPymtTransactionsByCenter', res);
 });
@@ -71,7 +71,7 @@ const addBulkPaymentReceived = catchAsync(async (req, res) => {
 });
 
 const bankList = catchAsync(async (req, res) => {
-	const data = await accountsService.bankList(req.params.centerid);
+	const data = await accountsService.bankList(req.user.center_id);
 
 	return responseForward(data, 'bankList', res);
 });

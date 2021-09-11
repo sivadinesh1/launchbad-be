@@ -2,7 +2,7 @@ import prisma from '../config/prisma';
 
 const { toTimeZone, toTimeZoneFrmt, currentTimeInTimeZone, promisifyQuery, encryptPassword, bigIntToString } = require('../utils/utils');
 
-exports.findOne = async (username: any) => {
+export const findOne = async (username: any) => {
 	const users = await prisma.users.findUnique({
 		where: {
 			username: username,

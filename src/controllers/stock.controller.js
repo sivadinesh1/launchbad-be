@@ -5,7 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const { stockService, salesService } = require('../services');
 
 const searchAllDraftPurchase = catchAsync(async (req, res) => {
-	const data = await stockService.searchAllDraftPurchase(req.params.centerid);
+	const data = await stockService.searchAllDraftPurchase(req.user.center_id);
 	return responseForward(data, 'searchAllDraftPurchase', res);
 });
 
@@ -70,7 +70,7 @@ const getProductWithAllMRP = catchAsync(async (req, res) => {
 });
 
 const deleteProductFromStock = catchAsync(async (req, res) => {
-	const data = await stockService.deleteProductFromStock(req.params.productid, req.params.mrp, req.params.centerid);
+	const data = await stockService.deleteProductFromStock(req.params.productid, req.params.mrp, req.user.center_id);
 	return responseForward(data, 'deleteProductFromStock', res);
 });
 

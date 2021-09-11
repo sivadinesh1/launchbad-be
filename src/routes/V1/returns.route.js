@@ -4,18 +4,19 @@
 
 const express = require('express');
 const router = express.Router();
+const { auth } = require('../../middleware/auth');
 const returnsController = require('../../controllers/returns.controller');
 
-router.route('/get-sale-returns/:center_id').get(returnsController.getReturns);
+router.route('/get-sale-returns').get(auth('getUsers'), returnsController.getReturns);
 
-router.route('/search-sale-return').post(returnsController.searchSaleReturn);
+router.route('/search-sale-return').post(auth('getUsers'), returnsController.searchSaleReturn);
 
-router.route('/get-sale-return-details/:center_id/:salre_return_id').get(returnsController.getSaleReturnDetails);
+router.route('/get-sale-return-details/:salre_return_id').get(auth('getUsers'), returnsController.getSaleReturnDetails);
 
-router.route('/update-sale-returns-received').post(returnsController.updateSaleReturnsReceived);
+router.route('/update-sale-returns-received').post(auth('getUsers'), returnsController.updateSaleReturnsReceived);
 
-router.route('/show-receive-button/:center_id/:sale_return_id').get(returnsController.showReceiveButton);
+router.route('/show-receive-button/:sale_return_id').get(auth('getUsers'), returnsController.showReceiveButton);
 
-router.route('/add-sale-return').post(returnsController.addSaleReturn);
+router.route('/add-sale-return').post(auth('getUsers'), returnsController.addSaleReturn);
 
 module.exports = router;

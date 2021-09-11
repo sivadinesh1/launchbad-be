@@ -17,19 +17,19 @@ const searchProduct = catchAsync(async (req, res) => {
 });
 
 const searchCustomer = catchAsync(async (req, res) => {
-	const data = await customersService.getSearchCustomers(req.body.centerid, req.body.searchstr);
+	const data = await customersService.getSearchCustomers(req.user.center_id, req.body.searchstr);
 
 	return responseForward(data, 'searchCustomer', res);
 });
 
 const searchVendors = catchAsync(async (req, res) => {
-	const data = await vendorsService.getSearchVendors(req.body.centerid, req.body.searchstr);
+	const data = await vendorsService.getSearchVendors(req.user.center_id, req.body.searchstr);
 
 	return responseForward(data, 'searchVendors', res);
 });
 
 const searchBrand = catchAsync(async (req, res) => {
-	const data = await brandsService.getSearchBrands(req.body.centerid, req.body.searchstr);
+	const data = await brandsService.getSearchBrands(req.user.center_id, req.body.searchstr);
 
 	return responseForward(data, 'searchBrand', res);
 });
@@ -47,27 +47,27 @@ const getAllClients = catchAsync(async (req, res) => {
 });
 
 const getAllActiveVendors = catchAsync(async (req, res) => {
-	const data = await generalService.getAllActiveVendors(req.params.centerid);
+	const data = await generalService.getAllActiveVendors(req.user.center_id);
 	return responseForward(data, 'getAllActiveVendors', res);
 });
 
 const getAllActiveBrands = catchAsync(async (req, res) => {
-	const data = await brandsService.getAllBrands(req.params.centerid, req.params.status);
+	const data = await brandsService.getAllBrands(req.user.center_id, req.params.status);
 	return responseForward(data, 'getAllActiveBrands', res);
 });
 
 const isVendorExists = catchAsync(async (req, res) => {
-	const data = await vendorsService.isVendorExists(req.params.name, req.params.center_id);
+	const data = await vendorsService.isVendorExists(req.params.name, req.user.center_id);
 	return responseForward(data, 'isVendorExists', res);
 });
 
 const isCustomerExists = catchAsync(async (req, res) => {
-	const data = await customersService.isCustomerExists(req.params.name, req.params.center_id);
+	const data = await customersService.isCustomerExists(req.params.name, req.user.center_id);
 	return responseForward(data, 'isCustomerExists', res);
 });
 
 const isBrandExists = catchAsync(async (req, res) => {
-	const data = await brandsService.isBrandExists(req.params.name, req.params.center_id);
+	const data = await brandsService.isBrandExists(req.params.name, req.user.center_id);
 
 	return responseForward(data, 'isBrandExists', res);
 });
@@ -88,12 +88,12 @@ const deleteVendor = catchAsync(async (req, res) => {
 });
 
 const getBrandsMissingDiscountsByCustomer = catchAsync(async (req, res) => {
-	const data = await brandsService.getBrandsMissingDiscountsByCustomer(req.params.centerid, req.params.status, req.params.customerid);
+	const data = await brandsService.getBrandsMissingDiscountsByCustomer(req.user.center_id, req.params.status, req.params.customerid);
 	return responseForward(data, 'getBrandsMissingDiscountsByCustomer', res);
 });
 
 const getAllActiveCustomersByCenter = catchAsync(async (req, res) => {
-	const data = await generalService.getAllActiveCustomersByCenter(req.params.centerid);
+	const data = await generalService.getAllActiveCustomersByCenter(req.user.center_id);
 	return responseForward(data, 'getAllActiveCustomersByCenter', res);
 });
 
@@ -118,7 +118,7 @@ const updateTaxRate = catchAsync(async (req, res) => {
 });
 
 const getAllPaymentModes = catchAsync(async (req, res) => {
-	const data = await generalService.getAllPaymentModes(req.params.center_id, req.params.status);
+	const data = await generalService.getAllPaymentModes(req.user.center_id, req.params.status);
 	return responseForward(data, 'getAllPaymentModes', res);
 });
 

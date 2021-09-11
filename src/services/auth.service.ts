@@ -98,11 +98,3 @@ export const generateToken = (id: any, center_id: any, role: any) => {
 //   }
 //   return user;
 // };
-
-module.exports = {
-	getPermissions,
-	checkUsernameExists,
-	updateCenterForSuperAdmin,
-	login,
-	generateToken,
-};

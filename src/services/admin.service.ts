@@ -45,7 +45,7 @@ export const getTimezones = async () => {
 	return bigIntToString(result);
 };
 
-const addUser = async (jsonObj: any) => {
+export const addUser = async (jsonObj: any) => {
 	const user = await checkUserExist(jsonObj);
 	if (user !== null) {
 		return { message: 'DUP_USERNAME' };
@@ -79,7 +79,7 @@ export const getOutstandingBalance = async (center_id: any, limit: any) => {
 	return bigIntToString(result1);
 };
 
-const getBalanceByCustomer = async (center_id: any, limit: any) => {
+export const getBalanceByCustomer = async (center_id: any, limit: any) => {
 	let result: any = await prisma.customer.groupBy({
 		by: ['name', 'id', 'balance_amt'],
 
@@ -93,7 +93,7 @@ const getBalanceByCustomer = async (center_id: any, limit: any) => {
 	return bigIntToString(result);
 };
 
-const getInvoiceCountByCustomer = async (center_id: any, limit: any) => {
+export const getInvoiceCountByCustomer = async (center_id: any, limit: any) => {
 	const result = await prisma.sale.groupBy({
 		by: ['customer_id'],
 		_count: {
@@ -108,7 +108,7 @@ const getInvoiceCountByCustomer = async (center_id: any, limit: any) => {
 	return bigIntToString(result);
 };
 
-const updateLogo = async (center_id: any, logo_name: any, logo_url: any, position: any) => {
+export const updateLogo = async (center_id: any, logo_name: any, logo_url: any, position: any) => {
 	if (position === 'main') {
 		await updateMainLogo(center_id, logo_name, logo_url);
 	} else if (position === 'side') {
@@ -145,7 +145,7 @@ export const updateSideLogo = async (center_id: any, logo_name: any, logo_url: a
 	return bigIntToString(result);
 };
 
-const addBank = async (insertValues: any) => {
+export const addBank = async (insertValues: any) => {
 	let addBank = await insertBank(insertValues);
 	if (insertValues.isdefault) {
 		let response = await updateCenterBankInfo(insertValues);
@@ -153,7 +153,7 @@ const addBank = async (insertValues: any) => {
 	return 'success';
 };
 
-const insertBank = async (insertValues: any) => {
+export const insertBank = async (insertValues: any) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 	const result = await prisma.center_banks.create({
 		data: {
@@ -171,7 +171,7 @@ const insertBank = async (insertValues: any) => {
 	return 'success';
 };
 
-const updateBank = async (insertValues: any) => {
+export const updateBank = async (insertValues: any) => {
 	if (insertValues.isdefault) {
 		let updateDefaults = await updateBankDefaults(insertValues.center_id);
 	}

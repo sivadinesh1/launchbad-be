@@ -1,5 +1,5 @@
 const express = require('express');
-const dashboardRouter = express.Router();
+const router = express.Router();
 
 const mysql = require('mysql');
 const moment = require('moment');
@@ -7,109 +7,26 @@ const logger = require('../../config/logger');
 
 const { handleError, ErrorHandler } = require('../../config/error');
 
-const {
-	getInquirySummary,
-	getSalesSummary,
-	getPurchaseSummary,
-	getSaleTotal,
-	getCenterSummary,
-	getReceivablesOutstanding,
-	getPaymentsByCustomers,
-	topClients,
-} = require('../../services/dashboard.service');
+const { auth } = require('../../middleware/auth');
+const dashboardController = require('../../controllers/dashboard.controller');
 
-dashboardRouter.post('/inquiry-summary', (req, res) => {
-	const [center_id, from_date, to_date] = Object.values(req.body);
+router.route('/inquiry-summary').post(auth('getUsers'), dashboardController.getInquirySummary);
 
-	getInquirySummary(center_id, from_date, to_date, (err, data) => {
-		if (err) {
-			return handleError(new ErrorHandler('500', `/inquiry-summary`, err), res);
-		} else {
-			return res.status(200).json(data);
-		}
-	});
-});
+router.route('/sales-summary').post(auth('getUsers'), dashboardController.getSalesSummary);
 
-dashboardRouter.post('/sales-summary', (req, res) => {
-	const [center_id, from_date, to_date] = Object.values(req.body);
+router.route('/purchase-summary').post(auth('getUsers'), dashboardController.getPurchaseSummary);
 
-	getSalesSummary(center_id, from_date, to_date, (err, data) => {
-		if (err) {
-			return handleError(new ErrorHandler('500', '/sales-summary', err), res);
-		} else {
-			return res.status(200).json(data);
-		}
-	});
-});
+router.route('/sales-total').post(auth('getUsers'), dashboardController.getSaleTotal);
 
-dashboardRouter.post('/purchase-summary', (req, res) => {
-	const [center_id, from_date, to_date] = Object.values(req.body);
+router.route('/center-summary').post(auth('getUsers'), dashboardController.getCenterSummary);
 
-	getPurchaseSummary(center_id, from_date, to_date, (err, data) => {
-		if (err) {
-			return handleError(new ErrorHandler('500', `/purchase-summary`, err), res);
-		} else {
-			return res.status(200).json(data);
-		}
-	});
-});
+router.route('/center-receivables-summary').post(auth('getUsers'), dashboardController.getReceivablesOutstanding);
 
-dashboardRouter.post('/sales-total', (req, res) => {
-	const [center_id, from_date, to_date] = Object.values(req.body);
+router.route('/payments-customers').post(auth('getUsers'), dashboardController.getPaymentsByCustomers);
 
-	getSaleTotal(center_id, from_date, to_date, (err, data) => {
-		if (err) {
-			return handleError(new ErrorHandler('500', `/sales-total`, err), res);
-		} else {
-			return res.status(200).json(data);
-		}
-	});
-});
+router.route('/get-top-clients').post(auth('getUsers'), dashboardController.topClients);
 
-dashboardRouter.post('/center-summary', (req, res) => {
-	const [center_id, from_date, to_date] = Object.values(req.body);
-
-	getCenterSummary(center_id, from_date, to_date, (err, data) => {
-		if (err) {
-			return handleError(new ErrorHandler('500', `/center-summary`, err), res);
-		} else {
-			return res.status(200).json(data);
-		}
-	});
-});
-
-dashboardRouter.post('/center-receivables-summary', (req, res) => {
-	const [center_id, from_date, to_date] = Object.values(req.body);
-
-	getReceivablesOutstanding(center_id, from_date, to_date, (err, data) => {
-		if (err) {
-			return handleError(new ErrorHandler('500', `/center-receivables-summary`, err), res);
-		} else {
-			return res.status(200).json(data);
-		}
-	});
-});
-
-dashboardRouter.post('/payments-customers', (req, res) => {
-	const [center_id, from_date, to_date] = Object.values(req.body);
-
-	getPaymentsByCustomers(center_id, from_date, to_date, (err, data) => {
-		if (err) {
-			return handleError(new ErrorHandler('500', `/payments-customers`, err), res);
-		} else {
-			return res.status(200).json(data);
-		}
-	});
-});
-
-// get customer outstanding balance
-dashboardRouter.post('/get-top-clients', async (req, res) => {
-	let rows = await topClients(req.body.center_id, req.body.limit);
-
-	return res.status(200).json(rows);
-});
-
-module.exports = dashboardRouter;
+module.exports = router;
 
 //  ~ Daily summary
 
