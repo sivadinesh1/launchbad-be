@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
+const { auth } = require('../../middleware/auth');
+
 const adminController = require('../../controllers/admin.controller');
 
 router.route('/view-products-count/:centerid').get(adminController.getProductsCount);
@@ -13,7 +15,7 @@ router.route('/update-product').post(adminController.updateProduct);
 
 router.route('/get-vendor-details/:centerid/:vendorid').get(adminController.getVendorDetails);
 
-router.route('/get-states').get(adminController.getStates);
+router.route('/get-states').get(auth('getUsers'), adminController.getStates);
 router.route('/get-timezones').get(adminController.getTimezones);
 
 router.route('/update-vendor/:id').put(adminController.updateVendor);

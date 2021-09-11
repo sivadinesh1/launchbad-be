@@ -3,6 +3,7 @@ const ApiError = require('../utils/ApiError');
 const { responseForward } = require('../utils/utils');
 const catchAsync = require('../utils/catchAsync');
 const { authService, userService } = require('../services');
+const { MAX_AGE, setTokenCookie, getTokenCookie } = require('../utils/auth-cookies');
 
 const updateCenterForSuperAdmin = catchAsync(async (req, res) => {
 	const data = await authService.updateCenterForSuperAdmin(req.body.center_id);
@@ -12,6 +13,18 @@ const updateCenterForSuperAdmin = catchAsync(async (req, res) => {
 
 const login = catchAsync(async (req, res) => {
 	const data = await authService.login(req.body);
+
+	console.log('object1' + JSON.stringify(data));
+	let { role, center_id, id } = data;
+
+	const token = await authService.generateToken(id, center_id, role);
+
+	console.log('object.....' + token);
+
+	await setTokenCookie(res, token);
+
+	// generate token for user
+	//set token in cookie
 
 	return responseForward(data, 'login', res);
 });

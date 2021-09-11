@@ -25,7 +25,8 @@ app.use(express.static('upload'));
 seqnce = 0;
 
 var corsOptions = {
-	origin: '*',
+	credentials: true,
+	origin: true,
 	optionsSuccessStatus: 200,
 };
 
