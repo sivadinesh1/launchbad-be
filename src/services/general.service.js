@@ -12,11 +12,11 @@ const searchProductInformation = async (requestBody) => {
 	// initially checks if product has custom discount for the selected customer. if yes, takes that discount
 	// if no custom discount available, it then gets the default discount. brand = 0 for defaults
 
-	let sql = ` select a.product_code as product_code, a.description, b.mrp, a.taxrate, b.available_stock,
+	let query = ` select a.product_code as product_code, a.description, b.mrp, a.taxrate, b.available_stock,
 	a.packetsize as qty, a.unit_price, a.id as product_id, b.id as stock_pk, a.rackno,
 IFNULL(
 (
-select concat(value,'~',type) 
+select concat(value,'~',type)  
 from discount 
 where str_to_date('${orderdate}','%d-%m-%Y')  
 between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') and
@@ -61,7 +61,7 @@ const searchProduct = async (requestBody) => {
 	// -- b.id as stock_pk, -- commented this out, if needed in sales then implement the same way as earlier --
 	// 	-- 		LEFT outer JOIN   stock b
 	// -- 		ON b.product_id = a.id
-	sql = `
+	query = `
 	select a.product_code as product_code, 
   		a.description, 
   		a.mrp, 

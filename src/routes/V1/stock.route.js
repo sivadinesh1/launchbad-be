@@ -9,7 +9,7 @@ stockRouter.route('/search-purchase').post(auth('getUsers'), stockController.sea
 stockRouter.route('/search-sales').post(auth('getUsers'), stockController.searchSales);
 
 stockRouter.route('/purchase-master/:id').get(auth('getUsers'), stockController.purchaseMaster);
-stockRouter.route('/purchase-master/:id').get(auth('getUsers'), stockController.getSalesMaster);
+stockRouter.route('/sales-master/:id').get(auth('getUsers'), stockController.getSalesMaster);
 
 stockRouter.route('/sale-details/:id').get(auth('getUsers'), stockController.getSalesDetails);
 

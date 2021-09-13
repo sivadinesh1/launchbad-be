@@ -72,11 +72,13 @@ function processItems(cloneReq, newPK, sale_ref_id, receivedamount) {
 
 // ***** OLD **** //
 
-const addSaleLedgerRecord = (insertValues, invoice_ref_id, callback) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+const addSaleLedgerRecord = async (insertValues, invoice_ref_id) => {
+	console.log('ssssssssss');
+	try {
+		let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
-	// balance amount is taken from querying ledger table, with Limit 1, check the subquery.
-	let query = `
+		// balance amount is taken from querying ledger table, with Limit 1, check the subquery.
+		let query = `
 INSERT INTO ledger ( center_id, customer_id, invoice_ref_id, ledger_detail, credit_amt, balance_amt, ledger_date)
 VALUES
   ( ? , ?, ?, 'invoice', ?, IFNULL((select balance_amt from (select (balance_amt) as balance_amt
@@ -86,17 +88,14 @@ VALUES
     LIMIT 1) a), 0) + '${insertValues.net_total}', '${today}'
   ) `;
 
-	let values = [insertValues.center_id, insertValues.customerctrl.id, invoice_ref_id, insertValues.net_total];
+		let values = [insertValues.center_id, insertValues.customerctrl.id, invoice_ref_id, insertValues.net_total];
 
-	return new Promise(function (resolve, reject) {
-		pool.query(query, values, async function (err, data) {
-			if (err) {
-				reject(err);
-			}
-			let updateCustomerBalance = await updateCustomerBalanceAmount(insertValues.customerctrl.id);
-			resolve(data);
-		});
-	});
+		let result = await promisifyQuery(query, values);
+		let updateCustomerBalance = await updateCustomerBalanceAmount(insertValues.customerctrl.id);
+	} catch (err) {
+		console.log('inside eeee' + JSON.stringify(err));
+	}
+	return 'success';
 };
 
 // reverse sale ledger entry if it is update of completed sale
@@ -178,7 +177,7 @@ VALUES
 	});
 };
 
-const addPaymentLedgerRecord = (insertValues, payment_ref_id, receivedamount, sale_ref_id, callback) => {
+const addPaymentLedgerRecord = async (insertValues, payment_ref_id, receivedamount, sale_ref_id) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let query = `
@@ -193,13 +192,8 @@ const addPaymentLedgerRecord = (insertValues, payment_ref_id, receivedamount, sa
 
 	let values = [insertValues.customer.center_id, insertValues.customer.id, payment_ref_id, receivedamount];
 
-	pool.query(query, values, async function (err, data) {
-		if (err) {
-			return callback(err);
-		}
-		let updateCustomerBalance = await updateCustomerBalanceAmount(insertValues.customer.id);
-		return callback(null, data);
-	});
+	let result = await promisifyQuery(query, values);
+	let updateCustomerBalance = await updateCustomerBalanceAmount(insertValues.customer.id);
 };
 
 const addPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
@@ -221,7 +215,7 @@ const addPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 		pymtNo,
 		insertValues.receivedamount,
 		cloneReq.customer.credit_amt,
-		toTimeZone(insertValues.receiveddate, 'Asia/Kolkata'),
+
 		insertValues.pymtmode,
 		insertValues.bankref,
 		insertValues.pymtref,

@@ -22,18 +22,18 @@ const insertItemHistoryTable = async (
 ) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
 
-	let query2 = `
+	let query = `
 insert into item_history (center_id, module, product_ref_id, purchase_id, purchase_det_id, sale_id, sale_det_id, actn, actn_type, txn_qty, stock_level, txn_date, sale_return_id, sale_return_det_id, purchase_return_id, purchase_return_det_id)
 values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purchase_det_id}',
 '${sale_id}', '${sale_det_id}',
 '${actn}', '${actn_type}', '${txn_qty}', `;
 
 	// if (module !== 'Product') {
-	query2 = query2 + `	(select IFNULL(sum(available_stock), 0) as available_stock  from stock where product_id = '${product_id}'  ), `;
+	query = query + `	(select IFNULL(sum(available_stock), 0) as available_stock  from stock where product_id = '${product_id}'  ), `;
 	// }
 
-	query2 =
-		query2 +
+	query =
+		query +
 		`	
 			 '${today}', '${sale_return_id}', '${sale_return_det_id}', '${purchase_return_id}', '${purchase_return_det_id}' ) `;
 
@@ -51,13 +51,13 @@ const updateStock = (qty_to_update, product_id, mrp, mode) => {
 
 // dinesh check
 // multiply by * -1 so that qty_to_update is minus, query works as expected
-const updateStockViaId = (qty_to_update, product_id, stock_id, mode) => {
+const updateStockViaId = async (qty_to_update, product_id, stock_id, mode) => {
 	let query =
 		mode === 'add'
 			? `update stock set available_stock =  available_stock + '${qty_to_update}' where product_id = '${product_id}' and id = '${stock_id}' `
 			: `update stock set available_stock =  available_stock - '${qty_to_update}' where product_id = '${product_id}' and id = '${stock_id}' `;
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 };
 
 const isStockIdExist = async (k) => {

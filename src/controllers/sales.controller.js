@@ -15,12 +15,13 @@ const deleteSalesDetails = catchAsync(async (req, res) => {
 });
 
 const insertSaleDetails = catchAsync(async (req, res) => {
-	const data = await salesService.insertSaleDetails(request.body);
-	return responseForward(data, 'insertSaleDetails', res);
+	const data = await salesService.insertSaleDetails(req.body);
+	console.log('in ctrl >> ' + data);
+	return responseForward(data, 'insertSaleDetails>>', res);
 });
 
 const convertSale = catchAsync(async (req, res) => {
-	const data = await salesService.convertSale(request.body);
+	const data = await salesService.convertSale(req.body);
 	return responseForward(data, 'convertSale', res);
 });
 

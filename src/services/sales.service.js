@@ -1,4 +1,5 @@
 var pool = require('../config/db');
+const { addSaleLedgerRecord, addReverseSaleLedgerRecord, addSaleLedgerAfterReversalRecord } = require('../services/accounts.service');
 
 const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
 
@@ -38,7 +39,7 @@ const getSalesDetails = async (sales_id) => {
 const insertSaleDetails = async (requestBody) => {
 	const cloneReq = { ...requestBody };
 
-	// (1) Updates invseq in tbl financialyear, then {returns} formated sequence {YY/MM/INVSEQ}
+	//	(1) Updates invseq in tbl financialyear, then {returns} formated sequence {YY/MM/INVSEQ}
 	if (cloneReq.status === 'C' && cloneReq.revision === 0 && cloneReq.inv_gen_mode === 'A') {
 		await updateSequenceGenerator(cloneReq);
 	} else if (cloneReq.status === 'D' && cloneReq.inv_gen_mode === 'A') {
@@ -50,7 +51,6 @@ const insertSaleDetails = async (requestBody) => {
 			}
 		}
 	}
-
 	let invNo = '';
 	// always very first insert will increment revision to 1, on consecutive inserts, it will be +1
 	if (cloneReq.status === 'C' && cloneReq.revision === 0 && cloneReq.inv_gen_mode === 'A') {
@@ -68,73 +68,78 @@ const insertSaleDetails = async (requestBody) => {
 	} else if (cloneReq.inv_gen_mode === 'M') {
 		invNo = cloneReq.invoiceno;
 	}
+	let resl = await saleMasterEntry(cloneReq, invNo);
+	console.log('dinesh 1111@');
 
 	// (2)
-	saleMasterEntry(cloneReq, invNo)
-		.then(async (data) => {
-			const start = Date.now();
 
-			newPK = cloneReq.salesid === '' ? data.insertId : cloneReq.salesid;
+	let data = await saleMasterEntry(cloneReq, invNo);
 
-			// if sale came from enquiry, then update the enq table with the said id {status = E (executed)}
-			if (cloneReq.enqref !== 0 && cloneReq.enqref !== null) {
-				await updateEnquiry(newPK, cloneReq.enqref);
-			}
+	const start = Date.now();
 
-			// (3) - updates sale details
-			let process = processItems(cloneReq, newPK);
+	newPK = cloneReq.salesid === '' ? data.insertId : cloneReq.salesid;
+	console.log('dinesh 2222@@@@##' + newPK);
+	// if sale came from enquiry, then update the enq table with the said id {status = E (executed)}
+	if (cloneReq.enqref !== 0 && cloneReq.enqref !== null) {
+		console.log('dinesh 2222!!');
+		await updateEnquiry(newPK, cloneReq.enqref);
+		console.log('dinesh 2222@@');
+	}
+	console.log('dinesh 3333');
+	// (3) - updates sale details
+	let process = processItems(cloneReq, newPK);
+	console.log('dinesh 5555');
+	// Promise.all([process]).then(() => {
+	// ledger entry should NOT be done if status is draft ("D")
+	console.log('dinesh 5555***' + cloneReq.salesid + 'asdfasd**** ' + cloneReq.status);
+	if (cloneReq.status === 'C' && cloneReq.salesid === '') {
+		await addSaleLedgerRecord(cloneReq, newPK);
+		console.log('dinesh 6666');
+		return { result: 'success', id: newPK, invoiceno: invNo };
+	} else if (cloneReq.status === 'C' && cloneReq.salesid !== '') {
+		// reverse the old ledger entry and then add a new sale entry. scenario: sale completed, but after sale, if any changes done,
+		// we reverse old entries and create new entries.
+		console.log('dinesh 7777');
+		await addReverseSaleLedgerRecord(cloneReq, newPK);
+		console.log('dinesh 8888');
+		await addSaleLedgerAfterReversalRecord(cloneReq, newPK);
+		console.log('dinesh 9999');
+		// check if customer has changed
+		if (cloneReq.hasCustomerChange) {
+			console.log('dinesh 0000');
+			updateLegerCustomerChange(cloneReq.center_id, cloneReq.salesid, cloneReq.customerctrl.id, cloneReq.old_customer_id);
+		}
 
-			// Promise.all([process]).then(() => {
-			// ledger entry should NOT be done if status is draft ("D")
-			if (cloneReq.status === 'C' && cloneReq.salesid === '') {
-				await addSaleLedgerRecord(cloneReq, newPK);
-				return { result: 'success', id: newPK, invoiceno: invNo };
-			} else if (cloneReq.status === 'C' && cloneReq.salesid !== '') {
-				// reverse the old ledger entry and then add a new sale entry. scenario: sale completed, but after sale, if any changes done,
-				// we reverse old entries and create new entries.
-
-				await addReverseSaleLedgerRecord(cloneReq, newPK);
-				await addSaleLedgerAfterReversalRecord(cloneReq, newPK);
-
-				// check if customer has changed
-				if (cloneReq.hasCustomerChange) {
-					updateLegerCustomerChange(cloneReq.center_id, cloneReq.salesid, cloneReq.customerctrl.id, cloneReq.old_customer_id);
-				}
-
-				return { result: 'success', id: newPK, invoiceno: invNo };
-			} else {
-				// draft scenario
-				return { result: 'success', id: newPK, invoiceno: invNo };
-			}
-			// });
-		})
-		.catch((err) => {
-			console.log(err);
-			return { result: 'error', err: err };
-		});
+		return { result: 'success', id: newPK, invoiceno: invNo };
+	} else {
+		console.log('dinesh ... ');
+		// draft scenario
+		return { result: 'success', id: newPK, invoiceno: invNo };
+	}
+	// });
 };
 
 // Update Sequence in financial Year tbl DRAFT
-function updateDraftSequenceGenerator(cloneReq) {
-	let qryUpdateSqnc = '';
+async function updateDraftSequenceGenerator(cloneReq) {
+	let query = '';
 
 	if (cloneReq.invoicetype === 'gstinvoice') {
-		qryUpdateSqnc = `
+		query = `
 		update financialyear set draft_inv_seq = draft_inv_seq + 1 where 
 		center_id = '${cloneReq.center_id}' and  
 		CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
 	} else if (cloneReq.invoicetype === 'stockissue') {
-		qryUpdateSqnc = `
+		query = `
 	update financialyear set stock_issue_seq = stock_issue_seq + 1 where 
 	center_id = '${cloneReq.center_id}' and  
 	CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
 	}
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 }
 
 // format and send sequence #
-function getSequenceNo(cloneReq) {
+async function getSequenceNo(cloneReq) {
 	let invNoQry = '';
 	if (cloneReq.invoicetype === 'gstinvoice' && cloneReq.status !== 'D') {
 		invNoQry = ` select 
@@ -158,35 +163,38 @@ function getSequenceNo(cloneReq) {
 				CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
 	}
 
-	let data = promisifyQuery(query);
+	let data = await promisifyQuery(invNoQry);
+	console.log('dinesh ' + JSON.stringify(data));
 	return data[0].invNo;
 }
 
 // format and send sequence #
-function saleMasterEntry(cloneReq, invNo) {
-	let revisionCnt = 0;
-	let printcount = cloneReq.print_count || 0;
+async function saleMasterEntry(cloneReq, invNo) {
+	console.log('SM>> 1');
+	try {
+		let revisionCnt = 0;
+		let printcount = cloneReq.print_count || 0;
 
-	let invoicedate = toTimeZone(cloneReq.invoicedate, 'Asia/Kolkata');
+		let invoicedate = toTimeZone(cloneReq.invoicedate, 'Asia/Kolkata');
 
-	// if inv # starts with 'D' (eg:invno: "D/21/04/00024") + status: "C" + revision: 0
-	if (cloneReq.invoiceno.startsWith('D') && cloneReq.status === 'C' && cloneReq.revision === 0) {
-		invoicedate = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY');
-	}
+		// if inv # starts with 'D' (eg:invno: "D/21/04/00024") + status: "C" + revision: 0
+		if (cloneReq.invoiceno.startsWith('D') && cloneReq.status === 'C' && cloneReq.revision === 0) {
+			invoicedate = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY');
+		}
 
-	// always very first insert will increment revision to 1, on consicutive inserts, it will be +1
-	if (cloneReq.status === 'C' && cloneReq.revision === 0) {
-		revisionCnt = 1;
-	} else if (cloneReq.status === 'C' && cloneReq.revision !== 0) {
-		revisionCnt = cloneReq.revision + 1;
-		printcount = '-1';
-	}
+		// always very first insert will increment revision to 1, on consicutive inserts, it will be +1
+		if (cloneReq.status === 'C' && cloneReq.revision === 0) {
+			revisionCnt = 1;
+		} else if (cloneReq.status === 'C' && cloneReq.revision !== 0) {
+			revisionCnt = cloneReq.revision + 1;
+			printcount = '-1';
+		}
 
-	let orderdate = cloneReq.orderdate !== '' && cloneReq.orderdate !== null ? toTimeZone(cloneReq.orderdate, 'Asia/Kolkata') : '';
-	let lrdate = cloneReq.lrdate !== '' && cloneReq.lrdate !== null ? toTimeZone(cloneReq.lrdate, 'Asia/Kolkata') : '';
+		let orderdate = cloneReq.orderdate !== '' && cloneReq.orderdate !== null ? toTimeZone(cloneReq.orderdate, 'Asia/Kolkata') : '';
+		let lrdate = cloneReq.lrdate !== '' && cloneReq.lrdate !== null ? toTimeZone(cloneReq.lrdate, 'Asia/Kolkata') : '';
 
-	// create a invoice number and save in sale master
-	let insQry = `
+		// create a invoice number and save in sale master
+		let insQry = `
 			INSERT INTO sale (center_id, customer_id, invoice_no, invoice_date, order_no, order_date, 
 			lr_no, lr_date, sale_type,  total_qty, no_of_items, taxable_value, cgst, sgst, igst, 
 			total_value, net_total, transport_charges, unloading_charges, misc_charges, status, 
@@ -199,11 +207,11 @@ function saleMasterEntry(cloneReq, invNo) {
 			'${cloneReq.noofitems}', '${cloneReq.taxable_value}', '${cloneReq.cgst}', '${cloneReq.sgst}', '${cloneReq.igst}', '${cloneReq.totalvalue}', 
 			'${cloneReq.net_total}', '${cloneReq.transport_charges}', '${cloneReq.unloading_charges}', '${cloneReq.misc_charges}', '${cloneReq.status}',
 			'${currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss')}', '${cloneReq.roundoff}', '${revisionCnt}', '${cloneReq.retail_customer_name}', '${
-		cloneReq.retail_customer_address
-	}', '${cloneReq.retail_customer_phone}', '${cloneReq.inv_gen_mode}'
+			cloneReq.retail_customer_address
+		}', '${cloneReq.retail_customer_phone}', '${cloneReq.inv_gen_mode}'
 			)`;
 
-	let upQry = `
+		let upQry = `
 			UPDATE sale set center_id = '${cloneReq.center_id}', customer_id = '${cloneReq.customerctrl.id}', 
 			invoice_no = '${invNo}',
 			invoice_date = 	'${invoicedate}', 
@@ -220,7 +228,10 @@ function saleMasterEntry(cloneReq, invNo) {
 			print_count= '${printcount}'
 			where id= '${cloneReq.salesid}' `;
 
-	return promisifyQuery(query);
+		return await promisifyQuery(cloneReq.salesid === '' ? insQry : upQry);
+	} catch (error) {
+		console.log('xxxxxxxx' + error);
+	}
 }
 
 const IUSaleDetailsAsync = async (k) => {
@@ -242,7 +253,7 @@ disc_value = '${k.disc_value}',	disc_type= '${k.disc_type}', unit_price = '${(k.
 		where
 		id = '${k.sale_det_id}' `;
 
-	return promisifyQuery(k.sale_det_id === '' ? insQuery100 : upQuery100);
+	return await promisifyQuery(k.sale_det_id === '' ? insQuery100 : upQuery100);
 };
 
 // check
@@ -497,7 +508,7 @@ function updateEnquiry(newPK, enqref) {
 	where 
 	id =  '${enqref}' `;
 
-	return promisifyQuery(query);
+	return promisifyQuery(uenqsaleidqry);
 }
 
 async function processItems(cloneReq, newPK) {
@@ -526,23 +537,23 @@ async function processItems(cloneReq, newPK) {
 }
 
 // Update Sequence in financial Year tbl when its fresh sale insert
-function updateSequenceGenerator(cloneReq) {
-	let qryUpdateSqnc = '';
+async function updateSequenceGenerator(cloneReq) {
+	let query = '';
 
 	if (cloneReq.invoicetype === 'gstinvoice') {
-		qryUpdateSqnc = `
+		query = `
 		update financialyear set invseq = invseq + 1 where 
 		center_id = '${cloneReq.center_id}' and  
 		CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
 	} else if (cloneReq.invoicetype === 'stockissue') {
-		qryUpdateSqnc = `		
+		query = `		
 	update financialyear set 
 	stock_issue_seq = @stock_issue_seq:= stock_issue_seq + 1 where 
  center_id = '${cloneReq.center_id}' and  
  CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') LIMIT 1  `;
 	}
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 }
 
 // convert stock issue to sale
@@ -667,4 +678,5 @@ module.exports = {
 	deleteSale,
 	deleteSaleMaster,
 	updateGetPrintCounter,
+	insertSaleDetails1,
 };

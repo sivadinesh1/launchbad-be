@@ -12,7 +12,8 @@ export const auth =
 
 			next();
 		} catch (error) {
-			throw new Error('Authorization Failed');
+			// throw new Error('Authorization Failed');
+			return res.status(401).send('Authorization Failed');
 		}
 	};
 
