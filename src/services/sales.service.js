@@ -678,5 +678,4 @@ module.exports = {
 	deleteSale,
 	deleteSaleMaster,
 	updateGetPrintCounter,
-	insertSaleDetails1,
 };

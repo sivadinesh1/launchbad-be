@@ -12,7 +12,7 @@ export function setTokenCookie(res: any, token: any) {
 			cookie.serialize('authToken', token, {
 				httpOnly: true,
 				secure: process.env.NODE_ENV !== 'development',
-				maxAge: 60 * 60,
+				maxAge: 365 * 24 * 60 * 60,
 				sameSite: 'strict',
 				path: '/',
 			}),

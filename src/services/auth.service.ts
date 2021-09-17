@@ -35,6 +35,7 @@ export const checkUsernameExists = async (username: any, center_id: any) => {
 			center: {
 				include: {
 					company: true,
+					state: true,
 					subscriptions: {
 						where: {
 							AND: [{ is_active: 'Y' }],
@@ -61,12 +62,26 @@ export const login = async (requestBody: any) => {
 	const [username, password] = Object.values(requestBody);
 	let { centerid: center_id, userpass, id, ...user } = await checkUsernameExists(username, '');
 
+	console.log('user >> ', JSON.stringify(user));
+
+	console.log('user >> ', user.center.name);
+
 	if (user !== null && user.length === 0) {
 		return { result: 'USER_NOT_FOUND' };
 	}
 
 	if (await bcrypt.compare(password, userpass)) {
-		return { result: 'success', role: user.user_role[0].role.name, role_id: user.user_role[0].role_id, center_id, username, id };
+		return {
+			result: 'success',
+			role: user.user_role[0].role.name,
+			role_id: user.user_role[0].role_id,
+			center_id,
+			username,
+			id,
+			center_name: user?.center.name,
+			center_district: user?.center.district,
+			code: user?.center?.state.code,
+		};
 	} else {
 		return { result: 'INVALID_CREDENTIALS' };
 	}
