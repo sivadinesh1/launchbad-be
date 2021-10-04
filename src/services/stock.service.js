@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { toTimeZone, toTimeZoneFrmt, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
+const { toTimeZone, toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
@@ -71,7 +71,7 @@ const isStockIdExist = async (k) => {
 
 const insertToStock = async (product_id, mrp, available_stock, open_stock) => {
 	let upDate = new Date();
-	todayYYMMDD = toTimeZoneFrmt(upDate, 'Asia/Kolkata', 'YYYY-MM-DD');
+	todayYYMMDD = toTimeZoneFormat(upDate, 'Asia/Kolkata', 'YYYY-MM-DD');
 
 	let query = `
 	insert into stock (product_id, mrp, available_stock, open_stock, updateddate)
@@ -173,7 +173,7 @@ const searchAllDraftPurchase = async (center_id) => {
 // str_to_date('2020-05-08 23:59:00', '%Y-%m-%d %T')
 
 const searchPurchase = async (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let status = requestBody.status;
 	let vendor_id = requestBody.vendorid;
 	let from_date = requestBody.fromdate;
@@ -217,7 +217,7 @@ const searchPurchase = async (requestBody) => {
 };
 
 const searchSales = async (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let status = requestBody.status;
 	let customer_id = requestBody.customerid;
 	let from_date = requestBody.fromdate;

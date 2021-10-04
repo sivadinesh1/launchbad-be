@@ -8,8 +8,8 @@ const insertBrand = async (insertValues: any) => {
 		data: {
 			center_id: Number(insertValues.center_id),
 			name: insertValues.name,
-			createdon: new Date(today),
-			isactive: 'A',
+			createdAt: new Date(today),
+			is_active: 'A',
 		},
 	});
 	return result;
@@ -35,7 +35,7 @@ export const getAllBrands = async (center_id: any, status: any) => {
 	const result = await prisma.brand.findMany({
 		where: {
 			center_id: Number(center_id),
-			isactive: status,
+			is_active: status,
 		},
 		orderBy: {
 			name: 'asc',
@@ -63,18 +63,19 @@ const getBrandsMissingDiscountsByCustomer = async (center_id: any, status: any, 
 	return bigIntToString(missingBrands);
 };
 
-const getSearchBrands = async (centerid: any, searchstr: any) => {
+const getSearchBrands = async (center_id: any, search_text: any) => {
 	const filteredBrands = await prisma.brand.findMany({
 		where: {
 			name: {
-				contains: 'searchstr',
+				contains: 'search_text',
 			},
+			center_id: Number(center_id),
 		},
 		select: {
 			id: true,
 			center_id: true,
 			name: true,
-			isactive: true,
+			is_active: true,
 		},
 	});
 	return bigIntToString(filteredBrands);
@@ -99,7 +100,7 @@ export const deleteBrand = async (id: any) => {
 			id: Number(id),
 		},
 		data: {
-			isactive: 'D',
+			is_active: 'D',
 		},
 	});
 

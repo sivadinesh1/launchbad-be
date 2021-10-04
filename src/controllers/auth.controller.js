@@ -6,7 +6,7 @@ const { authService, userService } = require('../services');
 const { MAX_AGE, setTokenCookie, getTokenCookie } = require('../utils/auth-cookies');
 
 const updateCenterForSuperAdmin = catchAsync(async (req, res) => {
-	const data = await authService.updateCenterForSuperAdmin(req.user.center_id);
+	const data = await authService.updateCenterForSuperAdmin(req.body.center_id);
 
 	return responseForward(data, 'updateCenterForSuperAdmin', res);
 });

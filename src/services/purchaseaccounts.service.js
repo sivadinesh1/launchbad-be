@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
@@ -13,12 +13,12 @@ INSERT INTO purchase_ledger ( center_id, vendor_id, purchase_ref_id, ledger_deta
 VALUES
   ( ? , ?, ?, 'purchase', ?, IFNULL((select balance_amt from (select (balance_amt) as balance_amt
     FROM purchase_ledger
-    where center_id = '${insertValues.centerid}'  and vendor_id = '${insertValues.vendorctrl.id}'
+    where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
     ORDER BY  id DESC
     LIMIT 1) a), 0) + '${insertValues.net_total}', '${today}'
   ) `;
 
-	let values = [insertValues.centerid, insertValues.vendorctrl.id, purchase_ref_id, insertValues.net_total];
+	let values = [insertValues.center_id, insertValues.vendorctrl.id, purchase_ref_id, insertValues.net_total];
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query, values, async function (err, data) {
@@ -42,7 +42,7 @@ VALUES
 	
 	IFNULL((select credit_amt from (select (credit_amt) as credit_amt
     FROM purchase_ledger
-		where center_id = '${insertValues.centerid}'  and vendor_id = '${insertValues.vendorctrl.id}'
+		where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
 		and ledger_detail = 'Invoice' and purchase_ref_id = '${purchase_ref_id}'
     ORDER BY  id DESC
 		LIMIT 1) a), 0),
@@ -52,14 +52,14 @@ VALUES
 	
 	 IFNULL((select balance_amt from (select (balance_amt ) as balance_amt
     FROM purchase_ledger
-		where center_id = '${insertValues.centerid}'  and vendor_id = '${insertValues.vendorctrl.id}'
+		where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
 		
     ORDER BY  id DESC
 		LIMIT 1) a), 0)
 		-
 		IFNULL((select credit_amt from (select (credit_amt) as credit_amt
 			FROM purchase_ledger
-			where center_id = '${insertValues.centerid}'  and vendor_id = '${insertValues.vendorctrl.id}'
+			where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
 			and ledger_detail = 'purchase' and purchase_ref_id = '${purchase_ref_id}'
 			ORDER BY  id DESC
 			LIMIT 1) a), 0)
@@ -67,7 +67,7 @@ VALUES
 		), '${today}'
   ) `;
 
-	let values = [insertValues.centerid, insertValues.vendorctrl.id, purchase_ref_id];
+	let values = [insertValues.center_id, insertValues.vendorctrl.id, purchase_ref_id];
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query, values, async function (err, data) {
@@ -89,12 +89,12 @@ INSERT INTO purchase_ledger ( center_id, vendor_id, purchase_ref_id, ledger_deta
 VALUES
   ( ? , ?, ?, 'purchase', ?, (credit_amt + IFNULL((select balance_amt from (select (balance_amt) as balance_amt
     FROM purchase_ledger
-    where center_id = '${insertValues.centerid}'  and vendor_id = '${insertValues.vendorctrl.id}'
+    where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
     ORDER BY  id DESC
     LIMIT 1) a), 0)), '${today}'
   ) `;
 
-	let values = [insertValues.centerid, insertValues.vendorctrl.id, purchase_ref_id, insertValues.net_total];
+	let values = [insertValues.center_id, insertValues.vendorctrl.id, purchase_ref_id, insertValues.net_total];
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query, values, async function (err, data) {
@@ -207,13 +207,13 @@ const updateVendorPymtSequenceGenerator = (center_id) => {
 const getVendorPymtSequenceNo = (cloneReq) => {
 	let pymtNoQry = '';
 
-	pymtNoQry = ` select concat("VP-",'${toTimeZoneFrmt(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'YY')}', "/", '${toTimeZoneFrmt(
+	pymtNoQry = ` select concat("VP-",'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'YY')}', "/", '${toTimeZoneFormat(
 		cloneReq.accountarr[0].receiveddate,
 		'Asia/Kolkata',
 		'MM',
 	)}', "/", lpad(vendor_pymt_seq, 5, "0")) as pymtNo from financialyear 
 				where 
-				center_id = '${cloneReq.centerid}' and  
+				center_id = '${cloneReq.center_id}' and  
 				CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
 
 	return new Promise(function (resolve, reject) {
@@ -240,7 +240,7 @@ const addVendorPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 	}
 
 	let values = [
-		cloneReq.centerid,
+		cloneReq.center_id,
 		cloneReq.vendor.id,
 		pymtNo,
 		insertValues.receivedamount,
@@ -340,7 +340,7 @@ const updateVendorCreditMinus = (creditusedamount, center_id, vendor_id) => {
 };
 
 const updateVendorLastPaidDate = (vendor_id, last_paid_date) => {
-	let dt = toTimeZoneFrmt(last_paid_date, 'Asia/Kolkata', 'YYYY-MM-DD');
+	let dt = toTimeZoneFormat(last_paid_date, 'Asia/Kolkata', 'YYYY-MM-DD');
 
 	let qryUpdate = `
 	update vendor c set c.last_paid_date = '${dt}' 
@@ -358,7 +358,7 @@ const updateVendorLastPaidDate = (vendor_id, last_paid_date) => {
 };
 
 const getVendorPaymentsByCenter = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let vendor_id = requestBody.vendorid;
@@ -416,7 +416,7 @@ const getVendorPaymentsByCenter = (requestBody) => {
 };
 
 const getPurchaseInvoiceByVendors = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let vendor_id = requestBody.vendorid;
@@ -475,7 +475,7 @@ const getPurchaseInvoiceByVendors = (requestBody) => {
 };
 
 const getPaymentsByVendors = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let vendor_id = requestBody.vendorid;
@@ -633,7 +633,7 @@ const addBulkVendorPaymentReceived = async (requestBody) => {
 
 		if (index == accountarr.length - 1) {
 			if (req.body.creditsused === 'YES') {
-				updateVendorCreditMinus(req.body.creditusedamount, cloneReq.centerid, cloneReq.vendor.id, (err, data1) => {
+				updateVendorCreditMinus(req.body.creditusedamount, cloneReq.center_id, cloneReq.vendor.id, (err, data1) => {
 					if (err) {
 						let errTxt = err.message;
 					} else {
@@ -645,7 +645,7 @@ const addBulkVendorPaymentReceived = async (requestBody) => {
 			// apply the excess amount to vendor credit
 			// applicable only if balanceamount < 0
 			if (balanceamount < 0) {
-				updateVendorCredit(balanceamount, cloneReq.centerid, cloneReq.vendor.id, (err, data1) => {
+				updateVendorCredit(balanceamount, cloneReq.center_id, cloneReq.vendor.id, (err, data1) => {
 					if (err) {
 						let errTxt = err.message;
 					} else {

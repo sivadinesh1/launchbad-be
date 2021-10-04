@@ -1,10 +1,10 @@
 var pool = require('../../config/db');
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../../utils/utils');
 
 const getStatement = (requestBody) => {
 	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
-	let start_date = toTimeZoneFrmt(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
-	let end_date = toTimeZoneFrmt(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
+	let start_date = toTimeZoneFormat(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
+	let end_date = toTimeZoneFormat(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
 
 	let query = `
 		select STR_TO_DATE(a.ref_date , '%d-%m-%Y') ref_date_f, a.name,a.place ,a.type, a.refn , a.									invoice_amount , a.Received_Amount, a.id as id
@@ -65,8 +65,8 @@ const getStatement = (requestBody) => {
 
 const getVendorStatement = (requestBody) => {
 	const [center_id, vendor_id, start, end] = Object.values(requestBody);
-	let start_date = toTimeZoneFrmt(start, 'Asia/Kolkata', 'YYYY-MM-DD') + ' 00:00:00';
-	let end_date = toTimeZoneFrmt(end, 'Asia/Kolkata', 'YYYY-MM-DD') + ' 23:59:59';
+	let start_date = toTimeZoneFormat(start, 'Asia/Kolkata', 'YYYY-MM-DD') + ' 00:00:00';
+	let end_date = toTimeZoneFormat(end, 'Asia/Kolkata', 'YYYY-MM-DD') + ' 23:59:59';
 
 	let query = ` 
   select 
@@ -148,8 +148,8 @@ const getItemWiseSale = (requestBody) => {
 const getReceivablesClosingBalance = (requestBody) => {
 	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
 
-	let start_date = toTimeZoneFrmt(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
-	let end_date = toTimeZoneFrmt(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
+	let start_date = toTimeZoneFormat(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
+	let end_date = toTimeZoneFormat(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
 	let query = `
 						select id, name , district, sum(invcd +  pymnt_rcvd*-1) as balance
 						From 
@@ -204,8 +204,8 @@ const getReceivablesClosingBalance = (requestBody) => {
 
 const getReceivablesOpeningBalance = (requestBody) => {
 	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
-	let start_date = toTimeZoneFrmt(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
-	let end_date = toTimeZoneFrmt(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
+	let start_date = toTimeZoneFormat(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
+	let end_date = toTimeZoneFormat(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
 
 	let query = `
 						select id, name , district, sum(invcd +  pymnt_rcvd*-1) as balance

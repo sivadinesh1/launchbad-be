@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { responseForward } = require('../utils/utils');
 const catchAsync = require('../utils/catchAsync');
-const { generalService, vendorsService, customersService, brandsService, enquiryService } = require('../services');
+const { generalService, vendorsService, productsService, customersService, brandsService, enquiryService } = require('../services');
 
 const searchProductInformation = catchAsync(async (req, res) => {
 	const data = await generalService.searchProductInformation(req.body);
@@ -11,7 +11,7 @@ const searchProductInformation = catchAsync(async (req, res) => {
 });
 
 const searchProduct = catchAsync(async (req, res) => {
-	const data = await generalService.searchProduct(req.body);
+	const data = await productsService.searchProduct(req.body.center_id, req.body.product_search_text);
 
 	return responseForward(data, 'searchProduct', res);
 });

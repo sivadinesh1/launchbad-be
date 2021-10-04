@@ -1,7 +1,7 @@
 var pool = require('../config/db');
 const { addSaleLedgerRecord, addReverseSaleLedgerRecord, addSaleLedgerAfterReversalRecord } = require('../services/accounts.service');
 
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
 
 const { insertItemHistoryTable, updateStockViaId } = require('../services/stock.service');
 

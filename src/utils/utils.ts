@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const httpStatus = require('http-status');
 const ApiError = require('./ApiError');
 
-const number2text = (value) => {
+const number2text = (value: any) => {
 	// function number2text(value) {
 	var fraction = Math.round(frac(value) * 100);
 	var f_text = '';
@@ -16,11 +16,11 @@ const number2text = (value) => {
 	return convert_number(value) + ' Rupees ' + f_text + ' only';
 };
 
-function frac(f) {
+function frac(f: any) {
 	return f % 1;
 }
 
-function convert_number(number) {
+function convert_number(number: any) {
 	if (number < 0 || number > 999999999) {
 		return 'Number out of range!';
 	}
@@ -94,21 +94,21 @@ function convert_number(number) {
 	return res;
 }
 
-function toTimeZone(time, zone) {
+function toTimeZone(time: any, zone: any) {
 	var format = 'YYYY-MM-DDTHH:mm:ssZ';
 	return moment(time, format).tz(zone).format('DD-MM-YYYY');
 }
 
-function toTimeZoneFrmt(time, zone, format) {
-	var defaul_format = 'YYYY-MM-DDTHH:mm:ssZ';
-	return moment(time, defaul_format).tz(zone).format(format);
+function toTimeZoneFormat(time: any, zone: any, format: any) {
+	var default_format = 'YYYY-MM-DDTHH:mm:ssZ';
+	return moment(time, default_format).tz(zone).format(format);
 }
 
-function currentTimeInTimeZone(zone, format) {
+function currentTimeInTimeZone(zone: any, format: any) {
 	return moment(moment(), format).tz(zone).format(format);
 }
 
-const encryptPassword = async (password) => {
+const encryptPassword = async (password: any) => {
 	try {
 		const hashedPassword = await bcrypt.hash(password, 10);
 		return hashedPassword;
@@ -117,16 +117,16 @@ const encryptPassword = async (password) => {
 	}
 };
 
-const escapeText = (text) => {
+const escapeText = (text: any) => {
 	let tempTxt = text.replaceAll(/`/g, '\\`');
 	tempTxt = tempTxt.replaceAll(/'/g, "\\'");
 
 	return tempTxt;
 };
 
-const promisifyQuery = (query, values = '') => {
+const promisifyQuery = (query: any, values = '') => {
 	return new Promise((resolve, reject) => {
-		pool.query(query, values, (err, data) => {
+		pool.query(query, values, (err: any, data: any) => {
 			if (err) {
 				return reject(err);
 			}
@@ -135,7 +135,7 @@ const promisifyQuery = (query, values = '') => {
 	});
 };
 
-const responseForward = (data, msg, res, status = 200) => {
+const responseForward = (data: any, msg: any, res: any, status = 200) => {
 	if (!data) {
 		throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, msg);
 	}
@@ -143,7 +143,7 @@ const responseForward = (data, msg, res, status = 200) => {
 	return res.status(status).json(data);
 };
 
-const bigIntToString = (data) => {
+const bigIntToString = (data: any) => {
 	const result = JSON.stringify(data, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
 	return JSON.parse(result);
 };
@@ -152,7 +152,7 @@ module.exports = {
 	number2text,
 	toTimeZone,
 	currentTimeInTimeZone,
-	toTimeZoneFrmt,
+	toTimeZoneFormat,
 	encryptPassword,
 	escapeText,
 	promisifyQuery,

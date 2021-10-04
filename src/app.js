@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const httpStatus = require('http-status');
 const { errorConverter, errorHandler } = require('./middleware/error');
-
+const reflectMetadata = require('reflect-metadata');
 const config = require('./config/config');
 const morgan = require('./config/morgan');
 const keys = require('./config/keys');

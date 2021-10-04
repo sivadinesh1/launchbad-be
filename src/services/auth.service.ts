@@ -23,7 +23,7 @@ export const checkUsernameExists = async (username: any, center_id: any) => {
 		},
 		select: {
 			id: true,
-			centerid: true,
+			center_id: true,
 			username: true,
 			userpass: true,
 
@@ -53,14 +53,14 @@ export const checkUsernameExists = async (username: any, center_id: any) => {
 };
 
 export const updateCenterForSuperAdmin = (center_id: any) => {
-	let query = `  update users set centerid = ${center_id} where username = 9999999990 `;
+	let query = `  update users set center_id = ${center_id} where username = 9999999990 `;
 
 	return promisifyQuery(query);
 };
 
 export const login = async (requestBody: any) => {
 	const [username, password] = Object.values(requestBody);
-	let { centerid: center_id, userpass, id, ...user } = await checkUsernameExists(username, '');
+	let { center_id: center_id, userpass, id, ...user } = await checkUsernameExists(username, '');
 
 	console.log('user >> ', JSON.stringify(user));
 

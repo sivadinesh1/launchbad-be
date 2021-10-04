@@ -31,7 +31,7 @@ model user_role {
 
 model users {
   id              BigInt      @id @default(autoincrement())
-  centerid        BigInt       
+  center_id        BigInt       
   username        String?     @db.VarChar(45)
   userpass        String?     @db.VarChar(255)
   mobilenumber    String?     @db.VarChar(20)
@@ -48,7 +48,7 @@ model users {
   updatedby       BigInt?     
   updateddatetime DateTime?   @db.Timestamp(6)
   user_role       user_role[]
-  center          center      @relation(fields: [centerid], references: [id])
+  center          center      @relation(fields: [center_id], references: [id])
   @@unique([username], name: "username_UNIQUE")
 }
 
@@ -169,35 +169,35 @@ subscriptions                     subscriptions[]
 
 
 model product {
-  id              BigInt      @id @default(autoincrement())
-  center_id	      BigInt?
-  brand_id	      BigInt     
-  product_code	  String?	    @db.VarChar(50)
-  description	    String?	    @db.VarChar(100)
-  unit	          String?	    @db.VarChar(50)
-  packetsize	    Int?	   
-  hsncode	        String?	    @db.VarChar(50)
-  currentstock	  String?     @db.VarChar(50)
-  unit_price	    String?	    @db.VarChar(50)
-  mrp	            String?	    @db.VarChar(50)
-  purchase_price	String?	    @db.VarChar(50)
-  salesprice	    String?	    @db.VarChar(50)
-  rackno	        String?	    @db.VarChar(50)
-  location	      String?	    @db.VarChar(50)
-  maxdiscount	    String?	    @db.VarChar(50)
-  alternatecode	  String?	    @db.VarChar(50)
-  taxrate	        Decimal?	  @db.Decimal(10,2)
-  minqty	        BigInt?
-  itemdiscount	  String?	    @db.VarChar(50)
-  reorderqty	    BigInt?
-  avgpurprice	    Decimal?	  @db.Decimal(10,2)
-  avgsaleprice	  Decimal?	  @db.Decimal(10,2)
-  margin	        Decimal?	  @db.Decimal(10,2)
-  createdon	      DateTime?   @db.Timestamp(6)
-  updatedon	      DateTime?   @db.Timestamp(6)
-  createdby	      BigInt?
-  updatedby       BigInt?
-  brand           brand      @relation(fields: [brand_id], references: [id])
+  id                      BigInt      @id @default(autoincrement())
+  center_id	              BigInt?
+  brand_id	              BigInt     
+  product_code	          String?	    @db.VarChar(50)
+  product_description	    String?	    @db.VarChar(250)
+  uom 	                  String?	    @db.VarChar(50)
+  packet_size	            Int?	   
+  hsn_code	              String?	    @db.VarChar(50)
+  current_stock	          Int?        @default(0)
+  unit_price	             Decimal?     @default(0.00)
+  mrp	                     Decimal?     @default(0.00)
+  purchase_price	         Decimal?     @default(0.00)
+  sales_price	             Decimal?     @default(0.00)
+  rack_info	                String?	    @db.VarChar(50) @default("")
+  location	              String?	    @db.VarChar(50) @default("")
+  max_discount	          Int?	    @default(0)
+  alternate_code	        String?	    @db.VarChar(50) @default("")
+  tax_rate	              Decimal?	  @db.Decimal(10,2)
+  minimum_quantity	      Int?        @default(0)
+  item_discount	          Int?	      @default(0)
+  reorder_quantity	      Int?        @default(0)
+  average_purchase_price	Decimal?	  @db.Decimal(10,2) @default(0.00)
+  average_sale_price	    Decimal?	  @db.Decimal(10,2) @default(0.00)
+  margin	                Decimal?	  @db.Decimal(10,2) @default(0.00)
+  createdAt	              DateTime?   @default(now())
+  updatedAt	              DateTime?   @updatedAt
+  created_by	            BigInt?
+  updated_by              BigInt?
+  brand                   brand      @relation(fields: [brand_id], references: [id])
   
 }
 
@@ -206,8 +206,11 @@ model brand {
   id              BigInt      @id @default(autoincrement())
   center_id	      BigInt?
   name            String?	    @db.VarChar(150)
-  isactive        String?	    @db.VarChar(1)
-  createdon	      DateTime?   @db.Timestamp(6)
+  is_active        String?	    @db.VarChar(1)
+  createdAt	              DateTime?   @default(now())
+  updatedAt	              DateTime?   @updatedAt
+  created_by	            BigInt?
+  updated_by              BigInt?
   product         product[]   
 }
 

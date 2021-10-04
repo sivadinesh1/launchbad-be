@@ -1,6 +1,6 @@
 import prisma from '../config/prisma';
 
-const { toTimeZone, toTimeZoneFrmt, currentTimeInTimeZone, promisifyQuery, encryptPassword, bigIntToString } = require('../utils/utils');
+const { toTimeZone, toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery, encryptPassword, bigIntToString } = require('../utils/utils');
 
 export const findOne = async (username: any) => {
 	const users = await prisma.users.findUnique({
@@ -16,14 +16,14 @@ export const insertUser = async (insertValues: any) => {
 
 	let hashed_password = await encryptPassword(insertValues.password);
 
-	let center_id = insertValues.centerid;
+	let center_id = insertValues.center_id;
 	let username = insertValues.username;
 	let firstname = insertValues.firstname;
 	let mobilenumber = insertValues.mobilenumber;
 
 	const result = await prisma.users.create({
 		data: {
-			centerid: Number(center_id),
+			center_id: Number(center_id),
 			username: username,
 			userpass: hashed_password,
 			firstname: firstname,
@@ -96,7 +96,7 @@ export const updateUserStatus = async (updateValues: any) => {
 export const getUsers = async (center_id: any, status: any) => {
 	const result = await prisma.users.findMany({
 		where: {
-			centerid: Number(center_id),
+			center_id: Number(center_id),
 			status: status,
 		},
 		include: {
@@ -122,7 +122,7 @@ export const getUsers = async (center_id: any, status: any) => {
 // where
 // u.id = ur.user_id and
 // ur.role_id = r.id and
-// u.centerid = '${center_id}' and status = '${status}'
+// u.center_id = '${center_id}' and status = '${status}'
 //   `;
 
 // 	return new Promise(function (resolve, reject) {

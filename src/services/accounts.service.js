@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
 
 const moment = require('moment');
 
@@ -59,10 +59,10 @@ function processItems(cloneReq, newPK, sale_ref_id, receivedamount) {
 	});
 }
 
-// 	getLedgerByCustomers(req.params.centerid, req.params.customerid, (err, data) => {
+// 	getLedgerByCustomers(req.params.center_id, req.params.customerid, (err, data) => {
 // 		if (err) {
 // 			return handleError(
-// 				new ErrorHandler('500', `/get-ledger-customer/:centerid/:customerid ${req.params.centerid} ${req.params.customerid}`, err),
+// 				new ErrorHandler('500', `/get-ledger-customer/:center_id/:customerid ${req.params.center_id} ${req.params.customerid}`, err),
 // 				res,
 // 			);
 // 		} else {
@@ -210,7 +210,7 @@ const addPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 	}
 
 	let values = [
-		cloneReq.centerid,
+		cloneReq.center_id,
 		cloneReq.customer.id,
 		pymtNo,
 		insertValues.receivedamount,
@@ -267,10 +267,10 @@ const getPymtSequenceNo = (cloneReq) => {
 	let pymtNoQry = '';
 
 	pymtNoQry = ` select 
-	concat("RP-",'${toTimeZoneFrmt(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'YY')}', "/", 
-	'${toTimeZoneFrmt(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'MM')}', "/", lpad(pymt_seq, 5, "0")) as pymtNo from financialyear 
+	concat("RP-",'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'YY')}', "/", 
+	'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'MM')}', "/", lpad(pymt_seq, 5, "0")) as pymtNo from financialyear 
 				where 
-				center_id = '${cloneReq.centerid}' and  
+				center_id = '${cloneReq.center_id}' and  
 				CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
 
 	return new Promise(function (resolve, reject) {
@@ -284,7 +284,7 @@ const getPymtSequenceNo = (cloneReq) => {
 };
 
 const getPaymentsByCustomers = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let customer_id = requestBody.customerid;
@@ -325,7 +325,7 @@ const getPaymentsByCustomers = (requestBody) => {
 };
 
 const getPaymentsOverviewByCustomers = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let customer_id = requestBody.customerid;
@@ -385,7 +385,7 @@ const getPymtTransactionByCustomers = (center_id, customer_id) => {
 };
 
 const getPaymentsByCenter = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let customer_id = requestBody.customerid;
@@ -445,7 +445,7 @@ const getPaymentsByCenter = (requestBody) => {
 };
 
 const getPaymentsOverviewByCenter = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let customer_id = requestBody.customerid;
@@ -534,7 +534,7 @@ const getLedgerByCustomers = async (center_id, customer_id) => {
 };
 
 const getSaleInvoiceByCustomers = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let customer_id = requestBody.customerid;
@@ -593,7 +593,7 @@ const getSaleInvoiceByCustomers = (requestBody) => {
 };
 
 const getSaleInvoiceByCenter = (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
 	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
 	let customer_id = requestBody.customerid;
@@ -713,7 +713,7 @@ const updateCustomerBalanceAmount = (customer_id) => {
 };
 
 const updateCustomerLastPaidDate = (customer_id, last_paid_date) => {
-	let dt = toTimeZoneFrmt(last_paid_date, 'Asia/Kolkata', 'YYYY-MM-DD');
+	let dt = toTimeZoneFormat(last_paid_date, 'Asia/Kolkata', 'YYYY-MM-DD');
 	let qryUpdate = `
 	update customer c set c.last_paid_date = '${dt}' 
 		where c.id = '${customer_id}' 
@@ -811,7 +811,7 @@ const addBulkPaymentReceived = async (requestBody) => {
 
 		if (index == accountarr.length - 1) {
 			if (req.body.creditsused === 'YES') {
-				updateCustomerCreditMinus(requestBody.creditusedamount, cloneReq.centerid, cloneReq.customer.id, (err, data1) => {
+				updateCustomerCreditMinus(requestBody.creditusedamount, cloneReq.center_id, cloneReq.customer.id, (err, data1) => {
 					if (err) {
 						let errTxt = err.message;
 					} else {
@@ -823,7 +823,7 @@ const addBulkPaymentReceived = async (requestBody) => {
 			// apply the excess amount to custome credit
 			// applicable only if balanceamount < 0
 			if (balanceamount < 0) {
-				updateCustomerCredit(balanceamount, cloneReq.centerid, cloneReq.customer.id, (err, data1) => {
+				updateCustomerCredit(balanceamount, cloneReq.center_id, cloneReq.customer.id, (err, data1) => {
 					if (err) {
 						let errTxt = err.message;
 					} else {
@@ -865,7 +865,7 @@ function processBulkItems(cloneReq, newPK, invoicesplit) {
 
 // dinesh to redo
 const isPaymentBankRef = async (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let bank_ref = requestBody.bankref;
 	let customer_id = requestBody.customerid;
 
@@ -880,7 +880,7 @@ const isPaymentBankRef = async (requestBody) => {
 };
 
 const vendorPaymentBankRef = async (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let bank_ref = requestBody.bankref;
 	let vendor_id = requestBody.vendorid;
 

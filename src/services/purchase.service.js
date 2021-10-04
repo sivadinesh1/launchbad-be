@@ -44,7 +44,7 @@ function purchaseMasterEntry(cloneReq) {
 			purchase_type, order_no, order_date, total_qty, no_of_items, taxable_value, cgst, sgst, igst, 
 			total_value, transport_charges, unloading_charges, misc_charges, net_total, no_of_boxes, status, stock_inwards_datetime, roundoff, revision)
 			VALUES
-			( '${cloneReq.centerid}', '${cloneReq.vendorctrl.id}', '${cloneReq.invoiceno}', 
+			( '${cloneReq.center_id}', '${cloneReq.vendorctrl.id}', '${cloneReq.invoiceno}', 
 			
 			'${toTimeZone(cloneReq.invoicedate, 'Asia/Kolkata')}', 
 			'${cloneReq.lrno}', '${lrdate}', 
@@ -56,7 +56,7 @@ function purchaseMasterEntry(cloneReq) {
 			'${currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss')}',
 			'${cloneReq.roundoff}', '${revisionCnt}' )`;
 
-	let updQry = ` update purchase set center_id = '${cloneReq.centerid}', vendor_id = '${cloneReq.vendorctrl.id}',
+	let updQry = ` update purchase set center_id = '${cloneReq.center_id}', vendor_id = '${cloneReq.vendorctrl.id}',
 			invoice_no = '${cloneReq.invoiceno}', 
 			invoice_date = '${toTimeZone(cloneReq.invoicedate, 'Asia/Kolkata')}', 
 			lr_no = '${cloneReq.lrno}',
@@ -113,9 +113,15 @@ async function processItems(cloneReq, newPK, res) {
 			pool.query(k.pur_det_id === '' ? insQuery1 : updQuery1, async function (err, data) {
 				if (err) {
 					if (k.pur_det_id === '') {
-						return reject(new ErrorHandler('500', `Error Purchase process items (update purchase_detail) INSERT QRY. ${insQuery1}`, err), res);
+						return reject(
+							new ErrorHandler('500', `Error Purchase process items (update purchase_detail) INSERT QRY. ${insQuery1}`, err),
+							res,
+						);
 					} else {
-						return reject(new ErrorHandler('500', `Error Purchase process items (update purchase_detail) UPDATE QRY. ${updQuery1}`, err), res);
+						return reject(
+							new ErrorHandler('500', `Error Purchase process items (update purchase_detail) UPDATE QRY. ${updQuery1}`, err),
+							res,
+						);
 					}
 				} else {
 					updateLatestPurchasePrice(k);
@@ -250,7 +256,7 @@ const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, re
 
 	if (txn_qty !== 0) {
 		let itemHistory = await insertItemHistoryTable(
-			cloneReq.centerid,
+			cloneReq.center_id,
 			purchase,
 			k.product_id,
 			purchase_id,

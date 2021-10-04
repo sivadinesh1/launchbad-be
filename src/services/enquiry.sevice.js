@@ -236,14 +236,39 @@ const moveToSale = async (requestBody) => {
 
 			const bqty = objValue.askqty - objValue.giveqty;
 
-			let result = await updateEnquiryDetail(objValue.product_id, objValue.stockid, objValue.giveqty, objValue.processed, 'P', objValue.id, userid);
+			let result = await updateEnquiryDetail(
+				objValue.product_id,
+				objValue.stockid,
+				objValue.giveqty,
+				objValue.processed,
+				'P',
+				objValue.id,
+				userid,
+			);
 
-			let result1 = await insertBackOrder(objValue.center_id, objValue.customer_id, objValue.id, bqty, 'Partial fullfillmeent', 'O', userid, res);
+			let result1 = await insertBackOrder(
+				objValue.center_id,
+				objValue.customer_id,
+				objValue.id,
+				bqty,
+				'Partial fullfillmeent',
+				'O',
+				userid,
+				res,
+			);
 		} else if (objValue.giveqty >= objValue.askqty && objValue.product_id !== '' && objValue.product_id !== null) {
 			// F- fullfilled
 			// updt enq_det_tbl status as F, give qty = actual given
 
-			let result = await updateEnquiryDetail(objValue.product_id, objValue.stockid, objValue.giveqty, objValue.processed, 'F', objValue.id, userid);
+			let result = await updateEnquiryDetail(
+				objValue.product_id,
+				objValue.stockid,
+				objValue.giveqty,
+				objValue.processed,
+				'F',
+				objValue.id,
+				userid,
+			);
 		}
 
 		if (objectKeysArray.length === idx) {
@@ -388,7 +413,7 @@ const addMoreEnquiryDetails = async (requestBody) => {
 	});
 };
 
-const openEnquiries = async (centerid, status) => {
+const openEnquiries = async (center_id, status) => {
 	let query = `select e.id, e.enquiry_date, e.estatus, c.name as custname,
   
 	(select count(*) from enquiry_detail where enquiry_id = e.id)
@@ -396,7 +421,7 @@ const openEnquiries = async (centerid, status) => {
 	from enquiry e, customer c
 	where 
 		e.customer_id = c.id and
-	estatus = '${status}' and e.center_id = '${centerid}'
+	estatus = '${status}' and e.center_id = '${center_id}'
 	order by 
 	enquiry_date desc`;
 
@@ -481,7 +506,7 @@ const getCustomerData = async (enqid) => {
 	return promisifyQuery(query);
 };
 
-const getEnquiredProductData = async (centerid, customerid, enqid, orderdate) => {
+const getEnquiredProductData = async (center_id, customerid, enqid, orderdate) => {
 	// fetch values only of enq detail status in {P - processed, F - fullfilled} B- backorder is ignored
 	let query = `select a.product_code as product_code, a.description, a.mrp, a.taxrate, b.available_stock,
 	ed.giveqty as qty, a.unit_price, a.id as product_id, b.id as stock_pk, e.enquiry_date,
@@ -526,7 +551,7 @@ discount.brand_id = 0 )
 	return promisifyQuery(query);
 };
 
-const getBackOrder = async (centerid) => {
+const getBackOrder = async (center_id) => {
 	let sql = `SELECT c.name as customer_name, p.product_code as product_code, p.id as product_id,
 	p.description as description, ed.notes, ed.askqty, ed.giveqty, b.reason, b.order_date, s.available_stock
 	FROM 
@@ -538,7 +563,7 @@ const getBackOrder = async (centerid) => {
 	s.product_id = p.id and c.id = b.customer_id and
 	b.enquiry_detail_id = ed.id and
 	p.id = ed.product_id and
-	b.center_id = '${centerid}' and
+	b.center_id = '${center_id}' and
 	str_to_date(order_date, '%d-%m-%YYYY') BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()
 	union all
 	SELECT c.name as customer_name, "N/A" as product_code, "N/A" as product_id, "N/A" as description, ed.notes, ed.askqty, ed.giveqty, b.reason, 
@@ -549,7 +574,7 @@ const getBackOrder = async (centerid) => {
 	b.enquiry_detail_id = ed.id and
 	c.id = b.customer_id and
 	ed.product_id is null and
-	b.center_id = '${centerid}' and
+	b.center_id = '${center_id}' and
 	str_to_date(order_date, '%d-%m-%YYYY') BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW();
 	`;
 
@@ -557,7 +582,7 @@ const getBackOrder = async (centerid) => {
 };
 
 const searchEnquiries = async (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 	let status = requestBody.status;
 	let customer_id = requestBody.customerid;
 	let from_date = requestBody.fromdate;

@@ -1,4 +1,4 @@
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
 
 const { insertItemHistoryTable, updateStock } = require('../services/stock.service');
 
@@ -176,7 +176,7 @@ const saleReturnPaymentMaster = (center_id, customer_id, payment_no, payment_now
 };
 
 const searchSaleReturn = async (requestBody) => {
-	let center_id = requestBody.centerid;
+	let center_id = requestBody.center_id;
 
 	let customer_id = requestBody.customerid;
 	let from_date = requestBody.fromdate;
@@ -368,7 +368,7 @@ const addSaleReturn = async (requestBody) => {
 	await updatePymtSequenceGenerator(smd.center_id);
 
 	let cloneReq = {
-		centerid: smd.center_id,
+		center_id: smd.center_id,
 		bank_id: 0,
 		accountarr: [{ receivedamount: smd.to_return_amount, receiveddate: today }],
 	};

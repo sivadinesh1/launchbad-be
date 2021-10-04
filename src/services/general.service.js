@@ -7,7 +7,7 @@ const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/
 const { getSearchCustomers } = require('./customers.service');
 
 const searchProductInformation = async (requestBody) => {
-	const [centerid, customerid, orderdate, searchstr] = Object.values(requestBody);
+	const [center_id, customerid, orderdate, searchstr] = Object.values(requestBody);
 
 	// initially checks if product has custom discount for the selected customer. if yes, takes that discount
 	// if no custom discount available, it then gets the default discount. brand = 0 for defaults
@@ -42,7 +42,7 @@ brand
 where 
 brand.id = a.brand_id and 
 a.id = b.product_id and
-a.center_id = '${centerid}' and
+a.center_id = '${center_id}' and
 ( a.product_code like '%${searchstr}%' or
 a.description like '%${searchstr}%' ) limit 50 
 `;
@@ -50,52 +50,51 @@ a.description like '%${searchstr}%' ) limit 50
 	return promisifyQuery(query);
 };
 
-const searchProduct = async (requestBody) => {
-	const [centerid, searchstr, searchby] = Object.values(requestBody);
+// const searchProduct = async (requestBody) => {
+// 	const [center_id, searchstr, searchby] = Object.values(requestBody);
 
-	let sql = '';
-	// -- select Produsct based on this query --
-	// -- combiles multiple MRP stock to one sum --
-	// -- can be used for Regular search and product purchase --
-	// --- b.available_stock,
-	// -- b.id as stock_pk, -- commented this out, if needed in sales then implement the same way as earlier --
-	// 	-- 		LEFT outer JOIN   stock b
-	// -- 		ON b.product_id = a.id
-	query = `
-	select a.product_code as product_code, 
-  		a.description, 
-  		a.mrp, 
-  		a.taxrate, 
-  		(select sum(s2.available_stock) from stock s2 where s2.product_id = a.id ) as available_stock, 
-			IFNULL((		select stock_level from item_history ih 
-				where ih.product_ref_id = a.id order by ih.id desc limit 1), 0) as true_stock,
-  		a.packetsize, a.unit_price, a.purchase_price as purchase_price, a.id as product_id, 
-		
-		a.packetsize as qty, 
-		a.rackno, 
-		bd.name,
-		bd.id as brand_id, 
-		a.unit as uom, 
-		a.hsncode as hsncode, 
-		a.minqty as minqty, 
-		a.avgpurprice as avgpurprice,
-		a.unit_price as unit_price, 
-		a.salesprice as salesprice,  
-		a.maxdiscount as maxdiscount, 
-		a.currentstock as currentstock
-		from 
-		brand bd,
-		product a
+// 	let sql = '';
+// 	// -- select Produsct based on this query --
+// 	// -- combiles multiple MRP stock to one sum --
+// 	// -- can be used for Regular search and product purchase --
+// 	// --- b.available_stock,
+// 	// -- b.id as stock_pk, -- commented this out, if needed in sales then implement the same way as earlier --
+// 	// 	-- 		LEFT outer JOIN   stock b
+// 	// -- 		ON b.product_id = a.id
+// 	query = `
+// 	select a.product_code as product_code,
+//   		a.product_description,
+//   		a.mrp,
+//   		a.tax_rate,
+//   		(select sum(s2.available_stock) from stock s2 where s2.product_id = a.id ) as available_stock,
+// 			IFNULL((		select stock_level from item_history ih
+// 				where ih.product_ref_id = a.id order by ih.id desc limit 1), 0) as true_stock,
+//   		a.packet_size, a.unit_price, a.purchase_price as purchase_price, a.id as product_id,
 
-		where 
-		a.center_id = '${centerid}' and
-		a.brand_id = bd.id and
-		( a.product_code like '%${searchstr}%' or
-		a.description like '%${searchstr}%' ) limit 50
-	`;
+// 		a.packet_size as packet_size,
+// 		a.rack_info,
+// 		bd.name,
+// 		bd.id as brand_id,
+// 		a.uom as uom,
+// 		a.hsn_code as hsn_code,
+// 		a.minimum_quantity as minimum_quantity,
+// 		a.average_purchase_price as average_purchase_price,
+// 		a.unit_price as unit_price,
+// 		a.sales_price as sales_price,
+// 		a.max_discount as max_discount,
+// 		a.current_stock as current_stock
+// 		from
+// 		brand bd,
+// 		product a
+// 		where
+// 		a.center_id = '${center_id}' and
+// 		a.brand_id = bd.id and
+// 		( a.product_code like '%${searchstr}%' or
+// 		a.product_description like '%${searchstr}%' ) limit 50
+// 	`;
 
-	return promisifyQuery(query);
-};
+// 	return promisifyQuery(query);
+// };
 
 const getAllInventory = async () => {
 	let query = `select p.product_code, p.description, p.mrp, s.available_stock
@@ -112,7 +111,7 @@ const getAllClients = async () => {
 	return promisifyQuery(query);
 };
 
-const getAllActiveVendors = async (centerid) => {
+const getAllActiveVendors = async (center_id) => {
 	let query = `select v.id, v.center_id, v.name, v.address1, v.address2, v.address3, v.district, s.id as state_id, s.code, s.description as state,
 	v.pin, v.gst, v.phone, v.mobile, v.mobile2, v.whatsapp, v.email, v.isactive, v.credit_amt,
 	v.balance_amt, 
@@ -121,7 +120,7 @@ const getAllActiveVendors = async (centerid) => {
 	vendor v,
 	state s
 	where 
-	v.state_id = s.id and isactive = 'A' and center_id = ${centerid} order by v.name`;
+	v.state_id = s.id and isactive = 'A' and center_id = ${center_id} order by v.name`;
 
 	return promisifyQuery(query);
 };
@@ -171,7 +170,6 @@ const getAllPaymentModes = async (center_id, status) => {
 
 module.exports = {
 	searchProductInformation,
-	searchProduct,
 
 	getAllInventory,
 	getAllClients,

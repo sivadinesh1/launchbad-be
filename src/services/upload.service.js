@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
 
 const { handleError, ErrorHandler } = require('../config/error');
 const { updateLogo } = require('../services/admin.service');
@@ -20,15 +20,14 @@ const uploadLogo = async (center_id, position) => {
 
 	form.multiples = true;
 
-	form
-		.on('error', function (err) {
-			return {
-				result: 'fail',
-				data: {},
-				message: `Cannot Upload images. Error is : ${err}`,
-			};
-			// throw err;
-		})
+	form.on('error', function (err) {
+		return {
+			result: 'fail',
+			data: {},
+			message: `Cannot Upload images. Error is : ${err}`,
+		};
+		// throw err;
+	})
 
 		.on('field', function (field, value) {
 			//receive form fields here

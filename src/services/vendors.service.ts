@@ -53,11 +53,11 @@ const updateVendor = async (updateValues: any, id: any) => {
 	return result;
 };
 
-export const getSearchVendors = async (centerid: any, searchstr: any) => {
+export const getSearchVendors = async (center_id: any, searchstr: any) => {
 	const filteredVendors = await prisma.vendor.findMany({
 		take: 50,
 		where: {
-			center_id: Number(centerid),
+			center_id: Number(center_id),
 			isactive: 'A',
 			name: {
 				contains: searchstr,

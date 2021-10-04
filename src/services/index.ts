@@ -8,7 +8,7 @@ module.exports.customersService = require('./customers.service');
 module.exports.dashboardService = require('./dashboard.service');
 module.exports.enquiryService = require('./enquiry.sevice');
 module.exports.printService = require('./print.service');
-module.exports.productsService = require('./products.service');
+module.exports.productsService = require('./product.service');
 module.exports.purchaseaccountsService = require('./purchaseaccounts.service');
 module.exports.returnsService = require('./returns.service');
 

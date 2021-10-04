@@ -1,7 +1,7 @@
 var pool = require('../../config/db');
 
 const { handleError, ErrorHandler } = require('../../config/error');
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFrmt, promisifyQuery } = require('../../utils/utils');
+const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../../utils/utils');
 
 const getProductInventoryReport = (requestBody) => {
 	const [center_id, product_code, product_id] = Object.values(requestBody);

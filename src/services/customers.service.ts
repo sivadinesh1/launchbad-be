@@ -1,7 +1,7 @@
 import prisma from '../config/prisma';
 var pool = require('../config/db');
 
-const { toTimeZone, toTimeZoneFrmt, currentTimeInTimeZone, promisifyQuery, bigIntToString } = require('../utils/utils');
+const { toTimeZone, toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery, bigIntToString } = require('../utils/utils');
 
 // insert row in customer tbl
 const insertCustomer = async (insertValues: any) => {
@@ -152,7 +152,7 @@ const getCustomerDiscount = async (center_id: any, customer_id: any) => {
 };
 
 // fetch rows for default (brandid as zero) customer discounts from discount tbl
-export const getAllCustomerDefaultDiscounts = async (centerid: any, customer_id: any) => {
+export const getAllCustomerDefaultDiscounts = async (center_id: any, customer_id: any) => {
 	let query = ` 
 	SELECT 
 	c.name, 'default' as 'brand_name',   d.type, d.brand_id as brand_id, 
@@ -182,13 +182,13 @@ FROM
     c.name
 	`;
 
-	let values = [centerid];
+	let values = [center_id];
 
 	return promisifyQuery(query, values);
 };
 
 // fetch rows for default (brandid as zero) customer discounts from discount tbl
-export const getDiscountsByCustomer = async (centerid: any, customerid: any) => {
+export const getDiscountsByCustomer = async (center_id: any, customerid: any) => {
 	let query = ` 
 	SELECT 
 	c.name,  '' as 'brand_name',  d.type, d.brand_id as brand_id, 
@@ -212,13 +212,13 @@ FROM
     c.name
 	`;
 
-	let values = [centerid, customerid, customerid, customerid];
+	let values = [center_id, customerid, customerid, customerid];
 
 	return promisifyQuery(query, values);
 };
 
 // fetch rows for default (brandid as NON zero) customer discounts from discount tbl
-export const getDiscountsByCustomerByBrand = async (centerid: any, customerid: any) => {
+export const getDiscountsByCustomerByBrand = async (center_id: any, customerid: any) => {
 	let query = ` 
 	SELECT 
 	c.name,  b.name as 'brand_name',  d.type, d.brand_id as brand_id, 
@@ -246,13 +246,13 @@ FROM
 
 	`;
 
-	let values = [centerid, customerid];
+	let values = [center_id, customerid];
 
 	return promisifyQuery(query, values);
 };
 
 // fetch rows for default (brandid as NON zero) customer discounts from discount tbl
-export const getDiscountsByAllCustomerByBrand = (centerid: any, callback: any) => {
+export const getDiscountsByAllCustomerByBrand = (center_id: any, callback: any) => {
 	let query = ` 
 	SELECT 
 	c.name,  b.name as 'brand_name',  d.type, d.brand_id as brand_id, 
@@ -278,7 +278,7 @@ FROM
 
 	`;
 
-	let values = [centerid];
+	let values = [center_id];
 
 	pool.query(query, values, function (err: any, data: any) {
 		if (err) return callback(err);
@@ -319,7 +319,7 @@ export const updateDefaultCustomerDiscount = async (updateValues: any) => {
 };
 
 // fetch rows from customer tbl & customer shipping addres tbl
-export const getCustomerDetails = async (centerid: any, customerid: any) => {
+export const getCustomerDetails = async (center_id: any, customerid: any) => {
 	let query = `select c.*, s.code,  s.description,
 	csa.state_id as csa_state,
 	csa.address1 as csa_address1,
@@ -343,7 +343,7 @@ export const getCustomerDetails = async (centerid: any, customerid: any) => {
 	csa.def_address= 'Y' and
 	
 	c.id = '${customerid}' and
-	c.center_id = '${centerid}' `;
+	c.center_id = '${center_id}' `;
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query, function (err: any, data: any) {
@@ -356,7 +356,7 @@ export const getCustomerDetails = async (centerid: any, customerid: any) => {
 };
 
 // fetch rows from customer tbl & customer shipping addres tbl
-export const getSearchCustomers = (centerid: any, searchstr: any) => {
+export const getSearchCustomers = (center_id: any, searchstr: any) => {
 	let query = `
 	select c.id, c.center_id, c.name, c.address1, c.address2, c.address3, c.district, s.code, s.description,
 	c.pin, c.gst, c.phone, c.mobile, c.mobile2, c.whatsapp,  c.email, c.isactive,
@@ -377,11 +377,11 @@ s1.code as csa_code
 	s1.id = csa.state_id and
 	csa.customer_id = c.id and
 	csa.def_address = 'Y' and
-	c.state_id = s.id and isactive = 'A' and center_id = '${centerid}'  and
+	c.state_id = s.id and isactive = 'A' and center_id = '${center_id}'  and
 	( LOWER(c.name) like LOWER('%${searchstr}%')) 
 	limit 50 `;
 
-	let values = [centerid, searchstr];
+	let values = [center_id, searchstr];
 
 	return promisifyQuery(query, values);
 };
