@@ -42,42 +42,49 @@ const addProduct = catchAsync(async (req: any, res: any) => {
 });
 
 const updateProduct = catchAsync(async (req: any, res: any) => {
-	const jsonObj = req.body;
-	const response = await productsService.updateProduct(jsonObj);
+	let product = plainToClass(Product, req.body as IProduct);
 
-	if (response === 'success') {
-		const stockcount = await stockService.isStockIdExist({ product_id: jsonObj.product_id, mrp: jsonObj.mrp });
+	product.updated_by = Number(req.user.id);
 
-		if (stockcount === 0) {
-			// add entry to stock with new mrp and stock as 0
-			// add entry in history table with new mrp and stock as same old stock
-			let stockid = await stockService.insertToStock(jsonObj.product_id, jsonObj.mrp, '0', '0');
+	const data = await productsService.updateProduct(product);
 
-			let data = await stockService.insertItemHistoryTable(
-				jsonObj.center_id,
-				'Product',
-				jsonObj.product_id,
-				'0',
-				'0',
-				'0',
-				'0',
-				'PRD',
-				`MRP Change - ${jsonObj.mrp}`,
-				'0',
-				'0', // sale_return_id
-				'0', // sale_return_det_id
-				'0', // purchase_return_id
-				'0', // purchase_return_det_id
-			);
+	res.status(200).json({
+		result: 'success',
+	});
 
-			if (!data) {
-				throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error adding new product');
-			}
-		}
-		res.status(200).json({
-			result: 'success',
-		});
-	}
+	// if (response === 'success') {
+	// 	const stockcount = await stockService.isStockIdExist({ product_id: jsonObj.product_id, mrp: jsonObj.mrp });
+
+	// 	if (stockcount === 0) {
+	// 		// add entry to stock with new mrp and stock as 0
+	// 		// add entry in history table with new mrp and stock as same old stock
+	// 		let stockid = await stockService.insertToStock(jsonObj.product_id, jsonObj.mrp, '0', '0');
+
+	// 		let data = await stockService.insertItemHistoryTable(
+	// 			jsonObj.center_id,
+	// 			'Product',
+	// 			jsonObj.product_id,
+	// 			'0',
+	// 			'0',
+	// 			'0',
+	// 			'0',
+	// 			'PRD',
+	// 			`MRP Change - ${jsonObj.mrp}`,
+	// 			'0',
+	// 			'0', // sale_return_id
+	// 			'0', // sale_return_det_id
+	// 			'0', // purchase_return_id
+	// 			'0', // purchase_return_det_id
+	// 		);
+
+	// 		if (!data) {
+	// 			throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Error adding new product');
+	// 		}
+	// 	}
+	// 	res.status(200).json({
+	// 		result: 'success',
+	// 	});
+	// }
 });
 
 const getVendorDetails = catchAsync(async (req: any, res: any) => {

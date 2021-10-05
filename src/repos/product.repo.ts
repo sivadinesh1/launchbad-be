@@ -52,7 +52,7 @@ class ProductRepo implements IProductRepo {
 		try {
 			const result = await prisma.product.update({
 				where: {
-					id: Number(product.id),
+					id: product.id,
 				},
 				data: {
 					center_id: product.center_id,
@@ -91,6 +91,17 @@ class ProductRepo implements IProductRepo {
 		}
 	}
 
+	isProductExists = async (product_code: string, center_id: any) => {
+		const result = await prisma.product.count({
+			where: {
+				center_id: Number(center_id),
+				product_code: escapeText(product_code),
+			},
+		});
+
+		return bigIntToString(result);
+	};
+
 	//public async updateProduct(product: IProduct) {
 	public async searchProduct(center_id: number, search_text: string) {
 		let query = `
@@ -101,7 +112,7 @@ class ProductRepo implements IProductRepo {
         (select sum(s2.available_stock) from stock s2 where s2.product_id = a.id ) as available_stock, 
         IFNULL((		select stock_level from item_history ih 
           where ih.product_ref_id = a.id order by ih.id desc limit 1), 0) as true_stock,
-        a.packet_size, a.unit_price, a.purchase_price as purchase_price, a.id as product_id, 
+        a.packet_size, a.unit_price, a.purchase_price as purchase_price, a.id as id, 
       
       a.packet_size as packet_size, 
       a.rack_info, 
