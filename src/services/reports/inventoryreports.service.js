@@ -6,7 +6,7 @@ const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = 
 const getProductInventoryReport = (requestBody) => {
 	const [center_id, product_code, product_id] = Object.values(requestBody);
 
-	let query = ` select ih.id, module, p.id as product_id, p.product_code as product_code, p.description as product_description,
+	let query = ` select ih.id, module, p.id as product_id, p.product_code as product_code, p.product_description as product_description,
   p.mrp as mrp,
   b.name as brand_name,  ih.module,
 
@@ -58,10 +58,13 @@ const getProductInventoryReport = (requestBody) => {
 	return promisifyQuery(query);
 };
 
+// used in product correction
 const getProductInventoryReportShort = (requestBody) => {
 	const [center_id, product_code, product_id] = Object.values(requestBody);
 
-	let query = ` select ih.id, module, p.id as product_id, p.product_code as product_code, p.description as product_description,
+	let query = ` select ih.id, module, p.id as product_id,
+  p.product_type as product_type,
+  p.product_code as product_code, p.product_description as product_description,
   p.mrp as mrp,
   b.name as brand_name,  ih.module,
 
@@ -108,7 +111,7 @@ const getProductInventoryReportShort = (requestBody) => {
   
   `;
 	// product_ref_id = '${product_id}'
-	// lateer include this to the search, as of now, fetch all
+	// later include this to the search, as of now, fetch all
 
 	return promisifyQuery(query);
 };
@@ -138,11 +141,11 @@ const fullStockReport = (requestBody) => {
       `;
 	} else {
 		query = `
-      select b.name, p.product_code, p.description,
+      select b.name, p.product_code, p.product_description,
       s.product_id, s.mrp, s.available_stock,
-      p.unit, p.packetsize, p.hsncode, 
+      p.unit, p.packet_size, p.hsn_code, 
       p.mrp, p.purchase_price,
-      p.rackno, p.taxrate
+      p.rack_info, p.tax_rate
       from 
       product p,
       brand b,

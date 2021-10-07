@@ -14,6 +14,7 @@ class ProductRepo implements IProductRepo {
 				data: {
 					center_id: product.center_id,
 					brand_id: product.brand_id,
+					product_type: product.product_type,
 					product_code: product.product_code,
 					product_description: escapeText(product.product_description),
 
@@ -57,6 +58,7 @@ class ProductRepo implements IProductRepo {
 				data: {
 					center_id: product.center_id,
 					brand_id: product.brand_id,
+					product_type: product.product_type,
 					product_code: product.product_code,
 					product_description: escapeText(product.product_description),
 
@@ -105,11 +107,11 @@ class ProductRepo implements IProductRepo {
 	//public async updateProduct(product: IProduct) {
 	public async searchProduct(center_id: number, search_text: string) {
 		let query = `
-    select a.product_code as product_code, 
+    select a.product_type as product_type, a.product_code as product_code, 
         a.product_description, 
         a.mrp, 
         a.tax_rate, 
-        (select sum(s2.available_stock) from stock s2 where s2.product_id = a.id ) as available_stock, 
+        IFNULL((select sum(s2.available_stock) from stock s2 where s2.product_id = a.id ), 0) as available_stock, 
         IFNULL((		select stock_level from item_history ih 
           where ih.product_ref_id = a.id order by ih.id desc limit 1), 0) as true_stock,
         a.packet_size, a.unit_price, a.purchase_price as purchase_price, a.id as id, 

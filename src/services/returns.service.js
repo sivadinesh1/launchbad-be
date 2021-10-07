@@ -133,7 +133,7 @@ function updateCrNoteIdInSaleReturnTable(cr_note_id, sale_return_id) {
 }
 
 const getSaleReturnDetails = (center_id, sale_return_id, res) => {
-	let query = ` select p.id, p.product_code, p.description, srd.* from 
+	let query = ` select p.id, p.product_code, p.product_description, srd.* from 
 	sale_return_detail srd,
 	product p,
 	sale_detail sd

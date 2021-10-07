@@ -20,11 +20,11 @@ const fetchEnquiryDetailByEnqId = async (enqid) => {
 	select orig.*, s.available_stock, s.id as stock_pk
 from
 (select ed.*, c.id as customer_id, c.name, c.address1, c.address2, c.district, c.pin, c.gst, c.mobile2, e.remarks, e.estatus,
-	p.id as pid, p.center_id, p.brand_id, p.product_code as pcode, p.description as pdesc, p.unit, p.packetsize, p.hsncode,
-	p.currentstock, p.unit_price, p.mrp, p.purchase_price,
-	p.salesprice, p.rackno, p.location, p.maxdiscount, p.taxrate, 
-	p.minqty, p.itemdiscount, p.reorderqty, p.avgpurprice,
-	p.avgsaleprice, p.margin
+	p.id as pid, p.center_id, p.brand_id, p.product_code as pcode, p.product_description as pdesc, p.unit, p.packet_size, p.hsn_code,
+	p.current_stock, p.unit_price, p.mrp, p.purchase_price,
+	p.sales_price, p.rack_info, p.location, p.max_discount, p.tax_rate, 
+	p.minimum_quantity, p.item_discount, p.reorder_quantity, p.average_purchase_price,
+	p.average_sale_price, p.margin
 	from 
 	enquiry e,
 	customer c,
@@ -553,7 +553,7 @@ discount.brand_id = 0 )
 
 const getBackOrder = async (center_id) => {
 	let sql = `SELECT c.name as customer_name, p.product_code as product_code, p.id as product_id,
-	p.description as description, ed.notes, ed.askqty, ed.giveqty, b.reason, b.order_date, s.available_stock
+	p.product_description as description, ed.notes, ed.askqty, ed.giveqty, b.reason, b.order_date, s.available_stock
 	FROM 
 	backorder b, 
 	enquiry_detail ed,

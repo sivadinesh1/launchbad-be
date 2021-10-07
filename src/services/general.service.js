@@ -97,7 +97,7 @@ a.description like '%${searchstr}%' ) limit 50
 // };
 
 const getAllInventory = async () => {
-	let query = `select p.product_code, p.description, p.mrp, s.available_stock
+	let query = `select p.product_code, p.product_description, p.mrp, s.available_stock
   from product p, 
        stock s 
   where p.product_code= s.product_code`;

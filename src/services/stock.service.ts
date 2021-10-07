@@ -4,21 +4,25 @@ const { toTimeZone, toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery } = 
 
 const { handleError, ErrorHandler } = require('../config/error');
 
+import { query } from 'express';
+import { IStock } from '../domain/Stock';
+import StockRepo from '../repos/stock.repo';
+
 const insertItemHistoryTable = async (
-	center_id,
-	module,
-	product_id,
-	purchase_id,
-	purchase_det_id,
-	sale_id,
-	sale_det_id,
-	actn,
-	actn_type,
-	txn_qty,
-	sale_return_id,
-	sale_return_det_id,
-	purchase_return_id,
-	purchase_return_det_id,
+	center_id: any,
+	module: string,
+	product_id: any,
+	purchase_id: string,
+	purchase_det_id: string,
+	sale_id: string,
+	sale_det_id: string,
+	actn: string,
+	actn_type: string,
+	txn_qty: string,
+	sale_return_id: string,
+	sale_return_det_id: string,
+	purchase_return_id: string,
+	purchase_return_det_id: string,
 ) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
 
@@ -40,7 +44,7 @@ values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purch
 	return promisifyQuery(query);
 };
 
-const updateStock = (qty_to_update, product_id, mrp, mode) => {
+const updateStock = (qty_to_update: any, product_id: any, mrp: any, mode: string) => {
 	let query =
 		mode === 'add'
 			? `update stock set available_stock =  available_stock + '${qty_to_update}' where product_id = '${product_id}' and mrp = '${mrp}' `
@@ -51,7 +55,7 @@ const updateStock = (qty_to_update, product_id, mrp, mode) => {
 
 // dinesh check
 // multiply by * -1 so that qty_to_update is minus, query works as expected
-const updateStockViaId = async (qty_to_update, product_id, stock_id, mode) => {
+const updateStockViaId = async (qty_to_update: any, product_id: any, stock_id: any, mode: string) => {
 	let query =
 		mode === 'add'
 			? `update stock set available_stock =  available_stock + '${qty_to_update}' where product_id = '${product_id}' and id = '${stock_id}' `
@@ -60,8 +64,8 @@ const updateStockViaId = async (qty_to_update, product_id, stock_id, mode) => {
 	return await promisifyQuery(query);
 };
 
-const isStockIdExist = async (k) => {
-	todayYYMMDD = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD');
+const isStockIdExist = async (k: { product_id: any; mrp: any }) => {
+	let todayYYMMDD = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD');
 	let query = `
 	select count(*) as count from stock where product_id = '${k.product_id}' and mrp  = '${k.mrp}' `;
 
@@ -69,9 +73,9 @@ const isStockIdExist = async (k) => {
 	return data[0].count;
 };
 
-const insertToStock = async (product_id, mrp, available_stock, open_stock) => {
+const insertToStock = async (product_id: any, mrp: any, available_stock: any, open_stock: any) => {
 	let upDate = new Date();
-	todayYYMMDD = toTimeZoneFormat(upDate, 'Asia/Kolkata', 'YYYY-MM-DD');
+	let todayYYMMDD = toTimeZoneFormat(upDate, 'Asia/Kolkata', 'YYYY-MM-DD');
 
 	let query = `
 	insert into stock (product_id, mrp, available_stock, open_stock, updateddate)
@@ -80,19 +84,31 @@ const insertToStock = async (product_id, mrp, available_stock, open_stock) => {
 	return promisifyQuery(query);
 };
 
-const correctStock = async (product_id, mrp, stock_qty) => {
-	let query = `update stock set available_stock =  '${stock_qty}' where product_id = '${product_id}' and mrp = '${mrp}' `;
+// const correctStock = async (product_id, mrp, stock_qty) => {
+// 	let query = `update stock set available_stock =  '${stock_qty}' where product_id = '${product_id}' and mrp = '${mrp}' `;
 
-	let data = promisifyQuery(query);
-	return 'updated';
-};
+// 	let data = promisifyQuery(query);
+// 	return 'updated';
+// };
 
-const getProductWithAllMRP = (product_id) => {
-	todayYYMMDD = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD');
-	let sql = ` select 
+// const correctStock = async (stock: IStock) => {
+// 	return StockRepo.updateStock(stock);
+
+// let query = `update stock set available_stock =  '${stock_qty}' where product_id = '${product_id}' and mrp = '${mrp}' `;
+
+// let data = promisifyQuery(query);
+//  return 'updated';
+// };
+
+// updateStock
+
+const getProductWithAllMRP = (product_id: any) => {
+	let todayYYMMDD = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD');
+	let query = ` select 
 	s.id as stock_id, 
-	s.product_id as product_id,
-	p.description as product_description,
+	p.product_type as product_type,
+  s.product_id as product_id,
+	p.product_description as product_description,
 	s.mrp, 
 	s.available_stock, 
 	s.open_stock 
@@ -107,9 +123,9 @@ const getProductWithAllMRP = (product_id) => {
 	return promisifyQuery(query);
 };
 
-const deleteProductFromStock = async (product_id, mrp) => {
-	todayYYMMDD = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD');
-
+const deleteProductFromStock = async (product_id: any, mrp: any) => {
+	// check center_id
+	let center_id;
 	let query = `delete from stock where product_id = ${product_id} and mrp = ${mrp}`;
 
 	let data = promisifyQuery(query);
@@ -138,7 +154,7 @@ const deleteProductFromStock = async (product_id, mrp) => {
 	};
 };
 
-const updateLatestProductMRP = async (product_id, center_id) => {
+const updateLatestProductMRP = async (product_id: any, center_id: any) => {
 	let query = `
 	update product set 
 mrp = (select max(mrp) from stock where
@@ -151,7 +167,7 @@ center_id = '${center_id}'
 	return promisifyQuery(query);
 };
 
-const searchAllDraftPurchase = async (center_id) => {
+const searchAllDraftPurchase = async (center_id: any) => {
 	let query = `select p.*, v.id as vendor_id, v.name as vendor_name,
 	case p.status
         when 'D' then 'Draft'
@@ -172,7 +188,7 @@ const searchAllDraftPurchase = async (center_id) => {
 // str_to_date('2020-05-01 00:00:00', '%Y-%m-%d %T') and
 // str_to_date('2020-05-08 23:59:00', '%Y-%m-%d %T')
 
-const searchPurchase = async (requestBody) => {
+const searchPurchase = async (requestBody: { center_id: any; status: any; vendorid: any; fromdate: any; todate: any; order: any }) => {
 	let center_id = requestBody.center_id;
 	let status = requestBody.status;
 	let vendor_id = requestBody.vendorid;
@@ -216,7 +232,17 @@ const searchPurchase = async (requestBody) => {
 	return promisifyQuery(query);
 };
 
-const searchSales = async (requestBody) => {
+const searchSales = async (requestBody: {
+	center_id: any;
+	status: any;
+	customerid: any;
+	fromdate: any;
+	todate: any;
+	saletype: any;
+	searchtype: any;
+	invoiceno: any;
+	order: any;
+}) => {
 	let center_id = requestBody.center_id;
 	let status = requestBody.status;
 	let customer_id = requestBody.customerid;
@@ -294,7 +320,7 @@ const searchSales = async (requestBody) => {
 	return promisifyQuery(search_type === 'all' ? sql : query);
 };
 
-const purchaseMaster = async (purchase_id) => {
+const purchaseMaster = async (purchase_id: any) => {
 	let query = `
 	select p.*
 from 
@@ -305,7 +331,7 @@ p.id = '${purchase_id}' `;
 	return promisifyQuery(query);
 };
 
-const deleteSaleDetails = async (id) => {
+const deleteSaleDetails = async (id: any) => {
 	let query = `
 	delete from sale_detail where id = '${id}' `;
 
@@ -315,7 +341,7 @@ const deleteSaleDetails = async (id) => {
 	};
 };
 
-const deleteItemHistory = async (sale_id) => {
+const deleteItemHistory = async (sale_id: any) => {
 	let query = `
 	delete from item_history where sale_id = '${sale_id}' `;
 
@@ -324,7 +350,7 @@ const deleteItemHistory = async (sale_id) => {
 	return { result: 'success' };
 };
 
-const purchaseDetails = async (purchase_id) => {
+const purchaseDetails = async (purchase_id: any) => {
 	let sql = `
 	select pd.*, 
 pd.id as id, 
@@ -341,8 +367,8 @@ pd.sgst as sgst,
 pd.taxable_value as tax_value,
 pd.total_value as total_value,
 ps.revision as revision,
-p.product_code, p.description, p.packetsize, p.taxrate,
-s.id as stock_pk, p.hsncode as hsncode from
+p.product_code, p.product_description, p.packet_size, p.tax_rate,
+s.id as stock_pk, p.hsn_code as hsn_code from
 purchase_detail pd,
 product p,
 stock s,
@@ -358,7 +384,15 @@ pd.purchase_id = '${purchase_id}'
 	return promisifyQuery(query);
 };
 
-const deletePurchaseDetails = async (requestBody) => {
+const deletePurchaseDetails = async (requestBody: {
+	center_id: any;
+	id: any;
+	purchaseid: any;
+	qty: any;
+	product_id: any;
+	stock_id: any;
+	mrp: any;
+}) => {
 	let center_id = requestBody.center_id;
 	let id = requestBody.id;
 	let purchase_id = requestBody.purchaseid;
@@ -423,7 +457,7 @@ const deletePurchaseDetails = async (requestBody) => {
 	};
 };
 
-const deletePurchaseById = async (purchase_id) => {
+const deletePurchaseById = async (purchase_id: any) => {
 	let purchaseDetails = await getPurchaseDetails(purchase_id);
 
 	let idx = 0;
@@ -437,7 +471,7 @@ const deletePurchaseById = async (purchase_id) => {
 	}
 };
 
-function getPurchaseDetails(purchase_id) {
+function getPurchaseDetails(purchase_id: any) {
 	let sql = `
 	select pd.*, 
 pd.id as id, 
@@ -453,7 +487,8 @@ pd.cgst as cgst,
 pd.sgst as sgst,
 pd.taxable_value as tax_value,
 pd.total_value as total_value,
-p.product_code, p.description, p.packetsize, p.taxrate from 
+p.product_type as product_type, 
+p.product_code, p.product_description, p.packet_size, p.tax_rate from 
 purchase_detail pd,
 product p
 where
@@ -464,10 +499,13 @@ pd.purchase_id = '${purchase_id}'
 	return promisifyQuery(query);
 }
 
-const deletePurchaseDetailsRecs = async (purchaseDetails, purchase_id) => {
+const deletePurchaseDetailsRecs = async (purchaseDetails: any[], purchase_id: any) => {
+	// check sale_id
+	let sale_id: any;
+
 	let idx = 0;
 
-	purchaseDetails.forEach(async (element, index) => {
+	purchaseDetails.forEach(async (element: { id: any; qty: any; product_id: any; stock_id: any }, index: number) => {
 		idx = index + 1;
 		let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
@@ -507,7 +545,7 @@ const deletePurchaseDetailsRecs = async (purchaseDetails, purchase_id) => {
 	}
 };
 
-const deletePurchaseMasterById = async (purchase_id) => {
+const deletePurchaseMasterById = async (purchase_id: any) => {
 	let query = `
 		delete from purchase where 
 	id = '${purchase_id}' `;
@@ -516,33 +554,39 @@ const deletePurchaseMasterById = async (purchase_id) => {
 	return { result: 'success' };
 };
 
-const stockCorrection = async (requestBody) => {
-	let product_id = requestBody.product_id;
-	let mrp = requestBody.mrp;
-	let stock_qty = requestBody.corrected_stock;
-	let center_id = requestBody.center_id;
+const stockCorrection = async (stock: IStock) => {
+	// let product_id = requestBody.product_id;
+	// let mrp = requestBody.mrp;
+	// let stock_qty = requestBody.corrected_stock;
+	// let center_id = requestBody.center_id;
+	// let stock: IStock;
+	// stock = {};
+	// let data = await correctStock(stock);
 
-	let data = await correctStock(product_id, mrp, stock_qty);
+	let result = await StockRepo.updateStock(stock);
 
-	let historyAddRes = await insertItemHistoryTable(
-		center_id,
-		'Product',
-		product_id,
-		'0',
-		'0',
-		'0',
-		'0',
-		'PRD',
-		`Stock Correction: MRP - ${mrp} : Qty - ${stock_qty}`,
-		'0',
-		'0', // sale_return_id
-		'0', // sale_return_det_id
-		'0', // purchase_return_id
-		'0', // purchase_return_det_id
-	);
+	// let data = await correctStock(product_id, mrp, stock_qty);
+
+	// 	let historyAddRes = await insertItemHistoryTable(
+	// const stockCorrection = async (stock: IStock) => {
+	//     stock.center_id,
+	//       'Product',
+	//       stock.product_id,
+	//       '0',
+	//       '0',
+	//       '0',
+	//       '0',
+	//       'PRD',
+	//       `Stock Correction: MRP - ${stock.mrp} : Qty - ${stock.corrected_qty}`,
+	//       '0',
+	//       '0', // sale_return_id
+	//       '0', // sale_return_det_id
+	//       '0', // purchase_return_id
+	//       '0', // purchase_return_det_id
+	// };
 
 	return {
-		result: data,
+		result: result,
 	};
 };
 
@@ -552,7 +596,7 @@ module.exports = {
 	updateStockViaId,
 	isStockIdExist,
 	insertToStock,
-	correctStock,
+
 	getProductWithAllMRP,
 	deleteProductFromStock,
 	updateLatestProductMRP,

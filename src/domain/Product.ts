@@ -5,6 +5,7 @@ export interface IProduct {
 	id?: number;
 	center_id: number;
 	brand_id: number;
+	product_type: string;
 	product_code: string;
 	product_description: string;
 	uom?: string;
@@ -42,6 +43,7 @@ export class Product implements IProduct {
 	center_id: number;
 	@Type(() => Number)
 	brand_id: number;
+	product_type: string;
 	product_code: string;
 	product_description: string;
 	uom: string;
@@ -88,6 +90,7 @@ export class Product implements IProduct {
 		id: number,
 		center_id: number,
 		brand_id: number,
+		product_type: string,
 		product_code: string,
 		product_description: string,
 		uom: string,
@@ -117,6 +120,7 @@ export class Product implements IProduct {
 		this.id = id;
 		this.center_id = center_id;
 		this.brand_id = brand_id;
+		this.product_type = product_type;
 		this.product_code = product_code;
 		this.product_description = product_description;
 		this.uom = uom;
