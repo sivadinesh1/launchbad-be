@@ -364,3 +364,20 @@ model stock {
   updated_by              BigInt?
   product                 product?   @relation(fields: [product_id], references: [id])
 }
+
+model audit {
+  id                      BigInt      @id @default(autoincrement())
+  center_id	              BigInt?
+  revision                BigInt?
+  module                  String?
+  module_ref_id           BigInt?
+  module_ref_det_id       BigInt?
+  action                  String?
+  old_value               String?
+  new_value               String?
+  audit_date              DateTime    @default(now())
+  createdAt	              DateTime?   @default(now())
+  updatedAt	              DateTime?   @updatedAt
+  created_by	            BigInt?
+  updated_by              BigInt?
+} 
