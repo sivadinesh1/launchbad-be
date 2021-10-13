@@ -137,7 +137,7 @@ const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, se
 	p.invoice_date as invoice_date, 
 	abs(datediff(STR_TO_DATE(p.invoice_date,'%d-%m-%Y'), CURDATE())) as aging_days,
 	p.net_total as invoice_amt, 
-	v.name as vendor_name, v.address1 as vendor_address1,
+	v.vendor_name as vendor_name, v.address1 as vendor_address1,
 	v.address2 as vendor_address2,
 	(select
 		(
@@ -190,9 +190,9 @@ const updateVendorPymtSequenceGenerator = (center_id) => {
 	let qryUpdateSqnc = '';
 
 	qryUpdateSqnc = `
-		update financialyear set vendor_pymt_seq = vendor_pymt_seq + 1 where 
+		update financial_year set vendor_pymt_seq = vendor_pymt_seq + 1 where 
 		center_id = '${center_id}' and  
-		CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
+		CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 
 	return new Promise(function (resolve, reject) {
 		pool.query(qryUpdateSqnc, function (err, data) {
@@ -211,10 +211,10 @@ const getVendorPymtSequenceNo = (cloneReq) => {
 		cloneReq.accountarr[0].receiveddate,
 		'Asia/Kolkata',
 		'MM',
-	)}', "/", lpad(vendor_pymt_seq, 5, "0")) as pymtNo from financialyear 
+	)}', "/", lpad(vendor_pymt_seq, 5, "0")) as pymtNo from financial_year 
 				where 
 				center_id = '${cloneReq.center_id}' and  
-				CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
+				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 
 	return new Promise(function (resolve, reject) {
 		pool.query(pymtNoQry, function (err, data) {
@@ -227,7 +227,7 @@ const getVendorPymtSequenceNo = (cloneReq) => {
 };
 
 const addVendorPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
-	// (1) Updates payment seq in tbl financialyear, then {returns} formated sequence {YY/MM/PYMTSEQ}
+	// (1) Updates payment seq in tbl financial_year, then {returns} formated sequence {YY/MM/PYMTSEQ}
 
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
@@ -255,7 +255,7 @@ const addVendorPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 	];
 
 	let query = `
-		INSERT INTO vendor_payment ( center_id, vendor_id, vendor_payment_no, payment_now_amt, advance_amt_used, pymt_date, pymt_mode_ref_id, bank_ref, pymt_ref, last_updated, bank_id, bank_name, createdby)
+		INSERT INTO vendor_payment ( center_id, vendor_id, vendor_payment_no, payment_now_amt, advance_amt_used, payment_date, pymt_mode_ref_id, bank_ref, pymt_ref, last_updated, bank_id, bank_name, createdby)
 		VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, '${today}', ?, ?, ? ) `;
 
 	return new Promise(function (resolve, reject) {
@@ -373,7 +373,7 @@ const getVendorPaymentsByCenter = (requestBody) => {
 	p.bank_ref as bank_ref,
 	p.pymt_ref as pymt_ref,
 	p.vendor_payment_no as payment_no,
- DATE_FORMAT(STR_TO_DATE(p.pymt_date,'%d-%m-%Y'), '%d-%b-%Y') as pymt_date,
+ DATE_FORMAT(STR_TO_DATE(p.payment_date,'%d-%m-%Y'), '%d-%b-%Y') as payment_date,
 	p.advance_amt_used as advance_amt_used,
 	pymt_mode_ref_id as pymt_mode_ref_id,
 	pymt_ref as pymt_ref,
@@ -410,7 +410,7 @@ const getVendorPaymentsByCenter = (requestBody) => {
 		query = query + ` and s.invoice_no like '%${invoiceno}%' `;
 	}
 
-	query = query + ` order by pymt_date desc  `;
+	query = query + ` order by payment_date desc  `;
 
 	return promisifyQuery(query);
 };
@@ -522,7 +522,7 @@ const getPymtTransactionByVendors = (center_id, vendor_id, callback) => {
 	p.vendor_payment_no as payment_no,
 		p.payment_now_amt as payment_now_amt,
 		p.advance_amt_used as advance_amt_used,
-		str_to_date(p.pymt_date, '%d-%m-%YYYY') as pymt_date,
+		str_to_date(p.payment_date, '%d-%m-%YYYY') as payment_date,
 		p.pymt_mode_ref_id as pymt_mode_ref_id,
 		p.bank_ref as bank_ref,
 		p.pymt_ref as pymt_ref,

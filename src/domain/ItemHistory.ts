@@ -17,7 +17,10 @@ export interface IItemHistory {
 	stock_level: number;
 	txn_date: Date;
 	sale_return_id: number;
+	sale_return_det_id: number;
+
 	purchase_return_id: number;
+	purchase_return_det_id: number;
 
 	createdAt?: Date;
 	updatedAt?: Date;
@@ -44,7 +47,9 @@ export class ItemHistory implements IItemHistory {
 	stock_level: number;
 	txn_date: Date;
 	sale_return_id: number;
+	sale_return_det_id: number;
 	purchase_return_id: number;
+	purchase_return_det_id: number;
 
 	@Type(() => Date)
 	createdAt: Date;
@@ -71,7 +76,9 @@ export class ItemHistory implements IItemHistory {
 		stock_level: number,
 		txn_date: Date,
 		sale_return_id: number,
+		sale_return_det_id: number,
 		purchase_return_id: number,
+		purchase_return_det_id: number,
 
 		createdAt: Date,
 		updatedAt: Date,
@@ -93,7 +100,9 @@ export class ItemHistory implements IItemHistory {
 		this.stock_level = stock_level;
 		this.txn_date = txn_date;
 		this.sale_return_id = sale_return_id;
+		this.sale_return_det_id = sale_return_det_id;
 		this.purchase_return_id = purchase_return_id;
+		this.purchase_return_det_id = purchase_return_det_id;
 
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;

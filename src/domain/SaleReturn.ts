@@ -1,29 +1,20 @@
 import { Transform, Type } from 'class-transformer';
 import { IsString, IsInt } from 'class-validator';
-import { string } from 'joi';
 
-export interface ISaleReturnDetail {
+export interface ISaleReturn {
 	id?: number;
 	center_id: number;
-
-	sale_return_id: number;
 	sale_id: number;
-	sale_detail_id: number;
-	exchange_id: number;
-	return_quantity: number;
-	received_quantity: number;
-	reason: string;
-	disc_percent: number;
-	tax: number;
-	mrp: number;
-	igs_t: number;
-	cgs_t: number;
-	sgs_t: number;
-	orig_sold_qty: number;
-	taxable_value: number;
-	total_value: number;
-	hsn_code: string;
-	unit: string;
+	cr_note_id: number;
+	return_date: Date;
+	to_return_amount: number;
+	amount_returned: number;
+	to_receive_items: number;
+	received_items: number;
+	receive_status: string;
+	refund_status: string;
+	return_status: string;
+	customer_id: number;
 
 	createdAt?: Date;
 	updatedAt?: Date;
@@ -31,47 +22,24 @@ export interface ISaleReturnDetail {
 	updated_by?: number;
 }
 
-export class SaleReturnDetail implements ISaleReturnDetail {
+export class SaleReturn implements ISaleReturn {
 	@Type(() => Number)
 	id: number;
 
 	@Type(() => Number)
 	center_id: number;
 
-	@Type(() => Number)
-	sale_return_id: number;
-	@Type(() => Number)
 	sale_id: number;
-	@Type(() => Number)
-	sale_detail_id: number;
-	@Type(() => Number)
-	exchange_id: number;
-	@Type(() => Number)
-	return_quantity: number;
-	@Type(() => Number)
-	received_quantity: number;
-	reason: string;
-	@Type(() => Number)
-	@Type(() => Number)
-	disc_percent: number;
-	@Type(() => Number)
-	tax: number;
-	@Type(() => Number)
-	mrp: number;
-	@Type(() => Number)
-	igs_t: number;
-	@Type(() => Number)
-	cgs_t: number;
-	@Type(() => Number)
-	sgs_t: number;
-	@Type(() => Number)
-	orig_sold_qty: number;
-	@Type(() => Number)
-	taxable_value: number;
-	@Type(() => Number)
-	total_value: number;
-	hsn_code: string;
-	unit: string;
+	cr_note_id: number;
+	return_date: Date;
+	to_return_amount: number;
+	amount_returned: number;
+	to_receive_items: number;
+	received_items: number;
+	receive_status: string;
+	refund_status: string;
+	return_status: string;
+	customer_id: number;
 
 	@Type(() => Date)
 	createdAt: Date;
@@ -86,24 +54,17 @@ export class SaleReturnDetail implements ISaleReturnDetail {
 		id: number,
 		center_id: number,
 
-		sale_return_id: number,
 		sale_id: number,
-		sale_detail_id: number,
-		exchange_id: number,
-		return_quantity: number,
-		received_quantity: number,
-		reason: string,
-		disc_percent: number,
-		tax: number,
-		mrp: number,
-		igs_t: number,
-		cgs_t: number,
-		sgs_t: number,
-		orig_sold_qty: number,
-		taxable_value: number,
-		total_value: number,
-		hsn_code: string,
-		unit: string,
+		cr_note_id: number,
+		return_date: Date,
+		to_return_amount: number,
+		amount_returned: number,
+		to_receive_items: number,
+		received_items: number,
+		receive_status: string,
+		refund_status: string,
+		return_status: string,
+		customer_id: number,
 
 		createdAt: Date,
 		updatedAt: Date,
@@ -113,24 +74,17 @@ export class SaleReturnDetail implements ISaleReturnDetail {
 		this.id = id;
 		this.center_id = center_id;
 
-		this.sale_return_id = sale_return_id;
 		this.sale_id = sale_id;
-		this.sale_detail_id = sale_detail_id;
-		this.exchange_id = exchange_id;
-		this.return_quantity = return_quantity;
-		this.received_quantity = received_quantity;
-		this.reason = reason;
-		this.disc_percent = disc_percent;
-		this.tax = tax;
-		this.mrp = mrp;
-		this.igs_t = igs_t;
-		this.cgs_t = cgs_t;
-		this.sgs_t = sgs_t;
-		this.orig_sold_qty = orig_sold_qty;
-		this.taxable_value = taxable_value;
-		this.total_value = total_value;
-		this.hsn_code = hsn_code;
-		this.unit = unit;
+		this.cr_note_id = cr_note_id;
+		this.return_date = return_date;
+		this.to_return_amount = to_return_amount;
+		this.amount_returned = amount_returned;
+		this.to_receive_items = to_receive_items;
+		this.received_items = received_items;
+		this.receive_status = receive_status;
+		this.refund_status = refund_status;
+		this.return_status = return_status;
+		this.customer_id = customer_id;
 
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;

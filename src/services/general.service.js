@@ -7,34 +7,34 @@ const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/
 const { getSearchCustomers } = require('./customers.service');
 
 const searchProductInformation = async (requestBody) => {
-	const [center_id, customerid, orderdate, searchstr] = Object.values(requestBody);
+	const [center_id, customer_id, order_date, search_text] = Object.values(requestBody);
 
 	// initially checks if product has custom discount for the selected customer. if yes, takes that discount
 	// if no custom discount available, it then gets the default discount. brand = 0 for defaults
 
-	let query = ` select a.product_code as product_code, a.description, b.mrp, a.taxrate, b.available_stock,
-	a.packetsize as qty, a.unit_price, a.id as product_id, b.id as stock_pk, a.rackno,
+	let query = ` select a.product_code as product_code, a.product_description, b.mrp, a.tax_rate, b.available_stock,
+	a.packet_size as qty, a.unit_price, a.id as product_id, b.id as stock_pk, a.rack_info,
 IFNULL(
 (
 select concat(value,'~',type)  
 from discount 
-where str_to_date('${orderdate}','%d-%m-%Y')  
-between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') and
-customer_id = '${customerid}' and
-gst_slab = a.taxrate and
+where str_to_date('${order_date}','%d-%m-%Y')  
+between start_date and end_date and
+customer_id = '${customer_id}' and
+gst_slab = a.tax_rate and
 a.brand_id = discount.brand_id and
 discount.brand_id = a.brand_id
 ), 
 (  select concat(value,'~',type) 
 from discount 
-where str_to_date('${orderdate}','%d-%m-%Y')  
-between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') and
-customer_id = '${customerid}' and
-gst_slab = a.taxrate and
+where str_to_date('${order_date}','%d-%m-%Y')  
+between start_date and end_date and
+customer_id = '${customer_id}' and
+gst_slab = a.tax_rate and
 discount.brand_id = 0 )
 	
 	) as disc_info,
-	brand.name as name
+	brand.brand_name as name
 from 
 product a, 
 stock b,
@@ -43,9 +43,11 @@ where
 brand.id = a.brand_id and 
 a.id = b.product_id and
 a.center_id = '${center_id}' and
-( a.product_code like '%${searchstr}%' or
-a.description like '%${searchstr}%' ) limit 50 
+( a.product_code like '%${search_text}%' or
+a.product_description like '%${search_text}%' ) limit 50 
 `;
+
+	console.log('dinesh >>> :: ' + query);
 
 	return promisifyQuery(query);
 };
@@ -106,21 +108,21 @@ const getAllInventory = async () => {
 };
 
 const getAllClients = async () => {
-	let query = `select * from customer where isactive = 'A'`;
+	let query = `select * from customer where is_active = 'A'`;
 
 	return promisifyQuery(query);
 };
 
 const getAllActiveVendors = async (center_id) => {
-	let query = `select v.id, v.center_id, v.name, v.address1, v.address2, v.address3, v.district, s.id as state_id, s.code, s.description as state,
-	v.pin, v.gst, v.phone, v.mobile, v.mobile2, v.whatsapp, v.email, v.isactive, v.credit_amt,
+	let query = `select v.id, v.center_id, v.vendor_name, v.address1, v.address2, v.address3, v.district, s.id as state_id, s.code, s.description as state,
+	v.pin, v.gst, v.phone, v.mobile, v.mobile2, v.whatsapp, v.email, v.is_active, v.credit_amt,
 	v.balance_amt, 
 	DATE_FORMAT(v.last_paid_date, '%d-%b-%Y') as last_paid_date
 	from 
 	vendor v,
 	state s
 	where 
-	v.state_id = s.id and isactive = 'A' and center_id = ${center_id} order by v.name`;
+	v.state_id = s.id and is_active = 'A' and center_id = ${center_id} order by v.vendor_name`;
 
 	return promisifyQuery(query);
 };
@@ -128,13 +130,13 @@ const getAllActiveVendors = async (center_id) => {
 const getAllActiveCustomersByCenter = async (center_id) => {
 	let query = `select c.id, c.center_id, c.name, c.address1, c.address2, c.district, s.id as state_id, s.code, s.description,
 	c.pin, c.gst, c.phone, c.mobile, c.mobile2, c.whatsapp, c.email, 
-	c.isactive, c.credit_amt as credit_amt, c.balance_amt as balance_amt, 
+	c.is_active, c.credit_amt as credit_amt, c.balance_amt as balance_amt, 
 	DATE_FORMAT(c.last_paid_date, '%d-%b-%Y') as last_paid_date
 	from 
 	customer c,
 	state s
 	where 
-	c.state_id = s.id and isactive = 'A' and center_id = ${center_id} 	order by name `;
+	c.state_id = s.id and is_active = 'A' and center_id = ${center_id} 	order by name `;
 	return promisifyQuery(query);
 };
 

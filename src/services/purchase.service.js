@@ -223,10 +223,10 @@ const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, re
 	// if purchase details id is missing its new else update
 	let purchase_det_id = k.pur_det_id === '' ? vPurchase_det_id : k.pur_det_id;
 	let txn_qty = k.pur_det_id === '' ? k.qty : k.qty - k.old_val;
-	// let actn_type = "ADD";
+	// let action_type = "ADD";
 	let purchase_id = vPurchase_id === '' ? k.purchase_id : vPurchase_id;
 
-	// scenario: purhcase added > draft status > now create purchase entry. txn_qty will be zero, because old_val & current_val will be same
+	// scenario: purchase added > draft status > now create purchase entry. txn_qty will be zero, because old_val & current_val will be same
 	// this is a fix for above scenario
 	if (cloneReq.revision === 0 && txn_qty === 0) {
 		txn_qty = k.qty;
@@ -234,19 +234,19 @@ const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, re
 
 	//let purchase_det_id = k.pur_det_id;
 	//let txn_qty = k.qty;
-	let actn_type = 'Purchased';
+	let action_type = 'Purchased';
 	//	let purchase_id = k.purchase_id;
 
 	//txn -ve means subtract from qty
 	// if (txn_qty < 0) {
-	// 	actn_type = 'Mod/Del';
+	// 	action_type = 'Mod/Del';
 	// }
 
 	if (txn_qty < 0) {
-		actn_type = `Edited: ${k.old_val} To: ${k.qty}`;
+		action_type = `Edited: ${k.old_val} To: ${k.qty}`;
 		txn_qty = k.old_val - k.qty;
 	} else if (txn_qty > 0 && cloneReq.revision > 0) {
-		actn_type = `Edited: ${k.old_val} To: ${k.qty}`;
+		action_type = `Edited: ${k.old_val} To: ${k.qty}`;
 		txn_qty = k.qty - k.old_val;
 	}
 
@@ -264,7 +264,7 @@ const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, re
 			'0', // sale_id
 			'0', //sale_det_id
 			'PUR',
-			actn_type,
+			action_type,
 			txn_qty, //txn_qty
 			'0', // sale_return_id
 			'0', // sale_return_det_id

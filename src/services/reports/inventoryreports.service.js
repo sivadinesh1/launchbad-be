@@ -24,7 +24,7 @@ const getProductInventoryReport = (requestBody) => {
 (select invoice_date from sale where id = ih.sale_id) as sale_invoice_date,
 (select return_date from sale_return where id = ih.sale_return_id) as sale_return_date,
 
-  ih.actn as actn, ih.actn_type as action_type, abs(ih.txn_qty) as txn_qty, ih.stock_level as stock_level,
+  ih.action as action, ih.action_type as action_type, abs(ih.txn_qty) as txn_qty, ih.stock_level as stock_level,
   txn_date as txn_date,
   ih.sale_id as sale_id,  
   s.customer_id as customer_id,
@@ -82,7 +82,7 @@ const getProductInventoryReportShort = (requestBody) => {
 (select invoice_date from sale where id = ih.sale_id) as sale_invoice_date,
 (select return_date from sale_return where id = ih.sale_return_id) as sale_return_date,
 
-  ih.actn as actn, ih.actn_type as action_type, abs(ih.txn_qty) as txn_qty, ih.stock_level as stock_level,
+  ih.action as action, ih.action_type as action_type, abs(ih.txn_qty) as txn_qty, ih.stock_level as stock_level,
   txn_date as txn_date,
   ih.sale_id as sale_id,  
   s.customer_id as customer_id,

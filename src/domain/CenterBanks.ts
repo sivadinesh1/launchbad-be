@@ -11,6 +11,7 @@ export interface ICenterBanks {
 	account_no: string;
 	ifsc_code: string;
 	branch: string;
+	is_default: string;
 
 	createdAt?: Date;
 	updatedAt?: Date;
@@ -30,6 +31,7 @@ export class CenterBanks implements ICenterBanks {
 	account_no: string;
 	ifsc_code: string;
 	branch: string;
+	is_default: string;
 
 	@Type(() => Date)
 	createdAt: Date;
@@ -49,7 +51,7 @@ export class CenterBanks implements ICenterBanks {
 		account_no: string,
 		ifsc_code: string,
 		branch: string,
-
+		is_default: string,
 		createdAt: Date,
 		updatedAt: Date,
 		created_by: number,
@@ -63,7 +65,7 @@ export class CenterBanks implements ICenterBanks {
 		this.account_no = account_no;
 		this.ifsc_code = ifsc_code;
 		this.branch = branch;
-
+		this.is_default = is_default;
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;
 		this.created_by = created_by;

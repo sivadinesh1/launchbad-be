@@ -9,7 +9,7 @@ router.route('/move-to-sale').post(enquiryController.moveToSale);
 router.route('/update-giveqty-enquiry-details').post(enquiryController.updateGiveqtyEnquiryDetails);
 router.route('/update-customer/:id/:enqid').get(enquiryController.updateCustomerEnquiry);
 
-router.route('/update-status-enquiry-details').post(enquiryController.updateStatusEnquiryDetails);
+router.route('/update-status-enquiry-details').post(enquiryController.update_statusEnquiryDetails);
 router.route('/update-enquiry-details').post(enquiryController.updateEnquiryDetails);
 
 router.route('/insert-enquiry-details').post(enquiryController.insertEnquiryDetails);

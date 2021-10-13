@@ -1,7 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import { IsString, IsInt } from 'class-validator';
 
-export interface IBrand {
+export interface IPurchaseDetail {
 	id?: number;
 	center_id: number;
 	purchase_id: number;
@@ -24,7 +24,7 @@ export interface IBrand {
 	updated_by?: number;
 }
 
-export class Brand implements IBrand {
+export class PurchaseDetail implements IPurchaseDetail {
 	@Type(() => Number)
 	id: number;
 

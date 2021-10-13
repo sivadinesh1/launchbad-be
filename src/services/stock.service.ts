@@ -16,8 +16,8 @@ const insertItemHistoryTable = async (
 	purchase_det_id: string,
 	sale_id: string,
 	sale_det_id: string,
-	actn: string,
-	actn_type: string,
+	action: string,
+	action_type: string,
 	txn_qty: string,
 	sale_return_id: string,
 	sale_return_det_id: string,
@@ -27,10 +27,10 @@ const insertItemHistoryTable = async (
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
 
 	let query = `
-insert into item_history (center_id, module, product_ref_id, purchase_id, purchase_det_id, sale_id, sale_det_id, actn, actn_type, txn_qty, stock_level, txn_date, sale_return_id, sale_return_det_id, purchase_return_id, purchase_return_det_id)
+insert into item_history (center_id, module, product_ref_id, purchase_id, purchase_det_id, sale_id, sale_det_id, action, action_type, txn_qty, stock_level, txn_date, sale_return_id, sale_return_det_id, purchase_return_id, purchase_return_det_id)
 values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purchase_det_id}',
 '${sale_id}', '${sale_det_id}',
-'${actn}', '${actn_type}', '${txn_qty}', `;
+'${action}', '${action_type}', '${txn_qty}', `;
 
 	// if (module !== 'Product') {
 	query = query + `	(select IFNULL(sum(available_stock), 0) as available_stock  from stock where product_id = '${product_id}'  ), `;
@@ -168,7 +168,7 @@ center_id = '${center_id}'
 };
 
 const searchAllDraftPurchase = async (center_id: any) => {
-	let query = `select p.*, v.id as vendor_id, v.name as vendor_name,
+	let query = `select p.*, v.id as vendor_id, v.vendor_name as vendor_name,
 	case p.status
         when 'D' then 'Draft'
         when 'C' then 'Completed'
@@ -207,7 +207,7 @@ const searchPurchase = async (requestBody: { center_id: any; status: any; vendor
 	let vendsql = `and p.vendor_id = '${vendor_id}' `;
 	let statussql = `and p.status = '${status}' `;
 
-	let sql = `select p.*, v.id as vendor_id, v.name as vendor_name
+	let sql = `select p.*, v.id as vendor_id, v.vendor_name as vendor_name
 	from
 	purchase p,
 	vendor v
@@ -235,22 +235,22 @@ const searchPurchase = async (requestBody: { center_id: any; status: any; vendor
 const searchSales = async (requestBody: {
 	center_id: any;
 	status: any;
-	customerid: any;
-	fromdate: any;
-	todate: any;
-	saletype: any;
-	searchtype: any;
-	invoiceno: any;
+	customer_id: any;
+	from_date: any;
+	to_date: any;
+	sale_type: any;
+	search_type: any;
+	invoice_no: any;
 	order: any;
 }) => {
 	let center_id = requestBody.center_id;
 	let status = requestBody.status;
-	let customer_id = requestBody.customerid;
-	let from_date = requestBody.fromdate;
-	let to_date = requestBody.todate;
-	let sale_type = requestBody.saletype;
-	let search_type = requestBody.searchtype;
-	let invoice_no = requestBody.invoiceno;
+	let customer_id = requestBody.customer_id;
+	let from_date = requestBody.from_date;
+	let to_date = requestBody.to_date;
+	let sale_type = requestBody.sale_type;
+	let search_type = requestBody.search_type;
+	let invoice_no = requestBody.invoice_no;
 	let order = requestBody.order;
 
 	let sql = '';
@@ -258,15 +258,15 @@ const searchSales = async (requestBody: {
 
 	if (search_type === 'all') {
 		if (from_date !== '') {
-			from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata') + ' 00:00:00';
+			from_date = toTimeZone(requestBody.from_date, 'Asia/Kolkata') + ' 00:00:00';
 		}
 
 		if (to_date !== '') {
-			to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata') + ' 23:59:00';
+			to_date = toTimeZone(requestBody.to_date, 'Asia/Kolkata') + ' 23:59:00';
 		}
 
-		let custsql = `and s.customer_id = '${customer_id}' `;
-		let statussql = `and s.status = '${status}' `;
+		let customer_sql = `and s.customer_id = '${customer_id}' `;
+		let status_sql = `and s.status = '${status}' `;
 
 		sql = `select s.*, c.id as customer_id, c.name as customer_name
         from
@@ -282,18 +282,18 @@ const searchSales = async (requestBody: {
 				str_to_date('${to_date}',  '%d-%m-%Y %T') `;
 
 		if (customer_id !== 'all') {
-			sql = sql + custsql;
+			sql = sql + customer_sql;
 		}
 
 		if (status !== 'all') {
-			sql = sql + statussql;
+			sql = sql + status_sql;
 		}
 
 		if (sale_type !== 'all') {
 			if (sale_type === 'GI') {
-				sql = sql + " and s.sale_type = 'gstinvoice' ";
+				sql = sql + " and s.sale_type = 'gstInvoice' ";
 			} else if (sale_type === 'SI') {
-				sql = sql + " and s.sale_type = 'stockissue' ";
+				sql = sql + " and s.sale_type = 'stockIssue' ";
 			}
 		}
 		// check dinesh
@@ -404,7 +404,7 @@ const deletePurchaseDetails = async (requestBody: {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 	let auditQuery = `
-	INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, actn, old_value, new_value, audit_date, center_id)
+	INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
 	VALUES
 		('Purchase', '${purchase_id}', '${id}', 'delete', 
 		(SELECT CONCAT('[{', result, '}]') as final
@@ -510,7 +510,7 @@ const deletePurchaseDetailsRecs = async (purchaseDetails: any[], purchase_id: an
 		let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
 		let auditQuery = `
-		INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, actn, old_value, new_value, audit_date, center_id)
+		INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
 		VALUES
 			('Purchase', '${purchase_id}', '${element.id}', 'delete', 
 			(SELECT CONCAT('[{', result, '}]') as final

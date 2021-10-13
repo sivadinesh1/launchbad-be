@@ -4,15 +4,13 @@ import { IsString, IsInt } from 'class-validator';
 export interface IEnquiry {
 	id?: number;
 	center_id: number;
-	enquiry_id: number;
-	product_id: number;
-	product_code: string;
-	stock_id: number;
-	ask_quantity: number;
-	give_quantity: number;
-	notes: string;
-	status: string;
-	processed: string;
+
+	customer_id: number;
+	enquiry_date: Date;
+	e_status: string;
+	remarks: string;
+	sale_id: number;
+	processed_date: Date;
 
 	createdAt?: Date;
 	updatedAt?: Date;
@@ -27,15 +25,12 @@ export class Enquiry implements IEnquiry {
 	@Type(() => Number)
 	center_id: number;
 
-	enquiry_id: number;
-	product_id: number;
-	product_code: string;
-	stock_id: number;
-	ask_quantity: number;
-	give_quantity: number;
-	notes: string;
-	status: string;
-	processed: string;
+	customer_id: number;
+	enquiry_date: Date;
+	e_status: string;
+	remarks: string;
+	sale_id: number;
+	processed_date: Date;
 
 	@Type(() => Date)
 	createdAt: Date;
@@ -50,15 +45,12 @@ export class Enquiry implements IEnquiry {
 		id: number,
 		center_id: number,
 
-		enquiry_id: number,
-		product_id: number,
-		product_code: string,
-		stock_id: number,
-		ask_quantity: number,
-		give_quantity: number,
-		notes: string,
-		status: string,
-		processed: string,
+		customer_id: number,
+		enquiry_date: Date,
+		e_status: string,
+		remarks: string,
+		sale_id: number,
+		processed_date: Date,
 
 		createdAt: Date,
 		updatedAt: Date,
@@ -68,15 +60,12 @@ export class Enquiry implements IEnquiry {
 		this.id = id;
 		this.center_id = center_id;
 
-		this.enquiry_id = enquiry_id;
-		this.product_id = product_id;
-		this.product_code = product_code;
-		this.stock_id = stock_id;
-		this.ask_quantity = ask_quantity;
-		this.give_quantity = give_quantity;
-		this.notes = notes;
-		this.status = status;
-		this.processed = processed;
+		this.customer_id = customer_id;
+		this.enquiry_date = enquiry_date;
+		this.e_status = e_status;
+		this.remarks = remarks;
+		this.sale_id = sale_id;
+		this.processed_date = processed_date;
 
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;

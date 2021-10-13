@@ -118,7 +118,7 @@ class ProductRepo implements IProductRepo {
       
       a.packet_size as packet_size, 
       a.rack_info, 
-      bd.name,
+      bd.brand_name,
       bd.id as brand_id, 
       a.uom as uom, 
       a.hsn_code as hsn_code, 

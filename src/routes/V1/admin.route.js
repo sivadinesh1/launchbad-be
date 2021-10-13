@@ -18,9 +18,9 @@ router.route('/get-vendor-details/:vendorid').get(auth('getUsers'), adminControl
 router.route('/get-states').get(auth('getUsers'), adminController.getStates);
 router.route('/get-timezones').get(auth('getUsers'), adminController.getTimezones);
 
-router.route('/update-vendor/:id').put(auth('getUsers'), adminController.updateVendor);
+router.route('/update-vendor').post(auth('getUsers'), adminController.updateVendor);
 
-router.route('/update-brand/:id').put(auth('getUsers'), adminController.updateBrand);
+router.route('/update-brand').post(auth('getUsers'), adminController.updateBrand);
 
 router.route('/add-vendor').post(auth('getUsers'), adminController.addVendor);
 

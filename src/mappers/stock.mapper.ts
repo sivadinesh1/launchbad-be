@@ -1,5 +1,5 @@
 import { Stock } from '../domain/Stock';
-import { StockDTO } from '../dtos/StockDTO';
+import { StockDTO } from '../dtos/stock.dto';
 
 export class StockMap {
 	public static toDTO(stock: any): StockDTO {

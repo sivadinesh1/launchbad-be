@@ -1,27 +1,29 @@
 import { Transform, Type } from 'class-transformer';
 import { IsString, IsInt } from 'class-validator';
+import { string } from 'joi';
 
-export interface ISaleDetail {
+export interface ISaleReturnDetail {
 	id?: number;
 	center_id: number;
 
+	sale_return_id: number;
 	sale_id: number;
-	product_id: number;
-	stock_id: number;
-	quantity: number;
-	unit_price: number;
-	mrp: string;
-	batch_date: Date;
+	sale_detail_id: number;
+	exchange_id: number;
+	return_quantity: number;
+	received_quantity: number;
+	reason: string;
+	disc_percent: number;
 	tax: number;
+	mrp: number;
 	igs_t: number;
 	cgs_t: number;
 	sgs_t: number;
+	orig_sold_qty: number;
 	taxable_value: number;
 	total_value: number;
-	disc_value: number;
-	disc_percent: number;
-	disc_type: string;
-	returned: string;
+	hsn_code: string;
+	unit: string;
 
 	createdAt?: Date;
 	updatedAt?: Date;
@@ -29,7 +31,7 @@ export interface ISaleDetail {
 	updated_by?: number;
 }
 
-export class SaleDetail implements ISaleDetail {
+export class SaleReturnDetail implements ISaleReturnDetail {
 	@Type(() => Number)
 	id: number;
 
@@ -37,21 +39,25 @@ export class SaleDetail implements ISaleDetail {
 	center_id: number;
 
 	@Type(() => Number)
+	sale_return_id: number;
+	@Type(() => Number)
 	sale_id: number;
 	@Type(() => Number)
-	product_id: number;
+	sale_detail_id: number;
 	@Type(() => Number)
-	stock_id: number;
+	exchange_id: number;
 	@Type(() => Number)
-	quantity: number;
+	return_quantity: number;
 	@Type(() => Number)
-	unit_price: number;
-	mrp: string;
-
-	@Type(() => Date)
-	batch_date: Date;
+	received_quantity: number;
+	reason: string;
+	@Type(() => Number)
+	@Type(() => Number)
+	disc_percent: number;
 	@Type(() => Number)
 	tax: number;
+	@Type(() => Number)
+	mrp: number;
 	@Type(() => Number)
 	igs_t: number;
 	@Type(() => Number)
@@ -59,15 +65,13 @@ export class SaleDetail implements ISaleDetail {
 	@Type(() => Number)
 	sgs_t: number;
 	@Type(() => Number)
+	orig_sold_qty: number;
+	@Type(() => Number)
 	taxable_value: number;
 	@Type(() => Number)
 	total_value: number;
-	@Type(() => Number)
-	disc_value: number;
-	@Type(() => Number)
-	disc_percent: number;
-	disc_type: string;
-	returned: string;
+	hsn_code: string;
+	unit: string;
 
 	@Type(() => Date)
 	createdAt: Date;
@@ -82,23 +86,24 @@ export class SaleDetail implements ISaleDetail {
 		id: number,
 		center_id: number,
 
+		sale_return_id: number,
 		sale_id: number,
-		product_id: number,
-		stock_id: number,
-		quantity: number,
-		unit_price: number,
-		mrp: string,
-		batch_date: Date,
+		sale_detail_id: number,
+		exchange_id: number,
+		return_quantity: number,
+		received_quantity: number,
+		reason: string,
+		disc_percent: number,
 		tax: number,
+		mrp: number,
 		igs_t: number,
 		cgs_t: number,
 		sgs_t: number,
+		orig_sold_qty: number,
 		taxable_value: number,
 		total_value: number,
-		disc_value: number,
-		disc_percent: number,
-		disc_type: string,
-		returned: string,
+		hsn_code: string,
+		unit: string,
 
 		createdAt: Date,
 		updatedAt: Date,
@@ -108,23 +113,24 @@ export class SaleDetail implements ISaleDetail {
 		this.id = id;
 		this.center_id = center_id;
 
+		this.sale_return_id = sale_return_id;
 		this.sale_id = sale_id;
-		this.product_id = product_id;
-		this.stock_id = stock_id;
-		this.quantity = quantity;
-		this.unit_price = unit_price;
-		this.mrp = mrp;
-		this.batch_date = batch_date;
+		this.sale_detail_id = sale_detail_id;
+		this.exchange_id = exchange_id;
+		this.return_quantity = return_quantity;
+		this.received_quantity = received_quantity;
+		this.reason = reason;
+		this.disc_percent = disc_percent;
 		this.tax = tax;
+		this.mrp = mrp;
 		this.igs_t = igs_t;
 		this.cgs_t = cgs_t;
 		this.sgs_t = sgs_t;
+		this.orig_sold_qty = orig_sold_qty;
 		this.taxable_value = taxable_value;
 		this.total_value = total_value;
-		this.disc_value = disc_value;
-		this.disc_percent = disc_percent;
-		this.disc_type = disc_type;
-		this.returned = returned;
+		this.hsn_code = hsn_code;
+		this.unit = unit;
 
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;

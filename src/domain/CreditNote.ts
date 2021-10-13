@@ -1,40 +1,30 @@
 import { Transform, Type } from 'class-transformer';
 import { IsString, IsInt } from 'class-validator';
 
-export interface IPaymentDetail {
+export interface ICreditNote {
 	id?: number;
 	center_id: number;
-
-	payment_ref_id: number;
-	sale_ref_id: number;
-
-	applied_amount: number;
-	sale_return_ref_id: number;
-
+	credit_note_no: string;
+	credit_note_total_amount: number;
+	refund_status: string;
 	createdAt?: Date;
 	updatedAt?: Date;
 	created_by?: number;
 	updated_by?: number;
 }
 
-export class PaymentDetail implements IPaymentDetail {
+export class CreditNote implements ICreditNote {
 	@Type(() => Number)
 	id: number;
 
 	@Type(() => Number)
 	center_id: number;
 
+	credit_note_no: string;
 	@Type(() => Number)
-	payment_ref_id: number;
+	credit_note_total_amount: number;
 
-	@Type(() => Number)
-	sale_ref_id: number;
-
-	@Type(() => Number)
-	applied_amount: number;
-
-	@Type(() => Number)
-	sale_return_ref_id: number;
+	refund_status: string;
 
 	@Type(() => Date)
 	createdAt: Date;
@@ -49,12 +39,9 @@ export class PaymentDetail implements IPaymentDetail {
 		id: number,
 		center_id: number,
 
-		payment_ref_id: number,
-		sale_ref_id: number,
-
-		applied_amount: number,
-		sale_return_ref_id: number,
-
+		credit_note_no: string,
+		credit_note_total_amount: number,
+		refund_status: string,
 		createdAt: Date,
 		updatedAt: Date,
 		created_by: number,
@@ -63,11 +50,9 @@ export class PaymentDetail implements IPaymentDetail {
 		this.id = id;
 		this.center_id = center_id;
 
-		this.payment_ref_id = payment_ref_id;
-		this.sale_ref_id = sale_ref_id;
-
-		this.applied_amount = applied_amount;
-		this.sale_return_ref_id = sale_return_ref_id;
+		this.credit_note_no = credit_note_no;
+		this.credit_note_total_amount = credit_note_total_amount;
+		this.refund_status = refund_status;
 
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;

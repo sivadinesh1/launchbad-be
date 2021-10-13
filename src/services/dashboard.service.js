@@ -4,12 +4,12 @@ const { currentTimeInTimeZone, bigIntToString, promisifyQuery } = require('../ut
 
 const getInquirySummary = (center_id, from_date, to_date) => {
 	let query = ` select 
-  IFNULL(SUM(CASE WHEN e.estatus = 'O' THEN 1 ELSE 0 END), 0) AS 'new',
-  IFNULL(SUM(CASE WHEN e.estatus = 'D' THEN 1 ELSE 0 END), 0) AS 'draft',
-  IFNULL(SUM(CASE WHEN e.estatus = 'E' THEN 1 ELSE 0 END), 0) AS 'executed',
-  IFNULL(SUM(CASE WHEN e.estatus = 'P' THEN 1 ELSE 0 END), 0) AS 'invoiceready',
-  IFNULL(SUM(CASE WHEN e.estatus = 'C' THEN 1 ELSE 0 END), 0) AS 'completed',
-  IFNULL(SUM(CASE WHEN e.estatus = 'X' THEN 1 ELSE 0 END), 0) AS 'cancelled'                   
+  IFNULL(SUM(CASE WHEN e.e_status = 'O' THEN 1 ELSE 0 END), 0) AS 'new',
+  IFNULL(SUM(CASE WHEN e.e_status = 'D' THEN 1 ELSE 0 END), 0) AS 'draft',
+  IFNULL(SUM(CASE WHEN e.e_status = 'E' THEN 1 ELSE 0 END), 0) AS 'executed',
+  IFNULL(SUM(CASE WHEN e.e_status = 'P' THEN 1 ELSE 0 END), 0) AS 'invoiceready',
+  IFNULL(SUM(CASE WHEN e.e_status = 'C' THEN 1 ELSE 0 END), 0) AS 'completed',
+  IFNULL(SUM(CASE WHEN e.e_status = 'X' THEN 1 ELSE 0 END), 0) AS 'cancelled'                   
 from
 enquiry e
 where
@@ -73,9 +73,9 @@ str_to_date('${to_date}', '%d-%m-%YYYY')
 
 const getCenterSummary = (center_id, from_date, to_date) => {
 	let query = ` select tbl1.active_customers, tbl2.active_vendors from (
-    select count(*) as 'active_customers' from customer where isactive = 'A' and center_id = '${center_id}' ) as tbl1,
+    select count(*) as 'active_customers' from customer where is_active = 'A' and center_id = '${center_id}' ) as tbl1,
     (
-    select count(*) as 'active_vendors' from vendor where isactive = 'A' and center_id = '${center_id}'
+    select count(*) as 'active_vendors' from vendor where is_active = 'A' and center_id = '${center_id}'
     ) as tbl2 `;
 
 	return promisifyQuery(query);
@@ -101,7 +101,7 @@ const getPaymentsByCustomers = (center_id, from_date, to_date) => {
   where
   c.id = p.customer_id and
   p.center_id =  '${center_id}' and
-  STR_TO_DATE(p.pymt_date,'%d-%m-%Y') between
+  STR_TO_DATE(p.payment_date,'%d-%m-%Y') between
   str_to_date('${from_date}', '%d-%m-%YYYY') and
   str_to_date('${to_date}', '%d-%m-%YYYY')    
    `;

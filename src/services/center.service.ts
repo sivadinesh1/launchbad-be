@@ -43,9 +43,9 @@ export const updateCenter = async (requestBody: any) => {
 
 	const email = addl_info['email'];
 
-	const bankname = addl_info['bankname'];
-	const accountno = addl_info['accountno'];
-	const ifsccode = addl_info['ifsccode'];
+	const bank_name = addl_info['bank_name'];
+	const account_no = addl_info['account_no'];
+	const ifsc_code = addl_info['ifsc_code'];
 	const branch = addl_info['branch'];
 
 	const result = await prisma.center.update({
@@ -67,9 +67,9 @@ export const updateCenter = async (requestBody: any) => {
 			mobile2: mobile2,
 			whatsapp: whatsapp,
 			email: email,
-			bankname: bankname,
-			accountno: accountno,
-			ifsccode: ifsccode,
+			bank_name: bank_name,
+			account_no: account_no,
+			ifsc_code: ifsc_code,
 			branch: branch,
 		},
 	});

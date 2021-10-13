@@ -4,7 +4,7 @@ const { auth } = require('../../middleware/auth');
 const salesController = require('../../controllers/sales.controller');
 
 // Get Possible Next Sale Invoice # (ReadOnly)
-router.route('/get-next-sale-invoice-no/:invoicetype').get(auth('getUsers'), salesController.getNextSaleInvoiceNoAsync);
+router.route('/get-next-sale-invoice-no/:invoice_type').get(auth('getUsers'), salesController.getNextSaleInvoiceNoAsync);
 
 router.route('/delete-sales-details').post(auth('getUsers'), salesController.deleteSalesDetails);
 

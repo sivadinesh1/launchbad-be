@@ -28,10 +28,10 @@ const updateCustomerEnquiry = catchAsync(async (req, res) => {
 	return responseForward(data, 'updateCustomerEnquiry', res);
 });
 
-const updateStatusEnquiryDetails = catchAsync(async (req, res) => {
-	const data = await enquiryService.updateStatusEnquiryDetails(req.body);
+const update_statusEnquiryDetails = catchAsync(async (req, res) => {
+	const data = await enquiryService.update_statusEnquiryDetails(req.body);
 
-	return responseForward(data, 'updateStatusEnquiryDetails', res);
+	return responseForward(data, 'update_statusEnquiryDetails', res);
 });
 
 const updateEnquiryDetails = catchAsync(async (req, res) => {
@@ -109,7 +109,7 @@ module.exports = {
 	moveToSale,
 	updateGiveqtyEnquiryDetails,
 	updateCustomerEnquiry,
-	updateStatusEnquiryDetails,
+	update_statusEnquiryDetails,
 	updateEnquiryDetails,
 	insertEnquiryDetails,
 	addMoreEnquiryDetails,

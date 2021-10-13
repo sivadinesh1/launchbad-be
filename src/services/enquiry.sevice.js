@@ -19,7 +19,7 @@ const fetchEnquiryDetailByEnqId = async (enqid) => {
 	let query = `
 	select orig.*, s.available_stock, s.id as stock_pk
 from
-(select ed.*, c.id as customer_id, c.name, c.address1, c.address2, c.district, c.pin, c.gst, c.mobile2, e.remarks, e.estatus,
+(select ed.*, c.id as customer_id, c.name, c.address1, c.address2, c.district, c.pin, c.gst, c.mobile2, e.remarks, e.e_status,
 	p.id as pid, p.center_id, p.brand_id, p.product_code as pcode, p.product_description as pdesc, p.unit, p.packet_size, p.hsn_code,
 	p.current_stock, p.unit_price, p.mrp, p.purchase_price,
 	p.sales_price, p.rack_info, p.location, p.max_discount, p.tax_rate, 
@@ -61,7 +61,7 @@ const updateEnquiry = async (status, enqId, updatedby) => {
 
 	let query = `update enquiry 
 			set
-				estatus = '${status}',
+				e_status = '${status}',
 				processed_date = '${today}',
 				updatedby = '${updatedby}',
 				updateddate = '${today}'
@@ -145,7 +145,7 @@ const draftEnquiry = async (requestBody) => {
 		var objValue = jsonObj[objKey];
 
 		// first update enquiry table with STATUS = 'D'
-		let upQry1 = `update enquiry set estatus = 'D' where id = '${objValue.enquiry_id}' `;
+		let upQry1 = `update enquiry set e_status = 'D' where id = '${objValue.enquiry_id}' `;
 
 		pool.query(upQry1, function (err, data) {
 			if (err) {
@@ -323,7 +323,7 @@ const updateCustomerEnquiry = async (id, enqid) => {
 	return promisifyQuery(query);
 };
 
-const updateStatusEnquiryDetails = async (requestBody) => {
+const update_statusEnquiryDetails = async (requestBody) => {
 	let status = requestBody.status;
 	let id = requestBody.enqdetailid;
 
@@ -355,7 +355,7 @@ const insertEnquiryDetails = async (requestBody) => {
 
 	today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 
-	let query = `INSERT INTO enquiry ( center_id, customer_id, enquiry_date, estatus, remarks) 
+	let query = `INSERT INTO enquiry ( center_id, customer_id, enquiry_date, e_status, remarks) 
 							values ( '${jsonObj.center_id}', '${jsonObj.customerctrl.id}', '${today}', 'O','${jsonObj.remarks}')`;
 
 	pool.query(query, async function (err, data) {
@@ -414,14 +414,14 @@ const addMoreEnquiryDetails = async (requestBody) => {
 };
 
 const openEnquiries = async (center_id, status) => {
-	let query = `select e.id, e.enquiry_date, e.estatus, c.name as custname,
+	let query = `select e.id, e.enquiry_date, e.e_status, c.name as custname,
   
 	(select count(*) from enquiry_detail where enquiry_id = e.id)
 	as noofitems
 	from enquiry e, customer c
 	where 
 		e.customer_id = c.id and
-	estatus = '${status}' and e.center_id = '${center_id}'
+	e_status = '${status}' and e.center_id = '${center_id}'
 	order by 
 	enquiry_date desc`;
 
@@ -465,7 +465,7 @@ const getEnquiryMaster = async (enqid) => {
 	select 
 	e.id as enqid,
 	e.enquiry_date as enquiry_date,
-	e.estatus as estatus,
+	e.e_status as e_status,
 	e.sale_id as sale_id,
 	e.processed_date as processed_date,
 	c.id as customer_id,
@@ -508,16 +508,16 @@ const getCustomerData = async (enqid) => {
 
 const getEnquiredProductData = async (center_id, customerid, enqid, orderdate) => {
 	// fetch values only of enq detail status in {P - processed, F - fullfilled} B- backorder is ignored
-	let query = `select a.product_code as product_code, a.description, a.mrp, a.taxrate, b.available_stock,
+	let query = `select a.product_code as product_code, a.product_description, a.mrp, a.tax_rate, b.available_stock,
 	ed.giveqty as qty, a.unit_price, a.id as product_id, b.id as stock_pk, e.enquiry_date,
 	IFNULL(
 	(
 	select concat(value,'~',type)
 	from discount
 	where str_to_date('${orderdate}','%d-%m-%Y')  
-	between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') and
+	between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') and
   customer_id = '${customerid}' and
-	gst_slab = a.taxrate and
+	gst_slab = a.tax_rate and
 	a.brand_id = discount.brand_id and
   discount.brand_id = a.brand_id
 	), 
@@ -525,9 +525,9 @@ const getEnquiredProductData = async (center_id, customerid, enqid, orderdate) =
 	(  select concat(value,'~',type) 
 from discount 
 where str_to_date('${orderdate}','%d-%m-%Y')  
-between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') and
+between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') and
 customer_id = '${customerid}' and
-gst_slab = a.taxrate and
+gst_slab = a.tax_rate and
 discount.brand_id = 0 )
 	
 	) as disc_info
@@ -604,12 +604,12 @@ const searchEnquiries = async (requestBody) => {
 	e.center_id as center_id,
 	e.customer_id as customer_id,
 	CAST(e.enquiry_date AS CHAR) as enquiry_date,
-	e.estatus as estatus,
+	e.e_status as e_status,
 	e.remarks as remarks,
 	e.sale_id as sale_id,
 	e.processed_date as processed_date,
 	c.id as customer_id, c.name as customer_name,
-    	case e.estatus
+    	case e.e_status
 				when 'O' then 'New'
 				when 'D' then 'Draft'
 				when 'E' then 'Executed'
@@ -635,7 +635,7 @@ const searchEnquiries = async (requestBody) => {
 	}
 
 	if (status !== 'all') {
-		query = query + ` and e.estatus =  '${status}' `;
+		query = query + ` and e.e_status =  '${status}' `;
 	}
 
 	query = query + `order by enquiry_date ${order} `;
@@ -651,7 +651,7 @@ const deleteEnquiryDetails = async (requestBody) => {
 
 	// step 1
 	let auditQuery = `
-	INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, actn, old_value, new_value, audit_date, center_id)
+	INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
 	VALUES
 		('Enquiry', '${enq_id}', '${id}', 'delete', 
 		(SELECT CONCAT('[{', result, '}]') as final
@@ -694,7 +694,7 @@ const deleteEnquiryDetails = async (requestBody) => {
 };
 
 const deleteEnquiry = async (id) => {
-	let query = `update enquiry set estatus = 'X' where id = '${id}' `;
+	let query = `update enquiry set e_status = 'X' where id = '${id}' `;
 	return promisifyQuery(query);
 };
 
@@ -737,7 +737,7 @@ module.exports = {
 	moveToSale,
 	updateGiveqtyEnquiryDetails,
 	updateCustomerEnquiry,
-	updateStatusEnquiryDetails,
+	update_statusEnquiryDetails,
 	updateEnquiryDetails,
 	insertEnquiryDetails,
 	addMoreEnquiryDetails,

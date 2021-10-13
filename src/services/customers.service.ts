@@ -16,8 +16,8 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 0,
 			value: insertValues.gstzero,
-			startdate: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
-			enddate: '01-04-9999',
+			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			end_date: '01-04-9999',
 			brand_id: 0,
 		},
 		{
@@ -26,8 +26,8 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 5,
 			value: insertValues.gstfive,
-			startdate: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
-			enddate: '01-04-9999',
+			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			end_date: '01-04-9999',
 			brand_id: 0,
 		},
 		{
@@ -36,8 +36,8 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 12,
 			value: insertValues.gsttwelve,
-			startdate: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
-			enddate: '01-04-9999',
+			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			end_date: '01-04-9999',
 			brand_id: 0,
 		},
 		{
@@ -46,8 +46,8 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 18,
 			value: insertValues.gsteighteen,
-			startdate: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
-			enddate: '01-04-9999',
+			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			end_date: '01-04-9999',
 			brand_id: 0,
 		},
 		{
@@ -56,8 +56,8 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 28,
 			value: insertValues.gsttwentyeight,
-			startdate: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
-			enddate: '01-04-9999',
+			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			end_date: '01-04-9999',
 			brand_id: 0,
 		},
 	];
@@ -85,8 +85,8 @@ const insertCustomerBlock = async (insertValues: any) => {
 			mobile2: insertValues.mobile2.toString(),
 			whatsapp: insertValues.whatsapp.toString(),
 			email: insertValues.email,
-			createdon: currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss'),
-			isactive: 'A',
+
+			is_active: 'A',
 		},
 	});
 
@@ -118,7 +118,7 @@ const updateCustomer = async (updateValues: any, id: any) => {
 		},
 		data: {
 			center_id: updateValues.center_id,
-			name: updateValues.name,
+			vendor_name: updateValues.vendor_name,
 			address1: updateValues.address1,
 			address2: updateValues.address2,
 			address3: updateValues.address3,
@@ -161,7 +161,7 @@ export const getAllCustomerDefaultDiscounts = async (center_id: any, customer_id
      sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
      sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gsteighteen, 
 		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gsttwentyeight,
-		 c.id as id, d.startdate  
+		 c.id as id, d.start_date  
 FROM 
 	customer c,
     discount d
@@ -177,7 +177,7 @@ FROM
 		query +
 		` 
     group by 
-    c.name, d.type, d.brand_id, c.id, d.startdate   
+    c.name, d.type, d.brand_id, c.id, d.start_date   
     order by
     c.name
 	`;
@@ -197,7 +197,7 @@ export const getDiscountsByCustomer = async (center_id: any, customerid: any) =>
      sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
      sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gsteighteen, 
 		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gsttwentyeight,
-		 c.id as id, d.startdate  
+		 c.id as id, d.start_date  
 FROM 
 	customer c,
     discount d
@@ -207,7 +207,7 @@ FROM
 		c.id = ? and
 		d.customer_id = ?
     group by 
-    c.name, d.type, d.brand_id,c.id, d.startdate      
+    c.name, d.type, d.brand_id,c.id, d.start_date      
     order by
     c.name
 	`;
@@ -227,7 +227,7 @@ export const getDiscountsByCustomerByBrand = async (center_id: any, customerid: 
      sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
      sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gsteighteen, 
 		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gsttwentyeight,
-		 c.id as id, d.startdate  
+		 c.id as id, d.start_date  
 FROM 
 	customer c,
     discount d,
@@ -240,7 +240,7 @@ FROM
 		b.center_id = d.center_id and
 		d.customer_id = ?
     group by 
-    c.name, d.type, d.brand_id, b.name, c.id, d.startdate      
+    c.name, d.type, d.brand_id, b.name, c.id, d.start_date      
     order by
     c.name, b.name
 
@@ -261,7 +261,7 @@ export const getDiscountsByAllCustomerByBrand = (center_id: any, callback: any) 
      sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
      sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gsteighteen, 
 		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gsttwentyeight,
-		 c.id as id, d.startdate  
+		 c.id as id, d.start_date  
 FROM 
 	customer c,
     discount d,
@@ -272,7 +272,7 @@ FROM
 		d.center_id = ? 
     
     group by 
-    c.name, d.type, d.brand_id, b.name, c.id, d.startdate      
+    c.name, d.type, d.brand_id, b.name, c.id, d.start_date      
     order by
     c.name, b.name
 
@@ -305,7 +305,7 @@ export const updateDefaultCustomerDiscount = async (updateValues: any) => {
 	when gst_slab = 28 then '${updateValues.gsttwentyeight}'
 
 									end),
-									startdate = '${toTimeZone(updateValues.effDiscStDate, 'Asia/Kolkata')}',
+									start_date = '${toTimeZone(updateValues.effDiscStDate, 'Asia/Kolkata')}',
 			type= '${updateValues.disctype}'
 	WHERE 
 	brand_id = '${updateValues.brand_id}' and
@@ -356,10 +356,10 @@ export const getCustomerDetails = async (center_id: any, customerid: any) => {
 };
 
 // fetch rows from customer tbl & customer shipping addres tbl
-export const getSearchCustomers = (center_id: any, searchstr: any) => {
+export const getSearchCustomers = (center_id: any, search_text: any) => {
 	let query = `
 	select c.id, c.center_id, c.name, c.address1, c.address2, c.address3, c.district, s.code, s.description,
-	c.pin, c.gst, c.phone, c.mobile, c.mobile2, c.whatsapp,  c.email, c.isactive,
+	c.pin, c.gst, c.phone, c.mobile, c.mobile2, c.whatsapp,  c.email, c.is_active,
 		csa.state_id as csa_state,
 csa.address1 as csa_address1,
 csa.address2 as csa_address2, 
@@ -377,13 +377,11 @@ s1.code as csa_code
 	s1.id = csa.state_id and
 	csa.customer_id = c.id and
 	csa.def_address = 'Y' and
-	c.state_id = s.id and isactive = 'A' and center_id = '${center_id}'  and
-	( LOWER(c.name) like LOWER('%${searchstr}%')) 
+	c.state_id = s.id and c.is_active = 'A' and c.center_id = '${center_id}'  and
+	( LOWER(c.name) like LOWER('%${search_text}%')) 
 	limit 50 `;
 
-	let values = [center_id, searchstr];
-
-	return promisifyQuery(query, values);
+	return promisifyQuery(query);
 };
 
 // insert row in customer tbl
@@ -406,8 +404,8 @@ export const insertDiscountsByBrands = (insertValues: any, callback: any) => {
 			type: insertValues.disctype,
 			value: e.gstvalue,
 			gst_slab: e.gstslab,
-			startdate: toTimeZone(insertValues.effDiscStDate, 'Asia/Kolkata'),
-			enddate: '01-04-9999',
+			start_date: toTimeZone(insertValues.effDiscStDate, 'Asia/Kolkata'),
+			end_date: '01-04-9999',
 		};
 
 		insertCustomerDiscount(formObj);

@@ -17,13 +17,13 @@ const searchProduct = catchAsync(async (req, res) => {
 });
 
 const searchCustomer = catchAsync(async (req, res) => {
-	const data = await customersService.getSearchCustomers(req.user.center_id, req.body.searchstr);
+	const data = await customersService.getSearchCustomers(req.user.center_id, req.body.search_text);
 
 	return responseForward(data, 'searchCustomer', res);
 });
 
 const searchVendors = catchAsync(async (req, res) => {
-	const data = await vendorsService.getSearchVendors(req.user.center_id, req.body.searchstr);
+	const data = await vendorsService.getSearchVendors(req.user.center_id, req.body.search_text);
 
 	return responseForward(data, 'searchVendors', res);
 });
@@ -52,7 +52,7 @@ const getAllActiveVendors = catchAsync(async (req, res) => {
 });
 
 const getAllActiveBrands = catchAsync(async (req, res) => {
-	const data = await brandsService.getAllBrands(req.user.center_id, req.params.status);
+	const data = await brandsService.getAllBrands(Number(req.user.center_id), req.params.status);
 	return responseForward(data, 'getAllActiveBrands', res);
 });
 
@@ -67,7 +67,7 @@ const isCustomerExists = catchAsync(async (req, res) => {
 });
 
 const isBrandExists = catchAsync(async (req, res) => {
-	const data = await brandsService.isBrandExists(req.params.name, req.user.center_id);
+	const data = await brandsService.isBrandExists(Number(req.user.center_id), req.params.name);
 
 	return responseForward(data, 'isBrandExists', res);
 });

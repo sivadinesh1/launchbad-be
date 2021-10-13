@@ -1,111 +1,37 @@
 import prisma from '../config/prisma';
+import { IBrand } from '../domain/Brand';
+
+import BrandRepo from '../repos/brand.repo';
 
 const { currentTimeInTimeZone, bigIntToString } = require('../utils/utils');
 
-const insertBrand = async (insertValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-	const result = await prisma.brand.create({
-		data: {
-			center_id: Number(insertValues.center_id),
-			name: insertValues.name,
-			createdAt: new Date(today),
-			is_active: 'A',
-		},
-	});
-	return result;
-};
+export async function insertBrand(brand: IBrand) {
+	return BrandRepo.addBrand(brand);
+}
 
-export const updateBrand = async (updateValues: any, id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+export async function updateBrand(brand: IBrand) {
+	return BrandRepo.updateBrand(brand);
+}
 
-	const result = await prisma.brand.update({
-		where: {
-			id: Number(id),
-		},
-		data: {
-			center_id: Number(updateValues.center_id),
-			name: updateValues.name,
-		},
-	});
+export async function getAllBrands(center_id: number, status: string) {
+	return BrandRepo.getAllBrands(center_id, status);
+}
 
-	return bigIntToString(result);
-};
+export async function isBrandExists(center_id: number, brand_name: string) {
+	return BrandRepo.isBrandExists(+center_id, brand_name);
+}
 
-export const getAllBrands = async (center_id: any, status: any) => {
-	const result = await prisma.brand.findMany({
-		where: {
-			center_id: Number(center_id),
-			is_active: status,
-		},
-		orderBy: {
-			name: 'asc',
-		},
-	});
-	return bigIntToString(result);
-};
+export async function deleteBrand(id: number) {
+	return BrandRepo.deleteBrand(id);
+}
 
-const getBrandsMissingDiscountsByCustomer = async (center_id: any, status: any, customer_id: any) => {
-	const distinctBrands = await prisma.discount.findMany({
-		distinct: ['brand_id'],
-		where: {
-			center_id: Number(center_id),
+export async function getBrandsMissingDiscountsByCustomer(center_id: any, status: any, customer_id: any) {
+	return BrandRepo.getBrandsMissingDiscountsByCustomer(center_id, status, customer_id);
+}
 
-			customer_id: Number(customer_id),
-		},
-	});
-
-	const allBrands = await getAllBrands(center_id, status);
-
-	const missingBrands = allBrands.filter((brand: any) => {
-		return distinctBrands.find((item) => item.brand_id !== brand.id);
-	});
-
-	return bigIntToString(missingBrands);
-};
-
-const getSearchBrands = async (center_id: any, search_text: any) => {
-	const filteredBrands = await prisma.brand.findMany({
-		where: {
-			name: {
-				contains: 'search_text',
-			},
-			center_id: Number(center_id),
-		},
-		select: {
-			id: true,
-			center_id: true,
-			name: true,
-			is_active: true,
-		},
-	});
-	return bigIntToString(filteredBrands);
-};
-
-export const isBrandExists = async (center_id: any, name: any) => {
-	let brandCount = await prisma.brand.count({
-		where: {
-			name: name,
-			center_id: Number(center_id),
-		},
-	});
-
-	return { result: brandCount };
-};
-
-export const deleteBrand = async (id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-
-	const result = await prisma.brand.update({
-		where: {
-			id: Number(id),
-		},
-		data: {
-			is_active: 'D',
-		},
-	});
-
-	return bigIntToString(result);
-};
+export async function getSearchBrands(center_id: any, search_text: any) {
+	return BrandRepo.getSearchBrands(center_id, search_text);
+}
 
 module.exports = {
 	insertBrand,

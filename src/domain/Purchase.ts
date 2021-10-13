@@ -6,13 +6,13 @@ export interface IPurchase {
 	center_id: number;
 	vendor_id: number;
 	invoice_no: string;
-	invoice_date: string;
+	invoice_date: Date;
 	lr_no: string;
-	lr_date: string;
-	received_date: string;
+	lr_date: Date;
+	received_date: Date;
 	purchase_type: string;
 	order_no: string;
-	order_date: string;
+	order_date: Date;
 	total_quantity: number;
 	no_of_items: number;
 	taxable_value: number;
@@ -47,13 +47,17 @@ export class Purchase implements IPurchase {
 	vendor_id: number;
 
 	invoice_no: string;
-	invoice_date: string;
+	@Type(() => Date)
+	invoice_date: Date;
 	lr_no: string;
-	lr_date: string;
-	received_date: string;
+	@Type(() => Date)
+	lr_date: Date;
+	@Type(() => Date)
+	received_date: Date;
 	purchase_type: string;
 	order_no: string;
-	order_date: string;
+	@Type(() => Date)
+	order_date: Date;
 
 	@Type(() => Number)
 	total_quantity: number;
@@ -103,13 +107,13 @@ export class Purchase implements IPurchase {
 
 		vendor_id: number,
 		invoice_no: string,
-		invoice_date: string,
+		invoice_date: Date,
 		lr_no: string,
-		lr_date: string,
-		received_date: string,
+		lr_date: Date,
+		received_date: Date,
 		purchase_type: string,
 		order_no: string,
-		order_date: string,
+		order_date: Date,
 		total_quantity: number,
 		no_of_items: number,
 		taxable_value: number,

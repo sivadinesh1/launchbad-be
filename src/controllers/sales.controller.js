@@ -5,7 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const { salesService } = require('../services');
 
 const getNextSaleInvoiceNoAsync = catchAsync(async (req, res) => {
-	const data = await salesService.getNextSaleInvoiceNoAsync(req.user.center_id, req.params.invoicetype);
+	const data = await salesService.getNextSaleInvoiceNoAsync(req.user.center_id, req.params.invoice_type);
 	return responseForward(data, 'getNextSaleInvoiceNoAsync', res);
 });
 

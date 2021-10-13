@@ -9,7 +9,7 @@ export interface IVendorPayment {
 	vendor_id: number;
 	payment_now_amt: number;
 	advance_amt_used: number;
-	payment_date: string;
+	payment_date: Date;
 	payment_mode_ref_id: string;
 	bank_ref: string;
 	payment_ref: string;
@@ -38,7 +38,8 @@ export class VendorPayment implements IVendorPayment {
 	payment_now_amt: number;
 	@Type(() => Number)
 	advance_amt_used: number;
-	payment_date: string;
+	@Type(() => Date)
+	payment_date: Date;
 	payment_mode_ref_id: string;
 	bank_ref: string;
 	payment_ref: string;
@@ -65,7 +66,7 @@ export class VendorPayment implements IVendorPayment {
 		vendor_id: number,
 		payment_now_amt: number,
 		advance_amt_used: number,
-		payment_date: string,
+		payment_date: Date,
 		payment_mode_ref_id: string,
 		bank_ref: string,
 		payment_ref: string,

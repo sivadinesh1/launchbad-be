@@ -1,5 +1,7 @@
 import { plainToClass } from 'class-transformer';
+import { Brand, IBrand } from '../domain/Brand';
 import { IProduct, Product } from '../domain/Product';
+import { IVendor, Vendor } from '../domain/Vendor';
 import { ProductMap } from '../mappers/product.mapper';
 
 const httpStatus = require('http-status');
@@ -106,23 +108,36 @@ const getTimezones = catchAsync(async (req: any, res: any) => {
 });
 
 const updateVendor = catchAsync(async (req: any, res: any) => {
-	const data = await vendorsService.updateVendor(req.body, req.params.id);
+	let vendor = plainToClass(Vendor, req.body as IVendor);
+
+	vendor.updated_by = Number(req.user.id);
+	const data = await vendorsService.updateVendor(vendor);
 	return responseForward(data, 'updateVendor', res);
 });
 
-const updateBrand = catchAsync(async (req: any, res: any) => {
-	const data = await brandsService.updateBrand(req.body, req.params.id);
+export const updateBrand = catchAsync(async (req: any, res: any) => {
+	let brand = plainToClass(Brand, req.body as IBrand);
+
+	brand.updated_by = Number(req.user.id);
+
+	const data = await brandsService.updateBrand(brand);
 	return responseForward(data, 'updateBrand', res);
 });
 
 const addVendor = catchAsync(async (req: any, res: any) => {
+	let vendor = plainToClass(Brand, req.body as IVendor);
+
+	vendor.created_by = Number(req.user.id);
+
 	const data = await vendorsService.insertVendor(req.body);
 	return responseForward(data, 'addVendor', res, httpStatus.CREATED);
 });
-// console.info(status[500]);
-// console.info(status[status.INTERNAL_SERVER_ERROR]);
+
 const addBrand = catchAsync(async (req: any, res: any) => {
-	const data = await brandsService.insertBrand(req.body);
+	let brand = plainToClass(Brand, req.body as IBrand);
+	brand.created_by = Number(req.user.id);
+
+	const data = await brandsService.insertBrand(brand);
 	return responseForward(data, 'addBrand', res);
 });
 

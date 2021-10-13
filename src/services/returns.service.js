@@ -91,10 +91,10 @@ function getSequenceCrNote(center_id) {
 	query = ` select concat("CN-",'${currentTimeInTimeZone('Asia/Kolkata', 'YY')}', "/", '${currentTimeInTimeZone(
 		'Asia/Kolkata',
 		'MM',
-	)}', "/", lpad(cr_note_seq, 5, "0")) as crNoteNo from financialyear 
+	)}', "/", lpad(cr_note_seq, 5, "0")) as crNoteNo from financial_year 
 				where 
 				center_id = '${center_id}' and  
-				CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
+				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 
 	let data = promisifyQuery(query);
 	return data[0].crNoteNo;
@@ -105,9 +105,9 @@ function updateCRSequenceGenerator(center_id) {
 	let query = '';
 
 	query = `
-		update financialyear set cr_note_seq = cr_note_seq + 1 where 
+		update financial_year set cr_note_seq = cr_note_seq + 1 where 
 		center_id = '${center_id}' and  
-		CURDATE() between str_to_date(startdate, '%d-%m-%Y') and str_to_date(enddate, '%d-%m-%Y') `;
+		CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 
 	return promisifyQuery(query);
 }
@@ -166,11 +166,11 @@ const getReturns = (center_id) => {
 	return promisifyQuery(query);
 };
 
-const saleReturnPaymentMaster = (center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, pymt_date) => {
+const saleReturnPaymentMaster = (center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, payment_date) => {
 	let query = `
-		insert into payment ( center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, pymt_date, pymt_mode_ref_id, pymt_ref)
+		insert into payment ( center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, payment_date, pymt_mode_ref_id, pymt_ref)
 		VALUES ( '${center_id}', '${customer_id}', '${payment_no}', '${payment_now_amt}',
-     '${advance_amt_used}', '${pymt_date}', (select id from payment_mode where center_id = '${center_id}' and pymt_mode_name = 'Credit Note'), 'Credit Note' ) `;
+     '${advance_amt_used}', '${payment_date}', (select id from payment_mode where center_id = '${center_id}' and pymt_mode_name = 'Credit Note'), 'Credit Note' ) `;
 
 	return promisifyQuery(query);
 };
@@ -376,7 +376,7 @@ const addSaleReturn = async (requestBody) => {
 
 	// add payment master
 	// nst saleReturnPaymentMaster = (center_id, customer_id, payment_no,
-	// 	payment_now_amt, advance_amt_used, pymt_date ) => {
+	// 	payment_now_amt, advance_amt_used, payment_date ) => {
 	let newPK = await saleReturnPaymentMaster(smd.center_id, smd.customer_id, pymtNo, smd.to_return_amount, '0', today, res);
 
 	// (3) - updates pymt details

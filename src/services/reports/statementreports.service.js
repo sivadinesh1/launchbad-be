@@ -35,7 +35,7 @@ const getStatement = (requestBody) => {
 		query +
 		` union
 			select 
-				p.bank_ref refn, p.pymt_date ref_date, "Payment" type,
+				p.bank_ref refn, p.payment_date ref_date, "Payment" type,
 				(select c.name from customer c where c.id = p.customer_id) name 	,
 				(select c.district from customer c where c.id = p.customer_id) place, 
 				"" invoice_amount , p.payment_now_amt Received_Amount, p.customer_id as id 
@@ -49,7 +49,7 @@ const getStatement = (requestBody) => {
 	query =
 		query +
 		`
-				and str_to_date(p.pymt_date,  '%d-%m-%Y %T') between
+				and str_to_date(p.payment_date,  '%d-%m-%Y %T') between
 				str_to_date('${start_date}',  '%d-%m-%Y %T') and
 				str_to_date('${end_date}',  '%d-%m-%Y %T') 	
 				`;
@@ -96,8 +96,8 @@ const getItemWiseSale = (requestBody) => {
 	let brand_id = requestBody.brand_id;
 	let sale_type = requestBody.sale_type;
 
-	let start_date = toTimeZone(requestBody.startdate, 'Asia/Kolkata') + ' 00:00:00';
-	let end_date = toTimeZone(requestBody.enddate, 'Asia/Kolkata') + ' 23:59:59';
+	let start_date = toTimeZone(requestBody.start_date, 'Asia/Kolkata') + ' 00:00:00';
+	let end_date = toTimeZone(requestBody.end_date, 'Asia/Kolkata') + ' 23:59:59';
 
 	let query = ` 
 		select 
@@ -188,7 +188,7 @@ const getReceivablesClosingBalance = (requestBody) => {
 					and c2.center_id = p2.center_id 
 					and c2.id = p2.customer_id `;
 
-	query = query + ` and  STR_TO_DATE(p2.pymt_date,'%d-%m-%y') <= STR_TO_DATE('${end_date}','%d-%m-%y') 	`;
+	query = query + ` and  STR_TO_DATE(p2.payment_date,'%d-%m-%y') <= STR_TO_DATE('${end_date}','%d-%m-%y') 	`;
 
 	query =
 		query +
@@ -245,7 +245,7 @@ const getReceivablesOpeningBalance = (requestBody) => {
 					and c2.center_id = p2.center_id 
 					and c2.id = p2.customer_id `;
 
-	query = query + ` and  STR_TO_DATE(p2.pymt_date,'%d-%m-%y') < STR_TO_DATE('${start_date}','%d-%m-%y') 	`;
+	query = query + ` and  STR_TO_DATE(p2.payment_date,'%d-%m-%y') < STR_TO_DATE('${start_date}','%d-%m-%y') 	`;
 
 	query =
 		query +

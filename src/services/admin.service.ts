@@ -158,14 +158,12 @@ export const insertBank = async (insertValues: any) => {
 	const result = await prisma.center_banks.create({
 		data: {
 			center_id: Number(insertValues.center_id),
-			bankname: insertValues.bankname,
-			accountname: insertValues.accountname,
-			accountno: insertValues.accountno,
-			ifsccode: insertValues.ifsccode,
+			bank_name: insertValues.bank_name,
+			account_name: insertValues.account_name,
+			account_no: insertValues.account_no,
+			ifsc_code: insertValues.ifsc_code,
 			branch: insertValues.branchdetails,
-			isdefault: insertValues.isdefault === true ? 'Y' : 'N',
-			createddate: new Date(today),
-			createdby: insertValues.createdby,
+			is_default: insertValues.is_default === true ? 'Y' : 'N',
 		},
 	});
 	return 'success';
@@ -191,28 +189,26 @@ export const updateBkInfo = async (updateValues: any) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 	let id = updateValues.id;
 
-	let bankname = updateValues.bankname;
-	let accountname = updateValues.accountname;
-	let accountno = updateValues.accountno;
-	let ifsccode = updateValues.ifsccode;
-	let branch = updateValues.branchdetails;
-	let isdefault = updateValues.isdefault === true ? 'Y' : 'N';
-	let updatedby = updateValues.updatedby;
-	let updateddate = new Date(today);
+	let bank_name = updateValues.bank_name;
+	let account_name = updateValues.account_name;
+	let account_no = updateValues.account_no;
+	let ifsc_code = updateValues.ifsc_code;
+	let branch = updateValues.branch_details;
+	let is_default = updateValues.isdefault === true ? 'Y' : 'N';
+	let updated_by = updateValues.updated_by;
 
 	const result = await prisma.center_banks.update({
 		where: {
 			id: Number(id),
 		},
 		data: {
-			bankname: bankname,
-			accountname: accountname,
-			accountno: accountno,
-			ifsccode: ifsccode,
+			bank_name: bank_name,
+			account_name: account_name,
+			account_no: account_no,
+			ifsc_code: ifsc_code,
 			branch: branch,
-			isdefault: isdefault,
-			updatedby: updatedby,
-			updateddate: updateddate,
+			is_default: is_default,
+			updated_by: updated_by,
 		},
 	});
 
@@ -222,10 +218,10 @@ export const updateBkInfo = async (updateValues: any) => {
 export const updateCenterBankInfo = async (updateValues: any) => {
 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
 	let id = updateValues.center_id;
-	let bankname = `${updateValues.bankname}, IFSC: ${updateValues.ifsccode}`;
-	let accountname = updateValues.accountname;
-	let accountno = updateValues.accountno;
-	let ifsccode = updateValues.ifsc;
+	let bank_name = `${updateValues.bank_name}, IFSC: ${updateValues.ifsccode}`;
+	let account_name = updateValues.account_name;
+	let account_no = updateValues.account_no;
+	let ifsc_code = updateValues.ifsc;
 	let branch = updateValues.branchdetails;
 
 	const result = await prisma.center.update({
@@ -233,10 +229,10 @@ export const updateCenterBankInfo = async (updateValues: any) => {
 			id: Number(id),
 		},
 		data: {
-			bankname: bankname,
-			accountname: accountname,
-			accountno: accountno,
-			ifsccode: ifsccode,
+			bank_name: bank_name,
+			account_name: account_name,
+			account_no: account_no,
+			ifsc_code: ifsc_code,
 			branch: branch,
 		},
 	});
@@ -254,7 +250,7 @@ export const updateBankDefaults = async (updateValues: any) => {
 			center_id: Number(center_id),
 		},
 		data: {
-			isdefault: 'N',
+			is_default: 'N',
 		},
 	});
 
