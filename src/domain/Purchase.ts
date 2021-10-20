@@ -15,7 +15,7 @@ export interface IPurchase {
 	order_date: Date;
 	total_quantity: number;
 	no_of_items: number;
-	taxable_value: number;
+	after_tax_value: number;
 	cgs_t: number;
 	sgs_t: number;
 	igs_t: number;
@@ -66,7 +66,7 @@ export class Purchase implements IPurchase {
 	no_of_items: number;
 
 	@Type(() => Number)
-	taxable_value: number;
+	after_tax_value: number;
 	@Type(() => Number)
 	cgs_t: number;
 	@Type(() => Number)
@@ -116,7 +116,7 @@ export class Purchase implements IPurchase {
 		order_date: Date,
 		total_quantity: number,
 		no_of_items: number,
-		taxable_value: number,
+		after_tax_value: number,
 		cgs_t: number,
 		sgs_t: number,
 		igs_t: number,
@@ -150,7 +150,7 @@ export class Purchase implements IPurchase {
 		this.order_date = order_date;
 		this.total_quantity = total_quantity;
 		this.no_of_items = no_of_items;
-		this.taxable_value = taxable_value;
+		this.after_tax_value = after_tax_value;
 		this.cgs_t = cgs_t;
 		this.sgs_t = sgs_t;
 		this.igs_t = igs_t;

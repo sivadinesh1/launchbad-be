@@ -11,17 +11,20 @@ export interface ISaleDetail {
 	quantity: number;
 	unit_price: number;
 	mrp: string;
-	batch_date: Date;
+
 	tax: number;
 	igs_t: number;
 	cgs_t: number;
 	sgs_t: number;
-	taxable_value: number;
+	after_tax_value: number;
 	total_value: number;
 	disc_value: number;
 	disc_percent: number;
-	disc_type: string;
-	returned: string;
+	batch_date?: Date;
+	disc_type?: string;
+	returned?: string;
+
+	old_val: number;
 
 	createdAt?: Date;
 	updatedAt?: Date;
@@ -59,7 +62,7 @@ export class SaleDetail implements ISaleDetail {
 	@Type(() => Number)
 	sgs_t: number;
 	@Type(() => Number)
-	taxable_value: number;
+	after_tax_value: number;
 	@Type(() => Number)
 	total_value: number;
 	@Type(() => Number)
@@ -69,6 +72,9 @@ export class SaleDetail implements ISaleDetail {
 	disc_type: string;
 	returned: string;
 
+	@Type(() => Number)
+	old_val: number;
+
 	@Type(() => Date)
 	createdAt: Date;
 	@Type(() => Date)
@@ -76,7 +82,7 @@ export class SaleDetail implements ISaleDetail {
 	@Type(() => Number)
 	created_by: number;
 	@Type(() => Number)
-	updated_by: number;
+	updated_by?: number;
 
 	constructor(
 		id: number,
@@ -93,12 +99,14 @@ export class SaleDetail implements ISaleDetail {
 		igs_t: number,
 		cgs_t: number,
 		sgs_t: number,
-		taxable_value: number,
+		after_tax_value: number,
 		total_value: number,
 		disc_value: number,
 		disc_percent: number,
 		disc_type: string,
 		returned: string,
+
+		old_val: number,
 
 		createdAt: Date,
 		updatedAt: Date,
@@ -119,12 +127,14 @@ export class SaleDetail implements ISaleDetail {
 		this.igs_t = igs_t;
 		this.cgs_t = cgs_t;
 		this.sgs_t = sgs_t;
-		this.taxable_value = taxable_value;
+		this.after_tax_value = after_tax_value;
 		this.total_value = total_value;
 		this.disc_value = disc_value;
 		this.disc_percent = disc_percent;
 		this.disc_type = disc_type;
 		this.returned = returned;
+
+		this.old_val = old_val;
 
 		this.createdAt = createdAt;
 		this.updatedAt = updatedAt;

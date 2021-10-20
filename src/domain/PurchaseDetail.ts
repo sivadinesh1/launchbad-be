@@ -15,7 +15,7 @@ export interface IPurchaseDetail {
 	igs_t: number;
 	cgs_t: number;
 	sgs_t: number;
-	taxable_value: number;
+	after_tax_value: number;
 	total_value: number;
 
 	createdAt?: Date;
@@ -43,7 +43,7 @@ export class PurchaseDetail implements IPurchaseDetail {
 	igs_t: number;
 	cgs_t: number;
 	sgs_t: number;
-	taxable_value: number;
+	after_tax_value: number;
 	total_value: number;
 
 	@Type(() => Date)
@@ -70,7 +70,7 @@ export class PurchaseDetail implements IPurchaseDetail {
 		igs_t: number,
 		cgs_t: number,
 		sgs_t: number,
-		taxable_value: number,
+		after_tax_value: number,
 		total_value: number,
 
 		createdAt: Date,
@@ -92,7 +92,7 @@ export class PurchaseDetail implements IPurchaseDetail {
 		this.igs_t = igs_t;
 		this.cgs_t = cgs_t;
 		this.sgs_t = sgs_t;
-		this.taxable_value = taxable_value;
+		this.after_tax_value = after_tax_value;
 		this.total_value = total_value;
 
 		this.createdAt = createdAt;

@@ -221,7 +221,7 @@ FROM
 export const getDiscountsByCustomerByBrand = async (center_id: any, customerid: any) => {
 	let query = ` 
 	SELECT 
-	c.name,  b.name as 'brand_name',  d.type, d.brand_id as brand_id, 
+	c.name,  b.brand_name as 'brand_name',  d.type, d.brand_id as brand_id, 
      sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gstzero,  
      sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gstfive, 
      sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
@@ -240,9 +240,9 @@ FROM
 		b.center_id = d.center_id and
 		d.customer_id = ?
     group by 
-    c.name, d.type, d.brand_id, b.name, c.id, d.start_date      
+    c.name, d.type, d.brand_id, b.brand_name, c.id, d.start_date      
     order by
-    c.name, b.name
+    c.name, b.brand_name
 
 	`;
 
@@ -255,7 +255,7 @@ FROM
 export const getDiscountsByAllCustomerByBrand = (center_id: any, callback: any) => {
 	let query = ` 
 	SELECT 
-	c.name,  b.name as 'brand_name',  d.type, d.brand_id as brand_id, 
+	c.name,  b.brand_name as 'brand_name',  d.type, d.brand_id as brand_id, 
      sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gstzero,  
      sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gstfive, 
      sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
@@ -272,9 +272,9 @@ FROM
 		d.center_id = ? 
     
     group by 
-    c.name, d.type, d.brand_id, b.name, c.id, d.start_date      
+    c.name, d.type, d.brand_id, b.brand_name, c.id, d.start_date      
     order by
-    c.name, b.name
+    c.name, b.brand_name
 
 	`;
 

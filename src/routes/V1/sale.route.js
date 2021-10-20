@@ -8,7 +8,7 @@ router.route('/get-next-sale-invoice-no/:invoice_type').get(auth('getUsers'), sa
 
 router.route('/delete-sales-details').post(auth('getUsers'), salesController.deleteSalesDetails);
 
-router.route('/insert-sale-details').post(auth('getUsers'), salesController.insertSaleDetails);
+router.route('/insert-sale-details').post(auth('getUsers'), salesController.insertSale);
 
 router.route('/convert-sale').post(auth('getUsers'), salesController.convertSale);
 

@@ -57,12 +57,12 @@ const insertSaleReturnDetail = async (srd, sale_return_id, smd, res) => {
 const insertSaleDetailReturn = (srd, sale_return_id, smd) => {
 	let query = ` INSERT INTO sale_return_detail(sale_return_id, sale_id, sale_detail_id, return_qty, 
               reason, disc_percent, tax, mrp,
-              igst, cgst, sgst, orig_sold_qty, taxable_value, total_value, hsncode, unit)
+              igst, cgst, sgst, orig_sold_qty, after_tax_value, total_value, hsncode, unit)
               VALUES
               ( '${sale_return_id}', '${smd.sale_id}', '${srd.id}', '${srd.received_now}', 
               '${srd.reason}', '${srd.disc_percent}', '${srd.tax}', 
               '${srd.mrp}', '${srd.igst}', '${srd.cgst}', '${srd.sgst}', 
-              '${srd.qty}', '${srd.taxable_value}', '${srd.total_value}', '${srd.hsncode}', '${srd.unit}' ) `;
+              '${srd.qty}', '${srd.after_tax_value}', '${srd.total_value}', '${srd.hsncode}', '${srd.unit}' ) `;
 
 	let data = promisifyQuery(query);
 	return data.insertId;

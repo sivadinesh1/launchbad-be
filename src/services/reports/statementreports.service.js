@@ -2,7 +2,7 @@ var pool = require('../../config/db');
 const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../../utils/utils');
 
 const getStatement = (requestBody) => {
-	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
+	const [center_id, customer_id, start, end, invoice_type] = Object.values(requestBody);
 	let start_date = toTimeZoneFormat(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
 	let end_date = toTimeZoneFormat(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
 
@@ -15,7 +15,7 @@ const getStatement = (requestBody) => {
 			, s.net_total invoice_amount , "" Received_Amount, s.customer_id as id 
 			From  sale s 
 		where s.center_id = '${center_id}'
-		and s.sale_type = '${sale_type}'
+		and s.invoice_type = '${invoice_type}'
 		and s.status = 'C'
 		 `;
 
@@ -94,7 +94,7 @@ any_value((select p.vendor_payment_no from vendor_payment p where p.id = l.payme
 const getItemWiseSale = (requestBody) => {
 	let center_id = requestBody.center_id;
 	let brand_id = requestBody.brand_id;
-	let sale_type = requestBody.sale_type;
+	let invoice_type = requestBody.invoice_type;
 
 	let start_date = toTimeZone(requestBody.start_date, 'Asia/Kolkata') + ' 00:00:00';
 	let end_date = toTimeZone(requestBody.end_date, 'Asia/Kolkata') + ' 23:59:59';
@@ -104,9 +104,9 @@ const getItemWiseSale = (requestBody) => {
 			p2.product_code , 
 			p2.description , 
 			p2.brand_id , 
-			b.name as brand_name,
+			b.brand_name as brand_name,
 			sum(sd.qty) qty, 
-			sum(sd.taxable_value)/sum(sd.qty) avg_SP 
+			sum(sd.after_tax_value)/sum(sd.qty) avg_SP 
 		from 
 			sale s2 , 
 			sale_detail sd , 
@@ -122,8 +122,8 @@ const getItemWiseSale = (requestBody) => {
 		query = query + ` and p2.brand_id = '${brand_id}' `;
 	}
 
-	if (sale_type !== 'all') {
-		query = query + ` and s2.sale_type  = '${sale_type}' `;
+	if (invoice_type !== 'all') {
+		query = query + ` and s2.invoice_type  = '${invoice_type}' `;
 	}
 
 	query =
@@ -146,7 +146,7 @@ const getItemWiseSale = (requestBody) => {
 };
 
 const getReceivablesClosingBalance = (requestBody) => {
-	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
+	const [center_id, customer_id, start, end, invoice_type] = Object.values(requestBody);
 
 	let start_date = toTimeZoneFormat(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
 	let end_date = toTimeZoneFormat(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
@@ -158,7 +158,7 @@ const getReceivablesClosingBalance = (requestBody) => {
 						from sale s , customer c2 
 						where s.center_id = '${center_id}'
 						and s.status = 'C'
-						and s.sale_type = '${sale_type}' `;
+						and s.invoice_type = '${invoice_type}' `;
 
 	if (customer_id !== 'all') {
 		query = query + ` and s.customer_id = '${customer_id}' `;
@@ -203,7 +203,7 @@ const getReceivablesClosingBalance = (requestBody) => {
 };
 
 const getReceivablesOpeningBalance = (requestBody) => {
-	const [center_id, customer_id, start, end, sale_type] = Object.values(requestBody);
+	const [center_id, customer_id, start, end, invoice_type] = Object.values(requestBody);
 	let start_date = toTimeZoneFormat(start, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 00:00:00';
 	let end_date = toTimeZoneFormat(end, 'Asia/Kolkata', 'DD-MM-YYYY') + ' 23:59:59';
 
@@ -215,7 +215,7 @@ const getReceivablesOpeningBalance = (requestBody) => {
 						from sale s , customer c2 
 						where s.center_id = '${center_id}'
 						and s.status = 'C'
-						and s.sale_type = '${sale_type}' `;
+						and s.invoice_type = '${invoice_type}' `;
 
 	if (customer_id !== 'all') {
 		query = query + ` and s.customer_id = '${customer_id}' `;

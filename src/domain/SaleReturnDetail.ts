@@ -20,7 +20,7 @@ export interface ISaleReturnDetail {
 	cgs_t: number;
 	sgs_t: number;
 	orig_sold_qty: number;
-	taxable_value: number;
+	after_tax_value: number;
 	total_value: number;
 	hsn_code: string;
 	unit: string;
@@ -67,7 +67,7 @@ export class SaleReturnDetail implements ISaleReturnDetail {
 	@Type(() => Number)
 	orig_sold_qty: number;
 	@Type(() => Number)
-	taxable_value: number;
+	after_tax_value: number;
 	@Type(() => Number)
 	total_value: number;
 	hsn_code: string;
@@ -100,7 +100,7 @@ export class SaleReturnDetail implements ISaleReturnDetail {
 		cgs_t: number,
 		sgs_t: number,
 		orig_sold_qty: number,
-		taxable_value: number,
+		after_tax_value: number,
 		total_value: number,
 		hsn_code: string,
 		unit: string,
@@ -127,7 +127,7 @@ export class SaleReturnDetail implements ISaleReturnDetail {
 		this.cgs_t = cgs_t;
 		this.sgs_t = sgs_t;
 		this.orig_sold_qty = orig_sold_qty;
-		this.taxable_value = taxable_value;
+		this.after_tax_value = after_tax_value;
 		this.total_value = total_value;
 		this.hsn_code = hsn_code;
 		this.unit = unit;

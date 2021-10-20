@@ -274,10 +274,10 @@ model customer {
   is_active	        String?	    @db.VarChar(1)
   contact	          String?	    @db.VarChar(50)
   tin	              String?	    @db.VarChar(50)
-  panno	            String?	    @db.VarChar(50)
+  pan_no	          String?	    @db.VarChar(50)
   credit_amt	      Decimal?	  @db.Decimal(12,2)
   balance_amt	      Decimal?	  @db.Decimal(12,2)
-  last_paid_date    Decimal?	  @db.Decimal(12,2)
+  last_paid_date    DateTime?   
   createdAt	        DateTime?   @default(now())
   updatedAt	        DateTime?   @updatedAt
   created_by	      BigInt?
@@ -298,19 +298,18 @@ model sale {
   center_id	              BigInt?
   customer_id	            BigInt
   invoice_no	            String?	    @db.VarChar(50)
-  invoice_date	          String?	    @db.VarChar(50)
+  invoice_date	          DateTime?	    
   lr_no	                  String?	    @db.VarChar(50)
-  lr_date	                String?	    @db.VarChar(50)
-  received_date	          String?	    @db.VarChar(50)
-  sales_type	            String?	    @db.VarChar(50)
+  lr_date	                DateTime?	    
+  invoice_type	          String?	    @db.VarChar(50)
   order_no	              String?	    @db.VarChar(50)
-  order_date	            String?	    @db.VarChar(50)
-  total_qty               BigInt?
+  order_date	            DateTime?	    
+  total_quantity          Int?
   no_of_items	            Int?
-  taxable_value           Decimal?	  @db.Decimal(10,2)
-  cgs_t                   Decimal?	  @db.Decimal(10,2)
-  sgs_t                   Decimal?	  @db.Decimal(10,2)
-  igs_t                   Decimal?	  @db.Decimal(10,2)
+  after_tax_value           Decimal?	  @db.Decimal(10,2)
+  cgs_t                   Decimal?	  @db.Decimal(10,2) @default(0.00)
+  sgs_t                   Decimal?	  @db.Decimal(10,2) @default(0.00)
+  igs_t                   Decimal?	  @db.Decimal(10,2) @default(0.00)
   total_value	            Decimal?	  @db.Decimal(15,2)
   transport_charges	      Int?	
   unloading_charges       Int?
@@ -318,11 +317,11 @@ model sale {
   net_total               Decimal?	  @db.Decimal(15,2)
   no_of_boxes             Int?
   status                  String?	    @db.VarChar(1)
-  sale_date_time          String?	    @db.VarChar(50)
+  sale_date_time          DateTime?	  @default(now())
   revision                BigInt?
-  tax_applicable          String?	    @db.VarChar(50)
-  stock_issue_ref         String?	    @db.VarChar(150)
-  stock_issue_date_ref    String?	    @db.VarChar(50)
+  
+  stock_issue_ref         String?	    @db.VarChar(150)  @default("")
+  stock_issue_date_ref    DateTime?	    
   round_off               Decimal?	  @db.Decimal(10,2)
   retail_customer_name    String?	    @db.VarChar(150)
   retail_customer_address String?	    @db.VarChar(150)
@@ -352,16 +351,16 @@ model sale_detail {
   quantity                Int
   unit_price              Decimal?	  @db.Decimal(12,2) @default(0.00)
   mrp                     Decimal?	  @db.Decimal(12,2) @default(0.00)
-  batch_date              DateTime
+  batch_date              DateTime?    @default(now())
   tax                     Int
   igs_t                   Decimal?	  @db.Decimal(12,2) @default(0.00)
   cgs_t                   Decimal?	  @db.Decimal(12,2) @default(0.00)
   sgs_t                   Decimal?	  @db.Decimal(12,2) @default(0.00)
-  taxable_value           Decimal?	  @db.Decimal(12,2) @default(0.00)
+  after_tax_value         Decimal?	  @db.Decimal(12,2) @default(0.00)
   total_value             Decimal?	  @db.Decimal(12,2) @default(0.00)
   disc_value              Decimal?	  @db.Decimal(12,2) @default(0.00)
   disc_percent            Decimal?	  @db.Decimal(12,2) @default(0.00)
-  disc_type               String
+  disc_type               String?     @default("NET")
   returned                Int?
 
   createdAt	              DateTime?   @default(now())
@@ -423,7 +422,7 @@ model sale_return_detail {
   cgs_t                   Int?
   sgs_t                   Int?
   orig_sold_qty           Int?
-  taxable_value           Int?
+  after_tax_value           Int?
   total_value             Int?
   hsn_code                Int?
   unit                    Int?
@@ -627,7 +626,7 @@ model enquiry_detail {
 
   center              center      @relation(fields: [center_id], references: [id])
   enquiry             enquiry     @relation(fields: [enquiry_id], references: [id])
-  product             product     @relation(fields: [enquiry_id], references: [id])
+  product             product     @relation(fields: [product_id], references: [id])
   stock               stock       @relation(fields: [stock_id], references: [id])
 
 }
@@ -698,9 +697,9 @@ model ledger {
   invoice_ref_id      BigInt
   payment_ref_id      BigInt
   ledger_detail       String      @db.VarChar(50) @default("")
-  credit_amt          Decimal?	  @db.Decimal(12,2) @default(0.00) 
-  debit_amt           Decimal?	  @db.Decimal(12,2) @default(0.00)
-  balance_amt         Decimal?	  @db.Decimal(12,2) @default(0.00)
+  credit_amt          Decimal	  @db.Decimal(12,2) @default(0.00) 
+  debit_amt           Decimal	  @db.Decimal(12,2) @default(0.00)
+  balance_amt         Decimal	  @db.Decimal(12,2) @default(0.00)
   ledger_date         DateTime
  
   
@@ -797,15 +796,15 @@ model purchase {
   vendor_id             BigInt
   invoice_no            String      @db.VarChar(50) @default("")
   invoice_date          DateTime
-  lr_no                 String      @db.VarChar(50) @default("")
-  lr_date               DateTime
-  received_date         String
+  lr_no                 String?      @db.VarChar(50) @default("")
+  lr_date               DateTime?
+  received_date         String?
   purchase_type         String      @db.VarChar(50) @default("")
-  order_no              String      @db.VarChar(50) @default("")
-  order_date            DateTime
+  order_no              String?      @db.VarChar(50) @default("")
+  order_date            DateTime?
   total_quantity        Int 
   no_of_items           Int
-  taxable_value         Decimal?    @db.Decimal(12,2)  @default(0.00)
+  after_tax_value         Decimal?    @db.Decimal(12,2)  @default(0.00)
   cgs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00) 
   sgs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
   igs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
@@ -816,7 +815,7 @@ model purchase {
   net_total             Int
   no_of_boxes           Int
   status                String      @db.VarChar(1) @default("D")
-  stock_inwards_date_time String
+  stock_inwards_date_time DateTime?
   round_off             Decimal?    @db.Decimal(12,2)  @default(0.00)
   revision              Int         @default(0)
 
@@ -850,7 +849,7 @@ model purchase_detail {
   igs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
   cgs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
   sgs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
-  taxable_value         Decimal?    @db.Decimal(12,2)  @default(0.00)
+  after_tax_value         Decimal?    @db.Decimal(12,2)  @default(0.00)
   total_value           Decimal?    @db.Decimal(12,2)  @default(0.00)
 
   createdAt	            DateTime?   @default(now())

@@ -26,7 +26,20 @@ class StockRepo implements IStockRepo {
 		}
 	}
 
-	public async updateStock(stock: IStock) {
+	public async stockCount(product_id: number, prisma: any) {
+		const result = await prisma.stock.aggregate({
+			where: {
+				product_id: product_id,
+			},
+			_sum: {
+				available_stock: true,
+			},
+		});
+
+		return result._sum.available_stock;
+	}
+
+	public async stockCorrection(stock: IStock) {
 		try {
 			const result = await prisma.stock.updateMany({
 				where: {
@@ -45,6 +58,50 @@ class StockRepo implements IStockRepo {
 			return result;
 		} catch (error) {
 			console.log('error :: stock.repo.ts ' + error);
+			throw error;
+		}
+	}
+
+	public async stockMinus(qty_to_update: number, stock_pk: number, updated_by: number, prisma: any) {
+		try {
+			const result = await prisma.stock.updateMany({
+				where: {
+					id: stock_pk,
+				},
+
+				data: {
+					available_stock: {
+						decrement: qty_to_update,
+					},
+					updated_by: updated_by,
+				},
+			});
+
+			return result;
+		} catch (error) {
+			console.log('error :: stock.repo.ts : stockMinus:' + error);
+			throw error;
+		}
+	}
+
+	public async stockAdd(qty_to_update: number, stock_pk: number, updated_by: number, prisma: any) {
+		try {
+			const result = await prisma.stock.updateMany({
+				where: {
+					id: stock_pk,
+				},
+
+				data: {
+					available_stock: {
+						increment: qty_to_update,
+					},
+					updated_by: updated_by,
+				},
+			});
+
+			return result;
+		} catch (error) {
+			console.log('error :: stock.repo.ts : stockAdd: ' + error);
 			throw error;
 		}
 	}

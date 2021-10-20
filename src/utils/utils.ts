@@ -108,6 +108,22 @@ function currentTimeInTimeZone(zone: any, format: any) {
 	return moment(moment(), format).tz(zone).format(format);
 }
 
+export function getCurrentYear() {
+	return currentTimeInTimeZone('Asia/Kolkata', 'YY');
+}
+
+export function getCurrentMonth() {
+	return currentTimeInTimeZone('Asia/Kolkata', 'MM');
+}
+
+export function leftPad(value: string) {
+	return value.padStart(6, '0');
+}
+
+export function formatSequenceNumber(sequence: any, type: string = '') {
+	return `${type}${getCurrentYear()}/${getCurrentMonth()}/${leftPad(sequence)}`;
+}
+
 const encryptPassword = async (password: any) => {
 	try {
 		const hashedPassword = await bcrypt.hash(password, 10);
@@ -158,4 +174,7 @@ module.exports = {
 	promisifyQuery,
 	responseForward,
 	bigIntToString,
+	getCurrentYear,
+	getCurrentMonth,
+	formatSequenceNumber,
 };

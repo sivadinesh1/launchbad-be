@@ -116,7 +116,7 @@ function generateCustomerInformation(doc, customerdata, salemasterdata, print_sh
 		doc.fillColor('#000000').fontSize(13).font('Helvetica-Bold').text('To', 34, 117).font('Helvetica');
 	}
 
-	let invoice_type = salemasterdata.sale_type === 'gstInvoice' ? 'GST INVOICE' : 'STOCK ISSUE';
+	let invoice_type = salemasterdata.invoice_type === 'gstInvoice' ? 'GST INVOICE' : 'STOCK ISSUE';
 
 	doc.fillColor('#000000').fontSize(12).text(invoice_type, 440, 119, { align: 'center' });
 	doc.fillColor('#000000');
@@ -477,7 +477,7 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 			k.unit,
 			k.mrp,
 			k.disc_percent,
-			k.taxable_value,
+			k.after_tax_value,
 			k.sgst,
 			k.cgst,
 			k.total_value,
@@ -1397,7 +1397,7 @@ function getSumByTaxtypeAndTaxPercent(dataArr, tax_type, tax_percent) {
 			}
 		})
 		.reduce((a, c) => {
-			return a + c.taxable_value * (tax_percent / 100);
+			return a + c.after_tax_value * (tax_percent / 100);
 		}, 0);
 }
 
@@ -1413,7 +1413,7 @@ function getSumByTaxableByPercent(dataArr, tax_percent) {
 	return dataArr
 		.filter((arr) => arr.tax === tax_percent)
 		.reduce((a, c) => {
-			return a + c.taxable_value;
+			return a + c.after_tax_value;
 		}, 0);
 }
 

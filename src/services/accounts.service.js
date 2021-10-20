@@ -544,7 +544,7 @@ const getSaleInvoiceByCustomers = (requestBody) => {
 	let query = `	select s.id as sale_id, s.center_id as center_id, s.customer_id as customer_id, s.invoice_no as invoice_no, 
 	s.invoice_date as invoice_date, 
 	abs(datediff(STR_TO_DATE(s.invoice_date,'%d-%m-%Y'), CURDATE())) as aging_days,
-	s.net_total as invoice_amt, s.sale_type as sale_type, c.name as customer_name, c.address1 as customer_address1,
+	s.net_total as invoice_amt, s.invoice_type as invoice_type, c.name as customer_name, c.address1 as customer_address1,
 	c.address2 as customer_address2,
 	(select
 	(
@@ -568,7 +568,7 @@ const getSaleInvoiceByCustomers = (requestBody) => {
 	s.center_id = '${center_id}' and
 	s.customer_id = c.id and s.status = 'C'
 	and
-	s.sale_type= 'gstInvoice' 
+	s.invoice_type= 'gstInvoice' 
 	`;
 
 	if (customer_id !== undefined && searchtype === 'all') {
@@ -604,7 +604,7 @@ const getSaleInvoiceByCenter = (requestBody) => {
 	s.invoice_no as invoice_no, s.invoice_date as invoice_date, 
 	abs(datediff(STR_TO_DATE(s.invoice_date,'%d-%m-%Y'), CURDATE())) as aging_days,
 	s.net_total as invoice_amt, 
-	s.sale_type as sale_type, c.name as customer_name, c.address1 as customer_address1,
+	s.invoice_type as invoice_type, c.name as customer_name, c.address1 as customer_address1,
 	c.address2 as customer_address2,
 	(select
 	(
@@ -627,7 +627,7 @@ const getSaleInvoiceByCenter = (requestBody) => {
 	
 	s.center_id = '${center_id}' and
 	s.customer_id = c.id and
-	s.sale_type= 'gstInvoice'
+	s.invoice_type= 'gstInvoice'
 	`;
 
 	if (customer_id !== undefined && searchtype === 'all') {

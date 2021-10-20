@@ -8,7 +8,7 @@ const getProductInventoryReport = (requestBody) => {
 
 	let query = ` select ih.id, module, p.id as product_id, p.product_code as product_code, p.product_description as product_description,
   p.mrp as mrp,
-  b.name as brand_name,  ih.module,
+  b.brand_name as brand_name,  ih.module,
 
   (select invoice_no from purchase where id = ih.purchase_id) as pur_inv_no,
   (select invoice_no from sale where id = ih.sale_id) as invoice_no,
@@ -66,7 +66,7 @@ const getProductInventoryReportShort = (requestBody) => {
   p.product_type as product_type,
   p.product_code as product_code, p.product_description as product_description,
   p.mrp as mrp,
-  b.name as brand_name,  ih.module,
+  b.brand_name as brand_name,  ih.module,
 
   (select invoice_no from purchase where id = ih.purchase_id) as pur_inv_no,
   (select invoice_no from sale where id = ih.sale_id) as invoice_no,
@@ -141,7 +141,7 @@ const fullStockReport = (requestBody) => {
       `;
 	} else {
 		query = `
-      select b.name, p.product_code, p.product_description,
+      select b.brand_name, p.product_code, p.product_description,
       s.product_id, s.mrp, s.available_stock,
       p.unit, p.packet_size, p.hsn_code, 
       p.mrp, p.purchase_price,

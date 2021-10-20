@@ -5,7 +5,7 @@ const getProductSummaryReport = (requestBody) => {
 	const [center_id, start, end] = Object.values(requestBody);
 
 	let query = `
-  select p.id as id, c.name as center_name, b.name as brandname, p.product_code as code, p.product_description as description, p.hsn_code as hsn_code, p.unit as unit, p.packet_size as packet_size, p.unit_price as unit_price, 
+  select p.id as id, c.name as center_name, b.brand_name as brandname, p.product_code as code, p.product_description as description, p.hsn_code as hsn_code, p.unit as unit, p.packet_size as packet_size, p.unit_price as unit_price, 
 s.available_stock as available_stock, s.mrp as mrp, p.taxrate as tax_rate, 
 s.open_stock as open_stock, p.rack_info as rak_info,
 s.updatedAt as updatedAt

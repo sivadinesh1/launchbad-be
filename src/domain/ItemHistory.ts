@@ -22,91 +22,91 @@ export interface IItemHistory {
 	purchase_return_id: number;
 	purchase_return_det_id: number;
 
-	createdAt?: Date;
-	updatedAt?: Date;
-	created_by?: number;
-	updated_by?: number;
+	createdAt: Date;
+	updatedAt: Date;
+	created_by: number;
+	updated_by: number;
 }
 
 export class ItemHistory implements IItemHistory {
 	@Type(() => Number)
-	id: number;
+	id: number = 0;
 
 	@Type(() => Number)
-	center_id: number;
+	center_id: number = 0;
 
-	module: string;
-	product_ref_id: number;
-	purchase_id: number;
-	purchase_det_id: number;
-	sale_id: number;
-	sale_det_id: number;
-	action: string;
-	action_type: string;
-	txn_qty: number;
-	stock_level: number;
-	txn_date: Date;
-	sale_return_id: number;
-	sale_return_det_id: number;
-	purchase_return_id: number;
-	purchase_return_det_id: number;
+	module: string = '';
+	product_ref_id: number = 0;
+	purchase_id: number = 0;
+	purchase_det_id: number = 0;
+	sale_id: number = 0;
+	sale_det_id: number = 0;
+	action: string = '';
+	action_type: string = '';
+	txn_qty: number = 0;
+	stock_level: number = 0;
+	txn_date: Date = new Date();
+	sale_return_id: number = 0;
+	sale_return_det_id: number = 0;
+	purchase_return_id: number = 0;
+	purchase_return_det_id: number = 0;
 
 	@Type(() => Date)
-	createdAt: Date;
+	createdAt!: Date;
 	@Type(() => Date)
-	updatedAt: Date;
+	updatedAt!: Date;
 	@Type(() => Number)
-	created_by: number;
+	created_by!: number;
 	@Type(() => Number)
-	updated_by: number;
+	updated_by!: number;
 
-	constructor(
-		id: number,
-		center_id: number,
+	// constructor(
+	// 	id: number,
+	// 	center_id: number,
 
-		module: string,
-		product_ref_id: number,
-		purchase_id: number,
-		purchase_det_id: number,
-		sale_id: number,
-		sale_det_id: number,
-		action: string,
-		action_type: string,
-		txn_qty: number,
-		stock_level: number,
-		txn_date: Date,
-		sale_return_id: number,
-		sale_return_det_id: number,
-		purchase_return_id: number,
-		purchase_return_det_id: number,
+	// 	module: string,
+	// 	product_ref_id: number,
+	// 	purchase_id: number,
+	// 	purchase_det_id: number,
+	// 	sale_id: number,
+	// 	sale_det_id: number,
+	// 	action: string,
+	// 	action_type: string,
+	// 	txn_qty: number,
+	// 	stock_level: number,
+	// 	txn_date: Date,
+	// 	sale_return_id: number,
+	// 	sale_return_det_id: number,
+	// 	purchase_return_id: number,
+	// 	purchase_return_det_id: number,
 
-		createdAt: Date,
-		updatedAt: Date,
-		created_by: number,
-		updated_by: number,
-	) {
-		this.id = id;
-		this.center_id = center_id;
+	// 	createdAt: Date,
+	// 	updatedAt: Date,
+	// 	created_by: number,
+	// 	updated_by: number,
+	// ) {
+	// 	this.id = id;
+	// 	this.center_id = center_id;
 
-		this.module = module;
-		this.product_ref_id = product_ref_id;
-		this.purchase_id = purchase_id;
-		this.purchase_det_id = purchase_det_id;
-		this.sale_id = sale_id;
-		this.sale_det_id = sale_det_id;
-		this.action = action;
-		this.action_type = action_type;
-		this.txn_qty = txn_qty;
-		this.stock_level = stock_level;
-		this.txn_date = txn_date;
-		this.sale_return_id = sale_return_id;
-		this.sale_return_det_id = sale_return_det_id;
-		this.purchase_return_id = purchase_return_id;
-		this.purchase_return_det_id = purchase_return_det_id;
+	// 	this.module = module;
+	// 	this.product_ref_id = product_ref_id;
+	// 	this.purchase_id = purchase_id;
+	// 	this.purchase_det_id = purchase_det_id;
+	// 	this.sale_id = sale_id;
+	// 	this.sale_det_id = sale_det_id;
+	// 	this.action = action;
+	// 	this.action_type = action_type;
+	// 	this.txn_qty = txn_qty;
+	// 	this.stock_level = stock_level;
+	// 	this.txn_date = txn_date;
+	// 	this.sale_return_id = sale_return_id;
+	// 	this.sale_return_det_id = sale_return_det_id;
+	// 	this.purchase_return_id = purchase_return_id;
+	// 	this.purchase_return_det_id = purchase_return_det_id;
 
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-		this.created_by = created_by;
-		this.updated_by = updated_by;
-	}
+	// 	this.createdAt = createdAt;
+	// 	this.updatedAt = updatedAt;
+	// 	this.created_by = created_by;
+	// 	this.updated_by = updated_by;
+	// }
 }

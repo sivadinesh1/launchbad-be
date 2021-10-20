@@ -61,7 +61,7 @@
 		"cross-env": "^7.0.3",
 		"jest": "^27.0.6",
 		"nodemon": "^1.19.4",
-		"prisma": "^3.2.1",
+		"prisma": "^3.3.0",
 		"source-map-support": "^0.5.19",
 		"supertest": "^6.1.6",
 		"ts-node": "^10.2.1",

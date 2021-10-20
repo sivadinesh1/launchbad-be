@@ -41,7 +41,7 @@ function purchaseMasterEntry(cloneReq) {
 
 	let insQry = `
 			INSERT INTO purchase ( center_id, vendor_id, invoice_no, invoice_date, lr_no, lr_date, received_date, 
-			purchase_type, order_no, order_date, total_qty, no_of_items, taxable_value, cgst, sgst, igst, 
+			purchase_type, order_no, order_date, total_qty, no_of_items, after_tax_value, cgst, sgst, igst, 
 			total_value, transport_charges, unloading_charges, misc_charges, net_total, no_of_boxes, status, stock_inwards_datetime, roundoff, revision)
 			VALUES
 			( '${cloneReq.center_id}', '${cloneReq.vendorctrl.id}', '${cloneReq.invoiceno}', 
@@ -49,7 +49,7 @@ function purchaseMasterEntry(cloneReq) {
 			'${toTimeZone(cloneReq.invoicedate, 'Asia/Kolkata')}', 
 			'${cloneReq.lrno}', '${lrdate}', 
 			'${orderrcvddt}', 'GST Inovoice', '${cloneReq.orderno}', '${orderdate}', 
-			'${cloneReq.totalqty}', '${cloneReq.noofitems}', '${cloneReq.taxable_value}', '${cloneReq.cgst}', 
+			'${cloneReq.totalqty}', '${cloneReq.noofitems}', '${cloneReq.after_tax_value}', '${cloneReq.cgst}', 
 			'${cloneReq.sgst}', '${cloneReq.igst}', '${cloneReq.totalvalue}', '${cloneReq.transport_charges}', 
 			'${cloneReq.unloading_charges}', '${cloneReq.misc_charges}', '${cloneReq.net_total}', 
 			'${cloneReq.noofboxes}', '${cloneReq.status}' , 
@@ -62,7 +62,7 @@ function purchaseMasterEntry(cloneReq) {
 			lr_no = '${cloneReq.lrno}',
 			lr_date = '${lrdate}', received_date = '${orderrcvddt}', purchase_type = 'GST Inovoice',
 			order_no = '${cloneReq.orderno}', order_date = '${orderdate}', total_qty = '${cloneReq.totalqty}', 
-			no_of_items = '${cloneReq.noofitems}', taxable_value = '${cloneReq.taxable_value}', cgst = '${cloneReq.cgst}', 
+			no_of_items = '${cloneReq.noofitems}', after_tax_value = '${cloneReq.after_tax_value}', cgst = '${cloneReq.cgst}', 
 			sgst = '${cloneReq.sgst}', igst = '${cloneReq.igst}', total_value = '${cloneReq.totalvalue}', 
 			transport_charges = '${cloneReq.transport_charges}', unloading_charges = '${cloneReq.unloading_charges}', 
 			misc_charges = '${cloneReq.misc_charges}', net_total = '${cloneReq.net_total}', no_of_boxes = '${cloneReq.noofboxes}',
@@ -93,11 +93,11 @@ function purchaseMasterEntry(cloneReq) {
 async function processItems(cloneReq, newPK, res) {
 	for (const k of cloneReq.productarr) {
 		let insQuery1 = ` INSERT INTO purchase_detail(purchase_id, product_id, qty, purchase_price, mrp, batchdate, tax,
-			igst, cgst, sgst, taxable_value, total_value, stock_id) VALUES
+			igst, cgst, sgst, after_tax_value, total_value, stock_id) VALUES
 			( '${newPK}', '${k.product_id}', '${k.qty}', '${k.purchase_price}', '${k.mrp}', 
 			'${currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY')}',
 			'${k.taxrate}', '${k.igst}', 
-			'${k.cgst}', '${k.sgst}', '${k.taxable_value}', '${k.total_value}', 
+			'${k.cgst}', '${k.sgst}', '${k.after_tax_value}', '${k.total_value}', 
 			
 			(select id from stock where product_id = '${k.product_id}' and mrp = '${k.mrp}' order by id desc limit 1	)
 			)`;
@@ -106,7 +106,7 @@ async function processItems(cloneReq, newPK, res) {
 			qty = '${k.qty}', purchase_price = '${k.purchase_price}', mrp = '${k.mrp}', 
 			batchdate = '${currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY')}', 
 			tax = '${k.taxrate}', igst = '${k.igst}', cgst = '${k.cgst}', sgst = '${k.sgst}', 
-			taxable_value =  '${k.taxable_value}', total_value = '${k.total_value}', stock_id = '${k.stock_pk}' where
+			after_tax_value =  '${k.after_tax_value}', total_value = '${k.total_value}', stock_id = '${k.stock_pk}' where
 			id = '${k.pur_det_id}' `;
 
 		await new Promise(function (resolve, reject) {

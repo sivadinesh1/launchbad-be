@@ -238,7 +238,7 @@ const searchSales = async (requestBody: {
 	customer_id: any;
 	from_date: any;
 	to_date: any;
-	sale_type: any;
+	invoice_type: any;
 	search_type: any;
 	invoice_no: any;
 	order: any;
@@ -248,21 +248,31 @@ const searchSales = async (requestBody: {
 	let customer_id = requestBody.customer_id;
 	let from_date = requestBody.from_date;
 	let to_date = requestBody.to_date;
-	let sale_type = requestBody.sale_type;
+	let invoice_type = requestBody.invoice_type;
 	let search_type = requestBody.search_type;
 	let invoice_no = requestBody.invoice_no;
 	let order = requestBody.order;
+
+	to_date: '2021-10-20T18:10:48.959Z';
+	status: 'all';
+	search_type: 'all';
+	sale_type: 'all';
+	order: 'desc';
+	invoice_no: '';
+	from_date: '2021-10-20T18:10:48.959Z';
+	customer_id: 'all';
+	center_id: '2';
 
 	let sql = '';
 	let query = '';
 
 	if (search_type === 'all') {
 		if (from_date !== '') {
-			from_date = toTimeZone(requestBody.from_date, 'Asia/Kolkata') + ' 00:00:00';
+			from_date = toTimeZoneFormat(requestBody.from_date, 'Asia/Kolkata', 'YYYY-MM-DD') + ' 00:00:00';
 		}
 
 		if (to_date !== '') {
-			to_date = toTimeZone(requestBody.to_date, 'Asia/Kolkata') + ' 23:59:00';
+			to_date = toTimeZoneFormat(requestBody.to_date, 'Asia/Kolkata', 'YYYY-MM-DD') + ' 23:59:00';
 		}
 
 		let customer_sql = `and s.customer_id = '${customer_id}' `;
@@ -277,9 +287,9 @@ const searchSales = async (requestBody: {
         
 				s.center_id = '${center_id}' and
 				
-				str_to_date(invoice_date,  '%d-%m-%Y %T') between
-				str_to_date('${from_date}',  '%d-%m-%Y %T') and
-				str_to_date('${to_date}',  '%d-%m-%Y %T') `;
+				invoice_date between
+				'${from_date}' and
+				'${to_date}' `;
 
 		if (customer_id !== 'all') {
 			sql = sql + customer_sql;
@@ -289,11 +299,11 @@ const searchSales = async (requestBody: {
 			sql = sql + status_sql;
 		}
 
-		if (sale_type !== 'all') {
-			if (sale_type === 'GI') {
-				sql = sql + " and s.sale_type = 'gstInvoice' ";
-			} else if (sale_type === 'SI') {
-				sql = sql + " and s.sale_type = 'stockIssue' ";
+		if (invoice_type !== 'all') {
+			if (invoice_type === 'GI') {
+				sql = sql + " and s.invoice_type = 'gstInvoice' ";
+			} else if (invoice_type === 'SI') {
+				sql = sql + " and s.invoice_type = 'stockIssue' ";
 			}
 		}
 		// check dinesh
@@ -311,11 +321,17 @@ const searchSales = async (requestBody: {
 					where
 					c.id = s.customer_id and
 					
-					s.center_id = '${center_id}' and
-					invoice_no = '${invoice_no.trim()}'
+					s.center_id = '${center_id}'
+          
 					
 		`;
 	}
+
+	// and
+	// invoice_no = '${invoice_no.trim()}'
+
+	console.log('dinesh:: search-query' + sql);
+	console.log('dinesh:: search-query' + query);
 
 	return promisifyQuery(search_type === 'all' ? sql : query);
 };
@@ -364,7 +380,7 @@ pd.tax as tax,
 pd.igst as igst,
 pd.cgst as cgst,
 pd.sgst as sgst,
-pd.taxable_value as tax_value,
+pd.after_tax_value as tax_value,
 pd.total_value as total_value,
 ps.revision as revision,
 p.product_code, p.product_description, p.packet_size, p.tax_rate,
@@ -485,7 +501,7 @@ pd.tax as tax,
 pd.igst as igst,
 pd.cgst as cgst,
 pd.sgst as sgst,
-pd.taxable_value as tax_value,
+pd.after_tax_value as tax_value,
 pd.total_value as total_value,
 p.product_type as product_type, 
 p.product_code, p.product_description, p.packet_size, p.tax_rate from 
@@ -563,7 +579,7 @@ const stockCorrection = async (stock: IStock) => {
 	// stock = {};
 	// let data = await correctStock(stock);
 
-	let result = await StockRepo.updateStock(stock);
+	let result = await StockRepo.stockCorrection(stock);
 
 	// let data = await correctStock(product_id, mrp, stock_qty);
 
