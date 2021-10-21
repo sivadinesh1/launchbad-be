@@ -81,15 +81,16 @@ export const login = async (requestBody: any) => {
 			center_name: user?.center.name,
 			center_district: user?.center.district,
 			code: user?.center?.state.code,
+			timezone: user?.center?.timezone,
 		};
 	} else {
 		return { result: 'INVALID_CREDENTIALS' };
 	}
 };
 
-export const generateToken = (id: any, center_id: any, role: any) => {
+export const generateToken = (id: any, center_id: any, role: any, timezone: string) => {
 	return new Promise((resolve, reject) => {
-		const payload = { id, center_id, role };
+		const payload = { id, center_id, role, timezone };
 		const secret = process.env.ACCESS_TOKEN_SECRET;
 		const options = { expiresIn: '1d' };
 
@@ -113,3 +114,11 @@ export const generateToken = (id: any, center_id: any, role: any) => {
 //   }
 //   return user;
 // };
+
+module.exports = {
+	login,
+	generateToken,
+	updateCenterForSuperAdmin,
+	checkUsernameExists,
+	getPermissions,
+};

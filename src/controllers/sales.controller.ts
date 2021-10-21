@@ -25,7 +25,7 @@ const insertSale = catchAsync(async (req: any, res: any) => {
 	saleMaster.updated_by = Number(req.user.id);
 	saleDetails.updated_by = Number(req.user.id);
 
-	const data = await salesService.insertSale(saleMaster, saleDetails);
+	const data = await salesService.insertSale(saleMaster, saleDetails, req.user.timezone);
 
 	console.log('in ctrl >> ' + data);
 	return responseForward(data, 'insertSale>>', res);

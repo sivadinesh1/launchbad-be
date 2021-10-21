@@ -112,7 +112,7 @@ model center {
   pin             String?     @db.VarChar(50)
   district        String?     @db.VarChar(50)
   country         String?     @db.VarChar(50)
-  location        String?     @db.VarChar(50)
+  timezone        String?     @db.VarChar(100)
   gst             String?     @db.VarChar(50)
   bank_name       String?     @db.VarChar(100)
   account_name    String?     @db.VarChar(150)

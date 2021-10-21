@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const httpStatus = require('http-status');
 const ApiError = require('./ApiError');
 
+let center_timezone: string;
+
 const number2text = (value: any) => {
 	// function number2text(value) {
 	var fraction = Math.round(frac(value) * 100);
@@ -109,11 +111,19 @@ function currentTimeInTimeZone(zone: any, format: any) {
 }
 
 export function getCurrentYear() {
-	return currentTimeInTimeZone('Asia/Kolkata', 'YY');
+	return currentTimeInTimeZone(getTimezone(), 'YY');
+}
+
+export function setTimezone(timezone: string) {
+	center_timezone = timezone;
+}
+
+export function getTimezone() {
+	return center_timezone;
 }
 
 export function getCurrentMonth() {
-	return currentTimeInTimeZone('Asia/Kolkata', 'MM');
+	return currentTimeInTimeZone(getTimezone(), 'MM');
 }
 
 export function leftPad(value: string) {
@@ -177,4 +187,6 @@ module.exports = {
 	getCurrentYear,
 	getCurrentMonth,
 	formatSequenceNumber,
+	setTimezone,
+	getTimezone,
 };

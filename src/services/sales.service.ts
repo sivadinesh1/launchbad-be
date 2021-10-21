@@ -22,15 +22,9 @@ import SaleLedgerRepo from '../repos/sale-ledger.repo';
 import { ILedger, Ledger } from '../domain/Ledger';
 import { Audit } from '../domain/Audit';
 
-const {
-	getCurrentYear,
-	getCurrentMonth,
-	formatSequenceNumber,
-	toTimeZone,
-	currentTimeInTimeZone,
-	toTimeZoneFormat,
-	promisifyQuery,
-} = require('../utils/utils');
+// import { getTimezone } from '../utils/utils';
+
+const { getTimezone, formatSequenceNumber, toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
 
 const { insertItemHistoryTable, updateStockViaId } = require('../services/stock.service');
 
@@ -73,7 +67,8 @@ const getSalesDetails = async (sales_id: any) => {
 	// return promisifyQuery(query);
 };
 
-export const insertSale = async (saleMaster: ISale, saleDetails: ISaleDetail[]) => {
+export const insertSale = async (saleMaster: ISale, saleDetails: ISaleDetail[], timezone: string) => {
+	console.log('check timezone' + getTimezone());
 	try {
 		const status = await prisma.$transaction(async (prisma) => {
 			// 1. Update Sequence Generator and form a formatted sale invoice
@@ -281,9 +276,6 @@ async function prepareItemHistory(item: ISaleDetail, sale_id: number, sale_detai
 	// to avoid duplicate entry of history items when editing completed records
 	// with same qty. (status = 'c'). If status=C & k.qty - k.old_val !== 0 then updateHistoryTable
 	let skipHistoryUpdate = false;
-	var today = new Date();
-
-	today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
 
 	// if sale details id is missing its new else update
 	let saleDetailId = item.id === undefined ? sale_detail_id : item.id;

@@ -15,9 +15,9 @@ const login = catchAsync(async (req, res) => {
 	const data = await authService.login(req.body);
 
 	console.log('object1' + JSON.stringify(data));
-	let { role, center_id, id } = data;
+	let { role, center_id, id, timezone } = data;
 
-	const token = await authService.generateToken(id, center_id, role);
+	const token = await authService.generateToken(id, center_id, role, timezone);
 
 	console.log('object.....' + token);
 

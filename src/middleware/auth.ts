@@ -1,3 +1,5 @@
+import { setTimezone } from '../utils/utils';
+
 const JWT = require('jsonwebtoken');
 const cookie = require('cookie');
 
@@ -9,6 +11,7 @@ export const auth =
 		try {
 			let user = JWT.verify(cCookie['authToken'], process.env.ACCESS_TOKEN_SECRET);
 			req.user = user;
+			setTimezone(user.timezone);
 
 			next();
 		} catch (error) {
