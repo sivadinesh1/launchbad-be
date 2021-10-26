@@ -1038,7 +1038,7 @@ function getSumByTotalByPercent(dataArr, tax_percent) {
 function roundOffFn(value, param) {
 	if (param === 'rounding') {
 		return Math.round(+value.toFixed(2));
-	} else if (param === 'withoutrounding') {
+	} else if (param === 'without-rounding') {
 		return +value.toFixed(2);
 	}
 }

@@ -9,7 +9,7 @@ const { handleError, ErrorHandler } = require('../config/error');
 // param: smd : sale_master_data
 // NR: Not Received, A: Approved
 const insertSaleReturns = (smd) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY');
+	let today = currentTimeInTimeZone('DD-MM-YYYY');
 
 	return new Promise((resolve, reject) => {
 		let query = ` insert into sale_return (sale_id, customer_id, return_date, center_id, to_return_amount,
@@ -88,8 +88,7 @@ const createCreditNote = (credit_note_no, credit_note_total_amount, refund_statu
 function getSequenceCrNote(center_id) {
 	let query = '';
 
-	query = ` select concat("CN-",'${currentTimeInTimeZone('Asia/Kolkata', 'YY')}', "/", '${currentTimeInTimeZone(
-		'Asia/Kolkata',
+	query = ` select concat("CN-",'${currentTimeInTimeZone('YY')}', "/", '${currentTimeInTimeZone(
 		'MM',
 	)}', "/", lpad(cr_note_seq, 5, "0")) as crNoteNo from financial_year 
 				where 
@@ -344,7 +343,7 @@ Steps:
 
 const addSaleReturn = async (requestBody) => {
 	var today = new Date();
-	today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY');
+	today = currentTimeInTimeZone('DD-MM-YYYY');
 
 	let reqObject = requestBody;
 

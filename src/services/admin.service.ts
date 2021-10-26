@@ -154,7 +154,7 @@ export const addBank = async (insertValues: any) => {
 };
 
 export const insertBank = async (insertValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 	const result = await prisma.center_banks.create({
 		data: {
 			center_id: Number(insertValues.center_id),
@@ -174,7 +174,7 @@ export const updateBank = async (insertValues: any) => {
 		let updateDefaults = await updateBankDefaults(insertValues.center_id);
 	}
 
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	const result = updateBkInfo(insertValues);
 
@@ -186,7 +186,7 @@ export const updateBank = async (insertValues: any) => {
 };
 
 export const updateBkInfo = async (updateValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 	let id = updateValues.id;
 
 	let bank_name = updateValues.bank_name;
@@ -216,7 +216,7 @@ export const updateBkInfo = async (updateValues: any) => {
 };
 
 export const updateCenterBankInfo = async (updateValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 	let id = updateValues.center_id;
 	let bank_name = `${updateValues.bank_name}, IFSC: ${updateValues.ifsccode}`;
 	let account_name = updateValues.account_name;
@@ -241,7 +241,7 @@ export const updateCenterBankInfo = async (updateValues: any) => {
 };
 
 export const updateBankDefaults = async (updateValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 	let center_id = updateValues.center_id;
 	let status = updateValues.status;
 

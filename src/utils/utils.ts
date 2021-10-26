@@ -101,17 +101,18 @@ function toTimeZone(time: any, zone: any) {
 	return moment(time, format).tz(zone).format('DD-MM-YYYY');
 }
 
-function toTimeZoneFormat(time: any, zone: any, format: any) {
+function toTimeZoneFormat(time: any, format: any) {
 	var default_format = 'YYYY-MM-DDTHH:mm:ssZ';
-	return moment(time, default_format).tz(zone).format(format);
+
+	return moment(time, default_format).tz(getTimezone()).format(format);
 }
 
-function currentTimeInTimeZone(zone: any, format: any) {
-	return moment(moment(), format).tz(zone).format(format);
+function currentTimeInTimeZone(format: any) {
+	return moment(moment(), format).tz(getTimezone()).format(format);
 }
 
 export function getCurrentYear() {
-	return currentTimeInTimeZone(getTimezone(), 'YY');
+	return currentTimeInTimeZone('YY');
 }
 
 export function setTimezone(timezone: string) {
@@ -123,7 +124,7 @@ export function getTimezone() {
 }
 
 export function getCurrentMonth() {
-	return currentTimeInTimeZone(getTimezone(), 'MM');
+	return currentTimeInTimeZone('MM');
 }
 
 export function leftPad(value: string) {

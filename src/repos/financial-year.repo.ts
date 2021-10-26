@@ -78,15 +78,9 @@ class FinancialYearRepo {
 	public async updateDraftInvoiceSequenceGenerator(center_id: number, prisma: any) {
 		let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
 
-		const result = await prisma.financial_year.updateMany({
+		const result = await prisma.financial_year.update({
 			where: {
-				center_id: Number(rowId),
-				start_date: {
-					lt: new Date(),
-				},
-				end_date: {
-					gt: new Date(),
-				},
+				id: Number(rowId),
 			},
 			data: {
 				draft_inv_seq: {

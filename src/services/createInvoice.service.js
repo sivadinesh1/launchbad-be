@@ -1,4 +1,5 @@
 const fs = require('fs');
+const moment = require('moment-timezone');
 
 // require dependencies
 const PDFDocument = require('pdfkit');
@@ -9,10 +10,10 @@ let line_x_start = 24;
 let line_x_end = 571;
 
 function createInvoice(saleMaster, saleDetails, customerDetails, centerDetails, path, res, print_type, print_ship_to) {
-	let centerdata = centerDetails[0];
-	let customerdata = customerDetails[0];
-	let salemasterdata = saleMaster[0];
-	let saledetailsdata = saleDetails;
+	let center_data = centerDetails[0];
+	let customer_data = customerDetails[0];
+	let sale_master_data = saleMaster[0];
+	let sale_details_data = saleDetails;
 	res.contentType('application/pdf');
 
 	let doc = new PDFDocument({
@@ -29,15 +30,15 @@ function createInvoice(saleMaster, saleDetails, customerDetails, centerDetails, 
 		print_type.forEach((e) => {
 			doc.addPage();
 			doc.font('Helvetica');
-			generateHeader(doc, centerdata, e);
-			generateCustomerInformation(doc, customerdata, salemasterdata, print_ship_to);
+			generateHeader(doc, center_data, e);
+			generateCustomerInformation(doc, customer_data, sale_master_data, print_ship_to);
 
 			if (print_ship_to) {
-				generateShippingInformation(doc, customerdata, salemasterdata);
+				generateShippingInformation(doc, customer_data, sale_master_data);
 			}
 
-			generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, e, customerdata, print_ship_to);
-			generateFooterSummary(doc, centerdata);
+			generateInvoiceTable(doc, sale_master_data, sale_details_data, center_data, e, customer_data, print_ship_to);
+			generateFooterSummary(doc, center_data);
 
 			//		doc[counter].pipe(fs.createWriteStream(path));
 		});
@@ -57,22 +58,22 @@ function createInvoice(saleMaster, saleDetails, customerDetails, centerDetails, 
 	// res.send(url);
 	// });
 
-	// pipe the resposne
+	// pipe the response
 	doc.end();
 	doc.pipe(res);
 }
 
-function generateHeader(doc, centerdata, print_type) {
+function generateHeader(doc, center_data, print_type) {
 	// doc.image('tractor.png', 24, 24, { width: 70 }).fillColor('darkblue');
 
-	doc.image('upload/' + centerdata.logo_name, 24, 24, { width: 70 }).fillColor('darkblue');
+	doc.image('upload/' + center_data.logo_name, 24, 24, { width: 70 }).fillColor('darkblue');
 
 	doc.font('Helvetica').fontSize(10).text(print_type, 400, 20, { align: 'right' }).font('Helvetica');
 
 	doc.fillColor('#000000');
 	doc.font('Helvetica-Bold')
 		.fontSize(14)
-		.text(centerdata.name, 10, 40, {
+		.text(center_data.name, 10, 40, {
 			align: 'center',
 			lineGap: 2,
 			characterSpacing: 1.2,
@@ -80,24 +81,24 @@ function generateHeader(doc, centerdata, print_type) {
 		.font('Helvetica')
 		.fontSize(9)
 
-		.text(centerdata.tagline, {
+		.text(center_data.tagline, {
 			align: 'center',
 			lineGap: 1.5,
 			characterSpacing: 1,
 		})
-		.text(centerdata.address1 + ',' + centerdata.address2 + ', ' + centerdata.district + '-' + centerdata.pin, {
+		.text(center_data.address1 + ',' + center_data.address2 + ', ' + center_data.district + '-' + center_data.pin, {
 			align: 'center',
 			lineGap: 1.5,
 		})
 
-		.text('GSTIN : ' + centerdata.gst, { align: 'center', lineGap: 1.5 })
-		.text('Email: ' + centerdata.email, { align: 'center', lineGap: 1.5 })
+		.text('GST : ' + center_data.gst, { align: 'center', lineGap: 1.5 })
+		.text('Email: ' + center_data.email, { align: 'center', lineGap: 1.5 })
 
-		.text('Phone : ' + centerdata.phone + ' & ' + centerdata.mobile, 410, 92);
+		.text('Phone : ' + center_data.phone + ' & ' + center_data.mobile, 410, 92);
 
-	doc.image('upload/' + centerdata.side_logo_name, 475, 62, { width: 80 });
+	doc.image('upload/' + center_data.side_logo_name, 475, 62, { width: 80 });
 
-	// if (centerdata.id === 3) {
+	// if (center_data.id === 3) {
 	// 	doc.image('sonalika.png', 475, 62, { width: 80 });
 	// } else {
 	// 	doc.image('swaraj.png', 475, 62, { width: 80 });
@@ -106,7 +107,7 @@ function generateHeader(doc, centerdata, print_type) {
 	doc.moveDown();
 }
 
-function generateCustomerInformation(doc, customerdata, salemasterdata, print_ship_to) {
+function generateCustomerInformation(doc, customer_data, sale_master_data, print_ship_to) {
 	// first line before customer section
 	generateHr(doc, line_x_start, line_x_end, 109);
 
@@ -116,7 +117,7 @@ function generateCustomerInformation(doc, customerdata, salemasterdata, print_sh
 		doc.fillColor('#000000').fontSize(13).font('Helvetica-Bold').text('To', 34, 117).font('Helvetica');
 	}
 
-	let invoice_type = salemasterdata.invoice_type === 'gstInvoice' ? 'GST INVOICE' : 'STOCK ISSUE';
+	let invoice_type = sale_master_data.invoice_type === 'gstInvoice' ? 'Tax Invoice' : 'Stock Issue';
 
 	doc.fillColor('#000000').fontSize(12).text(invoice_type, 440, 119, { align: 'center' });
 	doc.fillColor('#000000');
@@ -128,65 +129,65 @@ function generateCustomerInformation(doc, customerdata, salemasterdata, print_sh
 
 	doc.fillColor('#000000')
 		.fontSize(10)
-		.text('BILL No.     : ' + salemasterdata.invoice_no, 460, 145);
+		.text('BILL No.     : ' + sale_master_data.invoice_no, 460, 145);
 
 	doc.fillColor('#000000')
 		.fontSize(10)
-		.text('BILL Date    : ' + salemasterdata.invoice_date, 460, 160);
+		.text('BILL Date    : ' + moment(sale_master_data.invoice_date).format('DD/MM/YYYY'), 460, 160);
 
 	const customerInformationTop = 136;
 
-	if (customerdata.name === 'Walk In') {
+	if (customer_data.name === 'Walk In') {
 		doc.fillColor('#000000')
 			.fontSize(10)
 			.font('Helvetica-Bold')
-			.text(salemasterdata.retail_customer_name, 40, customerInformationTop)
+			.text(sale_master_data.retail_customer_name, 40, customerInformationTop)
 			.font('Helvetica')
-			.text(salemasterdata.retail_customer_address, 40, 151)
-			.text(salemasterdata.retail_customer_phone, 40, 171);
+			.text(sale_master_data.retail_customer_address, 40, 151)
+			.text(sale_master_data.retail_customer_phone, 40, 171);
 	} else {
 		if (print_ship_to) {
 			doc.fillColor('#000000')
 				.fontSize(10)
 				.font('Helvetica-Bold')
-				.text(customerdata.name, 270, customerInformationTop)
+				.text(customer_data.name, 270, customerInformationTop)
 				.font('Helvetica')
-				.text(customerdata.address1, 270, 151);
+				.text(customer_data.address1, 270, 151);
 		} else {
 			doc.fillColor('#000000')
 				.fontSize(10)
 				.font('Helvetica-Bold')
-				.text(customerdata.name, 40, customerInformationTop)
+				.text(customer_data.name, 40, customerInformationTop)
 				.font('Helvetica')
-				.text(customerdata.address1, 40, 151);
+				.text(customer_data.address1, 40, 151);
 		}
 	}
 
-	if (customerdata.district !== '') {
+	if (customer_data.district !== '') {
 		if (print_ship_to) {
-			doc.text(customerdata.address2 + ', District: ' + customerdata.district, 270, 166);
+			doc.text(customer_data.address2 + ', District: ' + customer_data.district, 270, 166);
 		} else {
-			doc.text(customerdata.address2 + ', District: ' + customerdata.district, 40, 166);
+			doc.text(customer_data.address2 + ', District: ' + customer_data.district, 40, 166);
 		}
 	} else {
 		if (print_ship_to) {
-			doc.text(customerdata.address2, 270, 166);
+			doc.text(customer_data.address2, 270, 166);
 		} else {
-			doc.text(customerdata.address2, 40, 166);
+			doc.text(customer_data.address2, 40, 166);
 		}
 	}
 	if (print_ship_to) {
 		doc.fillColor('#000000')
-			.text('State: ' + customerdata.product_description + ' Pin: ' + customerdata.pin, 270, 181)
+			.text('State: ' + customer_data.description + ' Pin: ' + customer_data.pin, 270, 181)
 			.font('Helvetica-Bold')
-			.text('Phone: ' + customerdata.mobile + ' GSTIN: ' + customerdata.gst, 270, 196)
+			.text('Phone: ' + customer_data.mobile + ' GST: ' + customer_data.gst, 270, 196)
 			.font('Helvetica')
 			.moveDown();
 	} else {
 		doc.fillColor('#000000')
-			.text('State: ' + customerdata.product_description + ' Pin: ' + customerdata.pin, 40, 181)
+			.text('State: ' + customer_data.description + ' Pin: ' + customer_data.pin, 40, 181)
 			.font('Helvetica-Bold')
-			.text('Phone: ' + customerdata.mobile + ' GSTIN: ' + customerdata.gst, 40, 196)
+			.text('Phone: ' + customer_data.mobile + ' GST: ' + customer_data.gst, 40, 196)
 			.font('Helvetica')
 			.moveDown();
 	}
@@ -195,7 +196,7 @@ function generateCustomerInformation(doc, customerdata, salemasterdata, print_sh
 	generateHr(doc, line_x_start, line_x_end, 210);
 }
 
-function generateShippingInformation(doc, customerdata, salemasterdata) {
+function generateShippingInformation(doc, customer_data, sale_master_data) {
 	// first line before customer section
 	generateHr(doc, line_x_start, line_x_end, 109);
 
@@ -203,33 +204,33 @@ function generateShippingInformation(doc, customerdata, salemasterdata) {
 
 	const customerInformationTop = 136;
 
-	if (customerdata.name === 'Walk In') {
+	if (customer_data.name === 'Walk In') {
 		doc.fillColor('#000000')
 			.fontSize(10)
 			.font('Helvetica-Bold')
-			.text(salemasterdata.retail_customer_name, 40, customerInformationTop)
+			.text(sale_master_data.retail_customer_name, 40, customerInformationTop)
 			.font('Helvetica')
-			.text(salemasterdata.retail_customer_address, 40, 151)
-			.text(salemasterdata.retail_customer_phone, 40, 171);
+			.text(sale_master_data.retail_customer_address, 40, 151)
+			.text(sale_master_data.retail_customer_phone, 40, 171);
 	} else {
 		doc.fillColor('#000000')
 			.fontSize(10)
 			.font('Helvetica-Bold')
-			.text(customerdata.name, 40, customerInformationTop)
+			.text(customer_data.name, 40, customerInformationTop)
 			.font('Helvetica')
-			.text(customerdata.csa_address1, 40, 151);
+			.text(customer_data.csa_address1, 40, 151);
 	}
 
-	if (customerdata.csa_district !== '') {
-		doc.text(customerdata.csa_address2 + ', District: ' + customerdata.csa_district, 40, 166);
+	if (customer_data.csa_district !== '') {
+		doc.text(customer_data.csa_address2 + ', District: ' + customer_data.csa_district, 40, 166);
 	} else {
-		doc.text(customerdata.csa_address2, 40, 166);
+		doc.text(customer_data.csa_address2, 40, 166);
 	}
 
 	doc.fillColor('#000000')
-		.text('State: ' + customerdata.csa_description + ' Pin: ' + customerdata.pin, 40, 181)
+		.text('State: ' + customer_data.csa_description + ' Pin: ' + customer_data.pin, 40, 181)
 		.font('Helvetica-Bold')
-		.text('Phone: ' + customerdata.mobile + ' GSTIN: ' + customerdata.gst, 40, 196)
+		.text('Phone: ' + customer_data.mobile + ' GST: ' + customer_data.gst, 40, 196)
 		.font('Helvetica')
 		.moveDown();
 
@@ -237,14 +238,14 @@ function generateShippingInformation(doc, customerdata, salemasterdata) {
 	generateHr(doc, line_x_start, line_x_end, 210);
 }
 
-function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, print_type, customerdata, print_ship_to) {
+function generateInvoiceTable(doc, sale_master_data, sale_details_data, center_data, print_type, customer_data, print_ship_to) {
 	let i;
 	let invoiceTableTop = 216;
 	let x_start = 24;
-	let isIGST = false;
+	let is_igs_t = false;
 
-	if (salemasterdata.igst !== 0 || salemasterdata.igst !== 0.0) {
-		isIGST = true;
+	if (sale_master_data.igs_t !== 0 || sale_master_data.igs_t !== 0.0) {
+		is_igs_t = true;
 	}
 
 	generateTableRow(
@@ -252,7 +253,7 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 		invoiceTableTop,
 		'SNo',
 		'PRODUCT NAME',
-		'PCODE',
+		'P.CODE',
 		' HSN ',
 		' QTY ',
 		' UOM ',
@@ -261,29 +262,29 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 		' AMOUNT ',
 		'SGST',
 		'CGST',
-		'NET AMNT',
+		'NET AMT',
 		x_start,
-		isIGST,
+		is_igs_t,
 		'IGST',
 	);
 
 	generateHr(doc, line_x_start, line_x_end, invoiceTableTop + 13);
 
 	let snow = 30;
-	let pcodew = 60;
-	let pdescw = 125;
-	let hsnw = 42;
-	let qtyw = 30;
-	let uomw = 30;
-	let mrpw = 44;
-	let discpw = 25;
-	let amountw = 45;
-	let sgstw = 26;
-	let cgstw = 26;
-	let igstw = 51;
-	let netw = 47;
+	let product_code_w = 60;
+	let product_desc_w = 125;
+	let hsn_w = 42;
+	let qty_w = 30;
+	let uom_w = 30;
+	let mrp_w = 44;
+	let discount_percent_w = 25;
+	let amount_w = 45;
+	let sgs_tw = 26;
+	let cgs_tw = 26;
+	let igs_tw = 51;
+	let net_w = 47;
 
-	//runnig HEADER vertical lines SI
+	//running HEADER vertical lines SI
 	doc.strokeColor('#000000')
 		.moveTo(x_start + snow, 210)
 		.lineWidth(1)
@@ -293,173 +294,219 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 
 	// product code
 	doc.strokeColor('#000000')
-		.moveTo(x_start + (snow + 1) + pcodew, 210)
+		.moveTo(x_start + (snow + 1) + product_code_w, 210)
 		.lineWidth(1)
-		.lineTo(x_start + (snow + 1) + pcodew, 229);
+		.lineTo(x_start + (snow + 1) + product_code_w, 229);
 
 	// product desc
 	doc.strokeColor('#000000')
-		.moveTo(x_start + (snow + 1) + (pcodew + 1) + pdescw, 210)
+		.moveTo(x_start + (snow + 1) + (product_code_w + 1) + product_desc_w, 210)
 		.lineWidth(1)
-		.lineTo(x_start + (snow + 1) + (pcodew + 1) + pdescw, 229)
+		.lineTo(x_start + (snow + 1) + (product_code_w + 1) + product_desc_w, 229)
 
 		.stroke();
 
-	// // hsncode
+	// hsn code
 	doc.strokeColor('#000000')
-		.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + hsnw, 210)
+		.moveTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + hsn_w, 210)
 		.lineWidth(1)
-		.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + hsnw, 229)
+		.lineTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + hsn_w, 229)
 
 		.stroke();
 
 	// // qty
 	doc.strokeColor('#000000')
-		.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + qtyw, 210)
+		.moveTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + qty_w, 210)
 		.lineWidth(1)
-		.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + qtyw, 229)
+		.lineTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + qty_w, 229)
 
 		.stroke();
 
 	// // UOM
 	doc.strokeColor('#000000')
-		.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + uomw, 210)
+		.moveTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + (qty_w + 1) + uom_w, 210)
 		.lineWidth(1)
-		.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + uomw, 229)
+		.lineTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + (qty_w + 1) + uom_w, 229)
 
 		.stroke();
 
 	// // MRP
 	doc.strokeColor('#000000')
-		.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + mrpw, 210)
+		.moveTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + (qty_w + 1) + (uom_w + 1) + mrp_w, 210)
 		.lineWidth(1)
-		.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + mrpw, 229)
+		.lineTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + (qty_w + 1) + (uom_w + 1) + mrp_w, 229)
 
 		.stroke();
 
 	// // Disc %
 	doc.strokeColor('#000000')
-		.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + (mrpw + 1) + discpw, 210)
+		.moveTo(
+			x_start +
+				(snow + 1) +
+				(product_code_w + 1) +
+				(product_desc_w + 1) +
+				(hsn_w + 1) +
+				(qty_w + 1) +
+				(uom_w + 1) +
+				(mrp_w + 1) +
+				discount_percent_w,
+			210,
+		)
 		.lineWidth(1)
-		.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + (mrpw + 1) + discpw, 229)
+		.lineTo(
+			x_start +
+				(snow + 1) +
+				(product_code_w + 1) +
+				(product_desc_w + 1) +
+				(hsn_w + 1) +
+				(qty_w + 1) +
+				(uom_w + 1) +
+				(mrp_w + 1) +
+				discount_percent_w,
+			229,
+		)
 
 		.stroke();
 
 	// // Taxable Amount
 	doc.strokeColor('#000000')
-		.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + (mrpw + 1) + (discpw + 1) + amountw, 210)
+		.moveTo(
+			x_start +
+				(snow + 1) +
+				(product_code_w + 1) +
+				(product_desc_w + 1) +
+				(hsn_w + 1) +
+				(qty_w + 1) +
+				(uom_w + 1) +
+				(mrp_w + 1) +
+				(discount_percent_w + 1) +
+				amount_w,
+			210,
+		)
 		.lineWidth(1)
-		.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + (mrpw + 1) + (discpw + 1) + amountw, 229)
+		.lineTo(
+			x_start +
+				(snow + 1) +
+				(product_code_w + 1) +
+				(product_desc_w + 1) +
+				(hsn_w + 1) +
+				(qty_w + 1) +
+				(uom_w + 1) +
+				(mrp_w + 1) +
+				(discount_percent_w + 1) +
+				amount_w,
+			229,
+		)
 
 		.stroke();
 
-	if (!isIGST) {
-		// SGST
+	if (!is_igs_t) {
+		// sgs_t
 		doc.strokeColor('#000000')
 			.moveTo(
 				x_start +
 					(snow + 1) +
-					(pcodew + 1) +
-					(pdescw + 1) +
-					(hsnw + 1) +
-					(qtyw + 1) +
-					(uomw + 1) +
-					(mrpw + 1) +
-					(discpw + 1) +
-					(amountw + 1) +
-					sgstw,
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					(discount_percent_w + 1) +
+					(amount_w + 1) +
+					sgs_tw,
 				210,
 			)
 			.lineWidth(1)
 			.lineTo(
 				x_start +
 					(snow + 1) +
-					(pcodew + 1) +
-					(pdescw + 1) +
-					(hsnw + 1) +
-					(qtyw + 1) +
-					(uomw + 1) +
-					(mrpw + 1) +
-					(discpw + 1) +
-					(amountw + 1) +
-					sgstw,
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					(discount_percent_w + 1) +
+					(amount_w + 1) +
+					sgs_tw,
 				229,
 			)
 
 			.stroke();
 
-		// CGST
+		// cgs_t
 		doc.strokeColor('#000000')
 			.moveTo(
 				x_start +
 					(snow + 1) +
-					(pcodew + 1) +
-					(pdescw + 1) +
-					(hsnw + 1) +
-					(qtyw + 1) +
-					(uomw + 1) +
-					(mrpw + 1) +
-					(discpw + 1) +
-					(amountw + 1) +
-					(sgstw + 1) +
-					cgstw,
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					(discount_percent_w + 1) +
+					(amount_w + 1) +
+					(sgs_tw + 1) +
+					cgs_tw,
 				210,
 			)
 			.lineWidth(1)
 			.lineTo(
 				x_start +
 					(snow + 1) +
-					(pcodew + 1) +
-					(pdescw + 1) +
-					(hsnw + 1) +
-					(qtyw + 1) +
-					(uomw + 1) +
-					(mrpw + 1) +
-					(discpw + 1) +
-					(amountw + 1) +
-					(sgstw + 1) +
-					cgstw,
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					(discount_percent_w + 1) +
+					(amount_w + 1) +
+					(sgs_tw + 1) +
+					cgs_tw,
 				229,
 			)
 
 			.stroke();
 	} else {
-		//IGST
+		//igs_t
 		doc.strokeColor('#000000')
 			.moveTo(
 				x_start +
 					(snow + 1) +
-					(pcodew + 1) +
-					(pdescw + 1) +
-					(hsnw + 1) +
-					(qtyw + 1) +
-					(uomw + 1) +
-					(mrpw + 1) +
-					(discpw + 1) +
-					(amountw + 1) +
-					igstw,
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					(discount_percent_w + 1) +
+					(amount_w + 1) +
+					igs_tw,
 				210,
 			)
 			.lineWidth(1)
 			.lineTo(
 				x_start +
 					(snow + 1) +
-					(pcodew + 1) +
-					(pdescw + 1) +
-					(hsnw + 1) +
-					(qtyw + 1) +
-					(uomw + 1) +
-					(mrpw + 1) +
-					(discpw + 1) +
-					(amountw + 1) +
-					igstw,
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					(discount_percent_w + 1) +
+					(amount_w + 1) +
+					igs_tw,
 				229,
 			)
 
 			.stroke();
 	}
 
-	saledetailsdata.forEach(function (k, idx) {
+	sale_details_data.forEach(function (k, idx) {
 		if (idx === 0) {
 			invoiceTableTop = invoiceTableTop + 16;
 		} else {
@@ -470,20 +517,20 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 			doc,
 			invoiceTableTop,
 			idx + 1,
-			k.description,
-			k.product_code,
-			k.hsncode,
-			k.qty,
-			k.unit,
+			k.product.product_description,
+			k.product.product_code,
+			k.product.hsn_code,
+			k.quantity,
+			k.unit_price,
 			k.mrp,
 			k.disc_percent,
 			k.after_tax_value,
-			k.sgst,
-			k.cgst,
+			k.sgs_t,
+			k.cgs_t,
 			k.total_value,
 			x_start,
-			isIGST,
-			k.igst,
+			is_igs_t,
+			k.igs_t,
 		);
 
 		// new page
@@ -496,31 +543,31 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 				margin: 24,
 			});
 			// for each new page this adds the center and customer data
-			generateHeader(doc, centerdata, print_type);
+			generateHeader(doc, center_data, print_type);
 			generateHr(doc, line_x_start, line_x_end, 107);
-			generateCustomerInformation(doc, customerdata, salemasterdata, print_ship_to);
+			generateCustomerInformation(doc, customer_data, sale_master_data, print_ship_to);
 
 			if (print_ship_to) {
-				generateShippingInformation(doc, customerdata, salemasterdata);
+				generateShippingInformation(doc, customer_data, sale_master_data);
 			}
 			generateTableRow(
 				doc,
 				invoiceTableTop,
 				'SNo',
 				'PRODUCT NAME',
-				'PCODE',
+				'P.CODE',
 				' HSN ',
 				' QTY ',
 				' UOM ',
 				' MRP ',
 				'DIS%',
 				' AMOUNT ',
-				'SGST',
-				'CGST',
-				'NET AMNT',
+				'sgs_t',
+				'cgs_t',
+				'NET AMT',
 				x_start,
-				isIGST,
-				'IGST',
+				is_igs_t,
+				'igs_t',
 			);
 
 			generateHr(doc, line_x_start, line_x_end, invoiceTableTop + 10);
@@ -537,172 +584,212 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 
 		// Product Code
 		doc.strokeColor('#000000')
-			.moveTo(x_start + (snow + 1) + pcodew, invoiceTableTop - 8)
+			.moveTo(x_start + (snow + 1) + product_code_w, invoiceTableTop - 8)
 			.lineWidth(1)
-			.lineTo(x_start + (snow + 1) + pcodew, 540);
+			.lineTo(x_start + (snow + 1) + product_code_w, 540);
 
 		// // Product Desc
 		doc.strokeColor('#000000')
-			.moveTo(x_start + (snow + 1) + (pcodew + 1) + pdescw, invoiceTableTop - 8)
+			.moveTo(x_start + (snow + 1) + (product_code_w + 1) + product_desc_w, invoiceTableTop - 8)
 			.lineWidth(1)
-			.lineTo(x_start + (snow + 1) + (pcodew + 1) + pdescw, 540)
+			.lineTo(x_start + (snow + 1) + (product_code_w + 1) + product_desc_w, 540)
 
 			.stroke();
-		// // hsncode
+		// hsn code
 		doc.strokeColor('#000000')
-			.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + hsnw, invoiceTableTop - 8)
+			.moveTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + hsn_w, invoiceTableTop - 8)
 			.lineWidth(1)
-			.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + hsnw, 540)
-
-			.stroke();
-
-		// // qty
-		doc.strokeColor('#000000')
-			.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + qtyw, invoiceTableTop - 8)
-			.lineWidth(1)
-			.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + qtyw, 540)
+			.lineTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + hsn_w, 540)
 
 			.stroke();
 
-		// // UOM
+		// qty
 		doc.strokeColor('#000000')
-			.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + uomw, invoiceTableTop - 8)
+			.moveTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + qty_w, invoiceTableTop - 8)
 			.lineWidth(1)
-			.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + uomw, 540)
+			.lineTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + qty_w, 540)
+
+			.stroke();
+
+		// UOM
+		doc.strokeColor('#000000')
+			.moveTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + (qty_w + 1) + uom_w, invoiceTableTop - 8)
+			.lineWidth(1)
+			.lineTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + (qty_w + 1) + uom_w, 540)
 
 			.stroke();
 
 		//MRP
 		doc.strokeColor('#000000')
-			.moveTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + mrpw, invoiceTableTop - 8)
+			.moveTo(
+				x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + (qty_w + 1) + (uom_w + 1) + mrp_w,
+				invoiceTableTop - 8,
+			)
 			.lineWidth(1)
-			.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + mrpw, 540)
+			.lineTo(x_start + (snow + 1) + (product_code_w + 1) + (product_desc_w + 1) + (hsn_w + 1) + (qty_w + 1) + (uom_w + 1) + mrp_w, 540)
 
 			.stroke();
 
 		// disc
 		doc.strokeColor('#000000')
 			.moveTo(
-				x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + (mrpw + 1) + discpw,
+				x_start +
+					(snow + 1) +
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					discount_percent_w,
 				invoiceTableTop - 8,
 			)
 			.lineWidth(1)
-			.lineTo(x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + (mrpw + 1) + discpw, 540)
+			.lineTo(
+				x_start +
+					(snow + 1) +
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					discount_percent_w,
+				540,
+			)
 
 			.stroke();
 
 		// taxable amount
 		doc.strokeColor('#000000')
 			.moveTo(
-				x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + (mrpw + 1) + (discpw + 1) + amountw,
+				x_start +
+					(snow + 1) +
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					(discount_percent_w + 1) +
+					amount_w,
 				invoiceTableTop - 8,
 			)
 			.lineWidth(1)
 			.lineTo(
-				x_start + (snow + 1) + (pcodew + 1) + (pdescw + 1) + (hsnw + 1) + (qtyw + 1) + (uomw + 1) + (mrpw + 1) + (discpw + 1) + amountw,
+				x_start +
+					(snow + 1) +
+					(product_code_w + 1) +
+					(product_desc_w + 1) +
+					(hsn_w + 1) +
+					(qty_w + 1) +
+					(uom_w + 1) +
+					(mrp_w + 1) +
+					(discount_percent_w + 1) +
+					amount_w,
 				540,
 			)
 
 			.stroke();
-		if (!isIGST) {
-			//sgst
+		if (!is_igs_t) {
+			//sgs_t
 			doc.strokeColor('#000000')
 				.moveTo(
 					x_start +
 						(snow + 1) +
-						(pcodew + 1) +
-						(pdescw + 1) +
-						(hsnw + 1) +
-						(qtyw + 1) +
-						(uomw + 1) +
-						(mrpw + 1) +
-						(discpw + 1) +
-						(amountw + 1) +
-						sgstw,
+						(product_code_w + 1) +
+						(product_desc_w + 1) +
+						(hsn_w + 1) +
+						(qty_w + 1) +
+						(uom_w + 1) +
+						(mrp_w + 1) +
+						(discount_percent_w + 1) +
+						(amount_w + 1) +
+						sgs_tw,
 					invoiceTableTop - 8,
 				)
 				.lineWidth(1)
 				.lineTo(
 					x_start +
 						(snow + 1) +
-						(pcodew + 1) +
-						(pdescw + 1) +
-						(hsnw + 1) +
-						(qtyw + 1) +
-						(uomw + 1) +
-						(mrpw + 1) +
-						(discpw + 1) +
-						(amountw + 1) +
-						sgstw,
+						(product_code_w + 1) +
+						(product_desc_w + 1) +
+						(hsn_w + 1) +
+						(qty_w + 1) +
+						(uom_w + 1) +
+						(mrp_w + 1) +
+						(discount_percent_w + 1) +
+						(amount_w + 1) +
+						sgs_tw,
 					540,
 				)
 
 				.stroke();
-			//CGST
+			//cgs_t
 			doc.strokeColor('#000000')
 				.moveTo(
 					x_start +
 						(snow + 1) +
-						(pcodew + 1) +
-						(pdescw + 1) +
-						(hsnw + 1) +
-						(qtyw + 1) +
-						(uomw + 1) +
-						(mrpw + 1) +
-						(discpw + 1) +
-						(amountw + 1) +
-						(sgstw + 1) +
-						cgstw,
+						(product_code_w + 1) +
+						(product_desc_w + 1) +
+						(hsn_w + 1) +
+						(qty_w + 1) +
+						(uom_w + 1) +
+						(mrp_w + 1) +
+						(discount_percent_w + 1) +
+						(amount_w + 1) +
+						(sgs_tw + 1) +
+						cgs_tw,
 					invoiceTableTop - 8,
 				)
 				.lineWidth(1)
 				.lineTo(
 					x_start +
 						(snow + 1) +
-						(pcodew + 1) +
-						(pdescw + 1) +
-						(hsnw + 1) +
-						(qtyw + 1) +
-						(uomw + 1) +
-						(mrpw + 1) +
-						(discpw + 1) +
-						(amountw + 1) +
-						(sgstw + 1) +
-						cgstw,
+						(product_code_w + 1) +
+						(product_desc_w + 1) +
+						(hsn_w + 1) +
+						(qty_w + 1) +
+						(uom_w + 1) +
+						(mrp_w + 1) +
+						(discount_percent_w + 1) +
+						(amount_w + 1) +
+						(sgs_tw + 1) +
+						cgs_tw,
 					540,
 				)
 
 				.stroke();
 		} else {
-			//IGST
+			//igs_t
 			doc.strokeColor('#000000')
 				.moveTo(
 					x_start +
 						(snow + 1) +
-						(pcodew + 1) +
-						(pdescw + 1) +
-						(hsnw + 1) +
-						(qtyw + 1) +
-						(uomw + 1) +
-						(mrpw + 1) +
-						(discpw + 1) +
-						(amountw + 1) +
-						igstw,
+						(product_code_w + 1) +
+						(product_desc_w + 1) +
+						(hsn_w + 1) +
+						(qty_w + 1) +
+						(uom_w + 1) +
+						(mrp_w + 1) +
+						(discount_percent_w + 1) +
+						(amount_w + 1) +
+						igs_tw,
 					invoiceTableTop - 8,
 				)
 				.lineWidth(1)
 				.lineTo(
 					x_start +
 						(snow + 1) +
-						(pcodew + 1) +
-						(pdescw + 1) +
-						(hsnw + 1) +
-						(qtyw + 1) +
-						(uomw + 1) +
-						(mrpw + 1) +
-						(discpw + 1) +
-						(amountw + 1) +
-						igstw,
+						(product_code_w + 1) +
+						(product_desc_w + 1) +
+						(hsn_w + 1) +
+						(qty_w + 1) +
+						(uom_w + 1) +
+						(mrp_w + 1) +
+						(discount_percent_w + 1) +
+						(amount_w + 1) +
+						igs_tw,
 					540,
 				)
 
@@ -710,53 +797,53 @@ function generateInvoiceTable(doc, salemasterdata, saledetailsdata, centerdata, 
 		}
 	});
 
-	generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata);
+	generateSummaryLeft(doc, sale_details_data, is_igs_t, sale_master_data);
 }
 
-function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
-	let sum_SGST_0 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'SGST', 0).toFixed(2);
-	let sum_CGST_0 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'CGST', 0).toFixed(2);
-	let sum_IGST_0 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'IGST', 0).toFixed(2);
+function generateSummaryLeft(doc, sale_details_data, is_igs_t, sale_master_data) {
+	let sum_sgs_t_0 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'sgs_t', 0).toFixed(2);
+	let sum_cgs_t_0 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'cgs_t', 0).toFixed(2);
+	let sum_igs_t_0 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'igs_t', 0).toFixed(2);
 
-	let sum_SGST_5 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'SGST', 5).toFixed(2);
-	let sum_CGST_5 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'CGST', 5).toFixed(2);
-	let sum_IGST_5 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'IGST', 5).toFixed(2);
+	let sum_sgs_t_5 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'sgs_t', 5).toFixed(2);
+	let sum_cgs_t_5 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'cgs_t', 5).toFixed(2);
+	let sum_igs_t_5 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'igs_t', 5).toFixed(2);
 
-	let sum_SGST_12 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'SGST', 12).toFixed(2);
-	let sum_CGST_12 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'CGST', 12).toFixed(2);
-	let sum_IGST_12 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'IGST', 12).toFixed(2);
+	let sum_sgs_t_12 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'sgs_t', 12).toFixed(2);
+	let sum_cgs_t_12 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'cgs_t', 12).toFixed(2);
+	let sum_igs_t_12 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'igs_t', 12).toFixed(2);
 
-	let sum_SGST_18 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'SGST', 18).toFixed(2);
-	let sum_CGST_18 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'CGST', 18).toFixed(2);
-	let sum_IGST_18 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'IGST', 18).toFixed(2);
+	let sum_sgs_t_18 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'sgs_t', 18).toFixed(2);
+	let sum_cgs_t_18 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'cgs_t', 18).toFixed(2);
+	let sum_igs_t_18 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'igs_t', 18).toFixed(2);
 
-	let sum_SGST_28 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'SGST', 28).toFixed(2);
-	let sum_CGST_28 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'CGST', 28).toFixed(2);
-	let sum_IGST_28 = getSumByTaxtypeAndTaxPercent(saledetailsdata, 'IGST', 28).toFixed(2);
+	let sum_sgs_t_28 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'sgs_t', 28).toFixed(2);
+	let sum_cgs_t_28 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'cgs_t', 28).toFixed(2);
+	let sum_igs_t_28 = getSumByTaxTypeAndTaxPercent(sale_details_data, 'igs_t', 28).toFixed(2);
 
-	let GST_0 = +sum_SGST_0 / 2 + +sum_CGST_0 / 2 + +sum_IGST_0;
-	let GST_5 = +sum_SGST_5 / 2 + +sum_CGST_5 / 2 + +sum_IGST_5;
-	let GST_12 = +sum_SGST_12 / 2 + +sum_CGST_12 / 2 + +sum_IGST_12;
-	let GST_18 = +sum_SGST_18 / 2 + +sum_CGST_18 / 2 + +sum_IGST_18;
-	let GST_28 = +sum_SGST_28 / 2 + +sum_CGST_28 / 2 + +sum_IGST_28;
+	let GST_0 = +sum_sgs_t_0 / 2 + +sum_cgs_t_0 / 2 + +sum_igs_t_0;
+	let GST_5 = +sum_sgs_t_5 / 2 + +sum_cgs_t_5 / 2 + +sum_igs_t_5;
+	let GST_12 = +sum_sgs_t_12 / 2 + +sum_cgs_t_12 / 2 + +sum_igs_t_12;
+	let GST_18 = +sum_sgs_t_18 / 2 + +sum_cgs_t_18 / 2 + +sum_igs_t_18;
+	let GST_28 = +sum_sgs_t_28 / 2 + +sum_cgs_t_28 / 2 + +sum_igs_t_28;
 
-	let sumDiscountPercent_0 = getSumByDiscountPercent(saledetailsdata, 0).toFixed(2);
-	let sumDiscountPercent_5 = getSumByDiscountPercent(saledetailsdata, 5).toFixed(2);
-	let sumDiscountPercent_12 = getSumByDiscountPercent(saledetailsdata, 12).toFixed(2);
-	let sumDiscountPercent_18 = getSumByDiscountPercent(saledetailsdata, 18).toFixed(2);
-	let sumDiscountPercent_28 = getSumByDiscountPercent(saledetailsdata, 28).toFixed(2);
+	let sumDiscountPercent_0 = getSumByDiscountPercent(sale_details_data, 0).toFixed(2);
+	let sumDiscountPercent_5 = getSumByDiscountPercent(sale_details_data, 5).toFixed(2);
+	let sumDiscountPercent_12 = getSumByDiscountPercent(sale_details_data, 12).toFixed(2);
+	let sumDiscountPercent_18 = getSumByDiscountPercent(sale_details_data, 18).toFixed(2);
+	let sumDiscountPercent_28 = getSumByDiscountPercent(sale_details_data, 28).toFixed(2);
 
-	let sumTaxablePercent_0 = getSumByTaxableByPercent(saledetailsdata, 0).toFixed(2);
-	let sumTaxablePercent_5 = getSumByTaxableByPercent(saledetailsdata, 5).toFixed(2);
-	let sumTaxablePercent_12 = getSumByTaxableByPercent(saledetailsdata, 12).toFixed(2);
-	let sumTaxablePercent_18 = getSumByTaxableByPercent(saledetailsdata, 18).toFixed(2);
-	let sumTaxablePercent_28 = getSumByTaxableByPercent(saledetailsdata, 28).toFixed(2);
+	let sumTaxablePercent_0 = getSumByTaxableByPercent(sale_details_data, 0).toFixed(2);
+	let sumTaxablePercent_5 = getSumByTaxableByPercent(sale_details_data, 5).toFixed(2);
+	let sumTaxablePercent_12 = getSumByTaxableByPercent(sale_details_data, 12).toFixed(2);
+	let sumTaxablePercent_18 = getSumByTaxableByPercent(sale_details_data, 18).toFixed(2);
+	let sumTaxablePercent_28 = getSumByTaxableByPercent(sale_details_data, 28).toFixed(2);
 
-	let sumTotalPercent_0 = getSumByTotalByPercent(saledetailsdata, 0).toFixed(2);
-	let sumTotalPercent_5 = getSumByTotalByPercent(saledetailsdata, 5).toFixed(2);
-	let sumTotalPercent_12 = getSumByTotalByPercent(saledetailsdata, 12).toFixed(2);
-	let sumTotalPercent_18 = getSumByTotalByPercent(saledetailsdata, 18).toFixed(2);
-	let sumTotalPercent_28 = getSumByTotalByPercent(saledetailsdata, 28).toFixed(2);
+	let sumTotalPercent_0 = getSumByTotalByPercent(sale_details_data, 0).toFixed(2);
+	let sumTotalPercent_5 = getSumByTotalByPercent(sale_details_data, 5).toFixed(2);
+	let sumTotalPercent_12 = getSumByTotalByPercent(sale_details_data, 12).toFixed(2);
+	let sumTotalPercent_18 = getSumByTotalByPercent(sale_details_data, 18).toFixed(2);
+	let sumTotalPercent_28 = getSumByTotalByPercent(sale_details_data, 28).toFixed(2);
 
 	let total_0 = +GST_0 + +sumDiscountPercent_0 + +sumTaxablePercent_0 + +sumTotalPercent_0;
 	let total_5 = +GST_5 + +sumDiscountPercent_5 + +sumTaxablePercent_5 + +sumTotalPercent_5;
@@ -768,9 +855,9 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 	let discountAllTax = +sumDiscountPercent_0 + +sumDiscountPercent_5 + +sumDiscountPercent_12 + +sumDiscountPercent_18 + +sumDiscountPercent_28;
 	let totalAllTax = +sumTotalPercent_0 + +sumTotalPercent_5 + +sumTotalPercent_12 + +sumTotalPercent_18 + +sumTotalPercent_28;
 
-	let SGSTAllTax = +sum_SGST_0 / 2 + +sum_SGST_5 / 2 + +sum_SGST_12 / 2 + +sum_SGST_18 / 2 + +sum_SGST_28 / 2;
-	let CGSTAllTax = +sum_CGST_0 / 2 + +sum_CGST_5 / 2 + +sum_CGST_12 / 2 + +sum_CGST_18 / 2 + +sum_CGST_28 / 2;
-	let IGSTAllTax = +sum_IGST_0 + +sum_IGST_5 + +sum_IGST_12 + +sum_IGST_18 + +sum_IGST_28;
+	let sgs_tAllTax = +sum_sgs_t_0 / 2 + +sum_sgs_t_5 / 2 + +sum_sgs_t_12 / 2 + +sum_sgs_t_18 / 2 + +sum_sgs_t_28 / 2;
+	let cgs_tAllTax = +sum_cgs_t_0 / 2 + +sum_cgs_t_5 / 2 + +sum_cgs_t_12 / 2 + +sum_cgs_t_18 / 2 + +sum_cgs_t_28 / 2;
+	let igs_tAllTax = +sum_igs_t_0 + +sum_igs_t_5 + +sum_igs_t_12 + +sum_igs_t_18 + +sum_igs_t_28;
 
 	let finalTotalAllTax = +sumTotalPercent_0 + +sumTotalPercent_5 + +sumTotalPercent_12 + +sumTotalPercent_18 + +sumTotalPercent_28;
 
@@ -778,7 +865,7 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 	let start = 539;
 	generateHr(doc, line_x_start, line_x_end, start);
 	doc.font('Helvetica-Bold');
-	generateSummaryLeftTableRow(doc, start + 10, 'CLASS', 'SUB TOTAL', 'DISC', 'AMOUNT', 'SGST', 'CGST', 'GST', 'TOTAL', isIGST, 'IGST');
+	generateSummaryLeftTableRow(doc, start + 10, 'CLASS', 'SUB TOTAL', 'DISC', 'AMOUNT', 'SGST', 'CGST', 'GST', 'TOTAL', is_igs_t, 'IGST');
 	doc.font('Helvetica');
 	generateSummaryLeftTableRow(
 		doc,
@@ -787,12 +874,12 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 		sumTotalPercent_5,
 		sumDiscountPercent_5,
 		sumTaxablePercent_5,
-		sum_SGST_5,
-		sum_CGST_5,
+		sum_sgs_t_5,
+		sum_cgs_t_5,
 		GST_5,
 		sumTotalPercent_5,
-		isIGST,
-		sum_IGST_5,
+		is_igs_t,
+		sum_igs_t_5,
 	);
 	generateSummaryLeftTableRow(
 		doc,
@@ -801,12 +888,12 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 		sumTotalPercent_12,
 		sumDiscountPercent_12,
 		sumTaxablePercent_12,
-		sum_SGST_12,
-		sum_CGST_12,
+		sum_sgs_t_12,
+		sum_cgs_t_12,
 		GST_12,
 		sumTotalPercent_12,
-		isIGST,
-		sum_IGST_12,
+		is_igs_t,
+		sum_igs_t_12,
 	);
 	generateSummaryLeftTableRow(
 		doc,
@@ -815,12 +902,12 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 		sumTotalPercent_18,
 		sumDiscountPercent_18,
 		sumTaxablePercent_18,
-		sum_SGST_18,
-		sum_CGST_18,
+		sum_sgs_t_18,
+		sum_cgs_t_18,
 		GST_18,
 		sumTotalPercent_18,
-		isIGST,
-		sum_CGST_18,
+		is_igs_t,
+		sum_cgs_t_18,
 	);
 	generateSummaryLeftTableRow(
 		doc,
@@ -829,12 +916,12 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 		sumTotalPercent_28,
 		sumDiscountPercent_28,
 		sumTaxablePercent_28,
-		sum_SGST_28,
-		sum_CGST_28,
+		sum_sgs_t_28,
+		sum_cgs_t_28,
 		GST_28,
 		sumTotalPercent_28,
-		isIGST,
-		sum_CGST_28,
+		is_igs_t,
+		sum_cgs_t_28,
 	);
 	generateSummaryLeftTableRow(
 		doc,
@@ -843,12 +930,12 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 		sumTotalPercent_0,
 		sumDiscountPercent_0,
 		sumTaxablePercent_0,
-		sum_SGST_0,
-		sum_CGST_0,
+		sum_sgs_t_0,
+		sum_cgs_t_0,
 		GST_0,
 		sumTotalPercent_0,
-		isIGST,
-		sum_CGST_0,
+		is_igs_t,
+		sum_cgs_t_0,
 	);
 
 	generateHr(doc, line_x_start, line_x_end, start + 97);
@@ -862,12 +949,12 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 		discountAllTax,
 		subtotalAllTax,
 
-		SGSTAllTax * 2,
-		CGSTAllTax * 2,
-		SGSTAllTax + CGSTAllTax + IGSTAllTax,
+		sgs_tAllTax * 2,
+		cgs_tAllTax * 2,
+		sgs_tAllTax + cgs_tAllTax + igs_tAllTax,
 		finalTotalAllTax,
-		isIGST,
-		IGSTAllTax,
+		is_igs_t,
+		igs_tAllTax,
 	);
 	doc.font('Helvetica');
 
@@ -876,12 +963,12 @@ function generateSummaryLeft(doc, saledetailsdata, isIGST, salemasterdata) {
 		start + 10,
 		totalAllTax,
 		discountAllTax,
-		SGSTAllTax * 2,
-		CGSTAllTax * 2,
+		sgs_tAllTax * 2,
+		cgs_tAllTax * 2,
 		finalTotalAllTax,
-		isIGST,
-		IGSTAllTax,
-		salemasterdata,
+		is_igs_t,
+		igs_tAllTax,
+		sale_master_data,
 	);
 	generateHr(doc, line_x_start, line_x_end, start + 120);
 	numberToText(doc, finalTotalAllTax, start);
@@ -903,11 +990,11 @@ function generateFooter(doc) {
 	});
 }
 
-function generateToBlock(doc, customerdata) {
+function generateToBlock(doc, customer_data) {
 	doc.fontSize(11).text('To', 50, 350);
 }
 
-function generateFooterSummary(doc, centerdata) {
+function generateFooterSummary(doc, center_data) {
 	// adjusting footer section 2
 	let start = 680;
 
@@ -919,7 +1006,7 @@ function generateFooterSummary(doc, centerdata) {
 		.text('Bills not paid due date will attract 24% interest.', {
 			lineGap: 1.8,
 		})
-		.text('All disputes subject to Jurisdication only.', { lineGap: 1.8 })
+		.text('All disputes subject to Jurisdiction only.', { lineGap: 1.8 })
 		.text('Prescribed Sales Tax declaration will be given.', { lineGap: 1.8 });
 
 	doc.strokeColor('#000000')
@@ -934,25 +1021,25 @@ function generateFooterSummary(doc, centerdata) {
 
 	doc.fontSize(8)
 		.font('Helvetica-Bold')
-		.text('OUR BANK        : ' + centerdata.bankname, 320, start, {
+		.text('OUR BANK        : ' + center_data.bank_name, 320, start, {
 			lineGap: 1.8,
 		})
-		.text('A/C NAME          : ' + centerdata.accountname, 320, start + 10, {
+		.text('A/C NAME          : ' + center_data.account_name, 320, start + 10, {
 			lineGap: 1.8,
 		})
-		.text('A/C NO               : ' + centerdata.accountno, 320, start + 20, {
+		.text('A/C NO               : ' + center_data.account_no, 320, start + 20, {
 			lineGap: 1.8,
 		});
 	doc.font('Times-BoldItalic');
-	doc.fontSize(6).text(`Plz pay Cash/Cheque/DD in favour of '${centerdata.accountname}'.`, 320, start + 30, { lineGap: 1.4 });
+	doc.fontSize(6).text(`Plz pay Cash/Cheque/DD in favour of '${center_data.account_name}'.`, 320, start + 30, { lineGap: 1.4 });
 
-	doc.fontSize(7).text('For    ' + centerdata.accountname, 400, start + 40);
-	doc.fontSize(7).text('Authorised signatory', 400, start + 75);
+	doc.fontSize(7).text('For    ' + center_data.account_name, 400, start + 40);
+	doc.fontSize(7).text('Authorized signatory', 400, start + 75);
 
-	//  doc.fontSize(8).text("Checked By    " + centerdata.name, 350, 680);
+	//  doc.fontSize(8).text("Checked By    " + center_data.name, 350, 680);
 	//  doc.fontSize(8).text("  E.&O.E.", 350, 700);
 
-	// doc.fontSize(8).text("Prepared by:", 50, 800).text("Packed by:", 150, 800).text("Checked by:", 250, 800).text("Authorised signatory:", 350, 800);
+	// doc.fontSize(8).text("Prepared by:", 50, 800).text("Packed by:", 150, 800).text("Checked by:", 250, 800).text("Authorized signatory:", 350, 800);
 	doc.fontSize(8).text('Software By: 97316 16386', 250, 758);
 }
 
@@ -968,28 +1055,28 @@ function generateTableRow(
 	mrp,
 	disc_percent,
 	amount,
-	sgst,
-	cgst,
+	sgs_t,
+	cgs_t,
 	net_amount,
 	x_start,
-	isIGST,
-	igst,
+	is_igs_t,
+	igs_t,
 ) {
 	doc.fillColor('#000000');
 
 	let snow = 29;
-	let pcodew = 59;
-	let pdescw = 124;
-	let hsnw = 41;
-	let qtyw = 29;
-	let uomw = 29;
-	let mrpw = 44;
-	let discpw = 24;
-	let amountw = 44;
-	let sgstw = 25;
-	let cgstw = 25;
-	let igstw = 50;
-	let netw = 48;
+	let product_code_w = 59;
+	let product_desc_w = 124;
+	let hsn_w = 41;
+	let qty_w = 29;
+	let uom_w = 29;
+	let mrp_w = 44;
+	let discount_percent_w = 24;
+	let amount_w = 44;
+	let sgs_tw = 25;
+	let cgs_tw = 25;
+	let igs_tw = 50;
+	let net_w = 48;
 
 	// Si.No Id
 	if (idx === 'SNo') {
@@ -999,14 +1086,14 @@ function generateTableRow(
 	}
 
 	// P.CODE
-	if (product_code === 'PCODE') {
+	if (product_code === 'P.CODE') {
 		doc.text(product_code, x_start + (snow + 2), y, {
-			width: pcodew,
+			width: product_code_w,
 			align: 'left',
 		});
 	} else {
 		doc.text(product_code, x_start + (snow + 3), y, {
-			width: pcodew,
+			width: product_code_w,
 			align: 'left',
 		});
 	}
@@ -1014,236 +1101,269 @@ function generateTableRow(
 	if (product_description !== 'PRODUCT NAME') {
 		doc.text(
 			product_description.length > 33 ? product_description.substr(0, 29) + '...' : product_description,
-			x_start + (snow + 2) + (pcodew + 3),
+			x_start + (snow + 2) + (product_code_w + 3),
 			y,
 			{
-				width: pdescw,
+				width: product_desc_w,
 				align: 'left',
 				ellipsis: true,
 			},
 		);
 	} else {
-		doc.text(product_description, x_start + (snow + 2) + (pcodew + 2), y, {
-			width: pdescw,
+		doc.text(product_description, x_start + (snow + 2) + (product_code_w + 2), y, {
+			width: product_desc_w,
 			align: 'left',
 		});
 	}
 
 	// HSNCode
 	if (hsn === ' HSN ') {
-		doc.text(hsn, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2), y, {
-			width: hsnw,
+		doc.text(hsn, x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2), y, {
+			width: hsn_w,
 			align: 'center',
 		});
 	} else {
-		doc.text(hsn, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 3), y, {
-			width: hsnw,
+		doc.text(hsn, x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 3), y, {
+			width: hsn_w,
 			align: 'left',
 		});
 	}
 
 	if (qty === ' QTY ') {
-		doc.text(qty, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2), y, { width: qtyw - 1, align: 'right' });
+		doc.text(qty, x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2) + (hsn_w + 2), y, { width: qty_w - 1, align: 'right' });
 	} else {
-		doc.text(qty, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2), y, { width: qtyw - 3, align: 'right' }); // ADJUST FROM RIGHT
+		doc.text(qty, x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2) + (hsn_w + 2), y, { width: qty_w - 3, align: 'right' }); // ADJUST FROM RIGHT
 	}
 
 	if (uom === ' UOM ') {
-		doc.text(uom, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2), y, { width: uomw, align: 'center' });
-	} else {
-		doc.text(uom, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2), y, { width: uomw, align: 'center' });
-	}
-
-	if (mrp === ' MRP ') {
-		doc.text(mrp, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2), y, {
-			width: mrpw - 1,
+		doc.text(uom, x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2) + (hsn_w + 2) + (qty_w + 2), y, {
+			width: uom_w,
 			align: 'center',
 		});
 	} else {
-		doc.text((+mrp).toFixed(2), x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2), y, {
-			width: mrpw - 3,
+		doc.text(uom, x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2) + (hsn_w + 2) + (qty_w + 2), y, {
+			width: uom_w,
+			align: 'center',
+		});
+	}
+
+	if (mrp === ' MRP ') {
+		doc.text(mrp, x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2) + (hsn_w + 2) + (qty_w + 2) + (uom_w + 2), y, {
+			width: mrp_w - 1,
+			align: 'center',
+		});
+	} else {
+		doc.text((+mrp).toFixed(2), x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2) + (hsn_w + 2) + (qty_w + 2) + (uom_w + 2), y, {
+			width: mrp_w - 3,
 			align: 'right',
 		});
 	}
 
 	if (disc_percent === 'DIS%') {
-		doc.text(disc_percent, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2) + (mrpw + 2), y, {
-			width: discpw,
-			align: 'center',
-		});
-	} else {
-		doc.text(disc_percent.toFixed(2), x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2) + (mrpw + 2), y, {
-			width: discpw - 2,
-			align: 'right',
-		});
-	}
-
-	if (amount === ' AMOUNT ') {
-		doc.text(amount, x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2) + (mrpw + 2) + (discpw + 2), y, {
-			width: amountw - 3,
-			align: 'right',
-		});
-	} else {
 		doc.text(
-			amount.toFixed(2),
-			x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2) + (mrpw + 2) + (discpw + 2),
+			disc_percent,
+			x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2) + (hsn_w + 2) + (qty_w + 2) + (uom_w + 2) + (mrp_w + 2),
 			y,
 			{
-				width: amountw - 3,
+				width: discount_percent_w,
+				align: 'center',
+			},
+		);
+	} else {
+		doc.text(
+			Number(disc_percent).toFixed(2),
+			x_start + (snow + 2) + (product_code_w + 2) + (product_desc_w + 2) + (hsn_w + 2) + (qty_w + 2) + (uom_w + 2) + (mrp_w + 2),
+			y,
+			{
+				width: discount_percent_w - 2,
 				align: 'right',
 			},
 		);
 	}
 
-	if (sgst === 'SGST' && !isIGST) {
+	if (amount === ' AMOUNT ') {
 		doc.text(
-			sgst,
-			x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2) + (mrpw + 2) + (discpw + 2) + (amountw + 2),
-			y,
-			{ width: sgstw, align: 'center' },
-		);
-	} else if (!isIGST) {
-		doc.text(
-			sgst.toFixed(2),
-			x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2) + (mrpw + 2) + (discpw + 2) + (amountw + 2),
-			y,
-			{ width: sgstw - 3, align: 'right' },
-		);
-	}
-
-	if (cgst === 'CGST' && !isIGST) {
-		doc.text(
-			cgst,
+			amount,
 			x_start +
 				(snow + 2) +
-				(pcodew + 2) +
-				(pdescw + 2) +
-				(hsnw + 2) +
-				(qtyw + 2) +
-				(uomw + 2) +
-				(mrpw + 2) +
-				(discpw + 2) +
-				(amountw + 2) +
-				(sgstw + 2),
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2),
 			y,
-			{ width: cgstw - 1, align: 'right' },
+			{
+				width: amount_w - 3,
+				align: 'right',
+			},
 		);
-	} else if (!isIGST) {
+	} else {
 		doc.text(
-			cgst.toFixed(2),
+			Number(amount).toFixed(2),
 			x_start +
 				(snow + 2) +
-				(pcodew + 2) +
-				(pdescw + 2) +
-				(hsnw + 2) +
-				(qtyw + 2) +
-				(uomw + 2) +
-				(mrpw + 2) +
-				(discpw + 2) +
-				(amountw + 2) +
-				(sgstw + 2),
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2),
 			y,
-			{ width: cgstw - 3, align: 'right' },
+			{
+				width: amount_w - 3,
+				align: 'right',
+			},
 		);
 	}
 
-	if (igst === 'IGST' && isIGST) {
+	if (sgs_t === 'SGST' && !is_igs_t) {
 		doc.text(
-			igst,
-
-			x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2) + (mrpw + 2) + (discpw + 2) + (amountw + 2),
+			sgs_t,
+			x_start +
+				(snow + 2) +
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2) +
+				(amount_w + 2),
 			y,
-			{ width: igstw, align: 'center' },
+			{ width: sgs_tw, align: 'center' },
 		);
-	} else if (isIGST) {
+	} else if (!is_igs_t) {
 		doc.text(
-			igst.toFixed(2),
-
-			x_start + (snow + 2) + (pcodew + 2) + (pdescw + 2) + (hsnw + 2) + (qtyw + 2) + (uomw + 2) + (mrpw + 2) + (discpw + 2) + (amountw + 2),
+			Number(sgs_t).toFixed(2),
+			x_start +
+				(snow + 2) +
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2) +
+				(amount_w + 2),
 			y,
-			{ width: igstw - 20, align: 'right' },
+			{ width: sgs_tw - 3, align: 'right' },
 		);
 	}
 
-	if (net_amount === 'NET AMNT') {
+	if (cgs_t === 'CGST' && !is_igs_t) {
+		doc.text(
+			cgs_t,
+			x_start +
+				(snow + 2) +
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2) +
+				(amount_w + 2) +
+				(sgs_tw + 2),
+			y,
+			{ width: cgs_tw - 1, align: 'right' },
+		);
+	} else if (!is_igs_t) {
+		doc.text(
+			Number(cgs_t).toFixed(2),
+			x_start +
+				(snow + 2) +
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2) +
+				(amount_w + 2) +
+				(sgs_tw + 2),
+			y,
+			{ width: cgs_tw - 3, align: 'right' },
+		);
+	}
+
+	if (igs_t === 'IGST' && is_igs_t) {
+		doc.text(
+			igs_t,
+
+			x_start +
+				(snow + 2) +
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2) +
+				(amount_w + 2),
+			y,
+			{ width: igs_tw, align: 'center' },
+		);
+	} else if (is_igs_t) {
+		doc.text(
+			Number(igs_t).toFixed(2),
+
+			x_start +
+				(snow + 2) +
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2) +
+				(amount_w + 2),
+			y,
+			{ width: igs_tw - 20, align: 'right' },
+		);
+	}
+
+	if (net_amount === 'NET AMT') {
 		doc.text(
 			net_amount,
 			x_start +
 				(snow + 2) +
-				(pcodew + 2) +
-				(pdescw + 2) +
-				(hsnw + 2) +
-				(qtyw + 2) +
-				(uomw + 2) +
-				(mrpw + 2) +
-				(discpw + 2) +
-				(amountw + 2) +
-				(igstw + 2),
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2) +
+				(amount_w + 2) +
+				(igs_tw + 2),
 			y,
-			{ width: netw - 1, align: 'right' },
+			{ width: net_w - 1, align: 'right' },
 		);
 	} else {
 		doc.text(
-			net_amount.toFixed(2),
+			Number(net_amount).toFixed(2),
 			x_start +
 				(snow + 2) +
-				(pcodew + 2) +
-				(pdescw + 2) +
-				(hsnw + 2) +
-				(qtyw + 2) +
-				(uomw + 2) +
-				(mrpw + 2) +
-				(discpw + 2) +
-				(amountw + 2) +
-				(igstw + 2),
+				(product_code_w + 2) +
+				(product_desc_w + 2) +
+				(hsn_w + 2) +
+				(qty_w + 2) +
+				(uom_w + 2) +
+				(mrp_w + 2) +
+				(discount_percent_w + 2) +
+				(amount_w + 2) +
+				(igs_tw + 2),
 			y,
-			{ width: netw - 1, align: 'right' },
+			{ width: net_w - 1, align: 'right' },
 		);
 	}
-
-	// if (igst === "IGST" && isIGST) {
-	// 	doc.text(
-	// 		net_amount,
-	// 		x_start +
-	// 			(snow + 2) +
-	// 			(pcodew + 2) +
-	// 			(pdescw + 2) +
-	// 			(hsnw + 2) +
-	// 			(qtyw + 2) +
-	// 			(uomw + 2) +
-	// 			(mrpw + 2) +
-	// 			(discpw + 2) +
-	// 			(amountw + 2) +
-	// 			(igstw + 2),
-	// 		y,
-	// 		{ width: netw - 1, align: "right" },
-	// 	);
-	// } else {
-	// 	doc.text(
-	// 		net_amount,
-	// 		x_start +
-	// 			(snow + 2) +
-	// 			(pcodew + 2) +
-	// 			(pdescw + 2) +
-	// 			(hsnw + 2) +
-	// 			(qtyw + 2) +
-	// 			(uomw + 2) +
-	// 			(mrpw + 2) +
-	// 			(discpw + 2) +
-	// 			(amountw + 2) +
-	// 			(sgstw + 2) +
-	// 			(cgstw + 2),
-	// 		y,
-	// 		{
-	// 			width: netw - 1,
-	// 			align: "right",
-	// 		},
-	// 	);
-	// }
 }
 
 // FINAL SUMMARY TOTAL LEFT
-function generateSummaryLeftTableRow(doc, y, classhead, subtotal, disc, amount, sgst, cgst, gst, total, isIGST, igst) {
+function generateSummaryLeftTableRow(doc, y, classhead, subtotal, disc, amount, sgs_t, cgs_t, gst, total, is_igs_t, igs_t) {
 	doc.fillColor('#000000');
 	doc.fontSize(9).text(classhead, 24, y, { width: 40, align: 'left' });
 	if (subtotal === 'SUB TOTAL') {
@@ -1266,17 +1386,17 @@ function generateSummaryLeftTableRow(doc, y, classhead, subtotal, disc, amount, 
 		doc.text((+amount).toFixed(2), 169, y, { width: 49, align: 'right' });
 	}
 
-	if (!isIGST) {
-		if (sgst === 'SGST') {
-			doc.text(sgst, 225, y, { width: 49, align: 'right' });
+	if (!is_igs_t) {
+		if (sgs_t === 'SGST') {
+			doc.text(sgs_t, 225, y, { width: 49, align: 'right' });
 		} else {
-			doc.text((+sgst / 2).toFixed(2), 225, y, { width: 49, align: 'right' });
+			doc.text((+sgs_t / 2).toFixed(2), 225, y, { width: 49, align: 'right' });
 		}
 
-		if (cgst === 'CGST') {
-			doc.text(cgst, 281, y, { width: 49, align: 'right' });
+		if (cgs_t === 'CGST') {
+			doc.text(cgs_t, 281, y, { width: 49, align: 'right' });
 		} else {
-			doc.text((+cgst / 2).toFixed(2), 281, y, { width: 49, align: 'right' });
+			doc.text((+cgs_t / 2).toFixed(2), 281, y, { width: 49, align: 'right' });
 		}
 
 		if (gst === 'GST') {
@@ -1289,11 +1409,11 @@ function generateSummaryLeftTableRow(doc, y, classhead, subtotal, disc, amount, 
 		} else {
 			doc.text((+total).toFixed(2), 393, y, { width: 49, align: 'right' });
 		}
-	} else if (isIGST) {
-		if (igst === 'IGST') {
-			doc.text(igst, 225, y, { width: 39, align: 'right' });
+	} else if (is_igs_t) {
+		if (igs_t === 'IGST') {
+			doc.text(igs_t, 225, y, { width: 39, align: 'right' });
 		} else {
-			doc.text((+igst).toFixed(2), 225, y, { width: 39, align: 'right' });
+			doc.text((+igs_t).toFixed(2), 225, y, { width: 39, align: 'right' });
 		}
 
 		if (gst === 'GST') {
@@ -1310,7 +1430,7 @@ function generateSummaryLeftTableRow(doc, y, classhead, subtotal, disc, amount, 
 	}
 }
 //Final SUMMARY TOTAL RIGHT BOX
-function generateSummaryRightTableRow(doc, y, subtotal, discount, sgst, cgst, finalTotalAllTax, isIGST, igst, salemasterdata) {
+function generateSummaryRightTableRow(doc, y, subtotal, discount, sgs_t, cgs_t, finalTotalAllTax, is_igs_t, igs_t, sale_master_data) {
 	doc.fillColor('#000000');
 	doc.fontSize(9)
 		.font('Helvetica-Bold')
@@ -1325,20 +1445,20 @@ function generateSummaryRightTableRow(doc, y, subtotal, discount, sgst, cgst, fi
 
 		.text((+discount).toFixed(2), 500, y + 15, { width: 70, align: 'right' });
 
-	if (!isIGST) {
+	if (!is_igs_t) {
 		doc.text('SGST', 450, y + 30, { width: 70, align: 'left' })
 
-			.text((+sgst / 2).toFixed(2), 500, y + 30, { width: 70, align: 'right' })
+			.text((+sgs_t / 2).toFixed(2), 500, y + 30, { width: 70, align: 'right' })
 
 			.text('CGST', 450, y + 45, { width: 70, align: 'left' })
 
-			.text((+cgst / 2).toFixed(2), 500, y + 45, { width: 70, align: 'right' });
-	} else if (isIGST) {
-		doc.text('IGST', 450, y + 30, { width: 70, align: 'left' }).text((+igst).toFixed(2), 500, y + 30, { width: 70, align: 'right' });
+			.text((+cgs_t / 2).toFixed(2), 500, y + 45, { width: 70, align: 'right' });
+	} else if (is_igs_t) {
+		doc.text('IGST', 450, y + 30, { width: 70, align: 'left' }).text((+igs_t).toFixed(2), 500, y + 30, { width: 70, align: 'right' });
 	}
 
 	doc.text('Misc.', 450, y + 60, { width: 70, align: 'left' }).text(
-		(+(+salemasterdata.transport_charges + +salemasterdata.unloading_charges + +salemasterdata.misc_charges)).toFixed(2),
+		(+(+sale_master_data.transport_charges + +sale_master_data.unloading_charges + +sale_master_data.misc_charges)).toFixed(2),
 		500,
 		y + 60,
 		{
@@ -1347,10 +1467,15 @@ function generateSummaryRightTableRow(doc, y, subtotal, discount, sgst, cgst, fi
 		},
 	);
 
-	let finalSumTotal = +(+finalTotalAllTax + +salemasterdata.transport_charges + +salemasterdata.unloading_charges + +salemasterdata.misc_charges);
+	let finalSumTotal = +(
+		+finalTotalAllTax +
+		+sale_master_data.transport_charges +
+		+sale_master_data.unloading_charges +
+		+sale_master_data.misc_charges
+	);
 
 	doc.text('ROUNDED OFF', 450, y + 75, { width: 70, align: 'left' }).text(
-		(roundOffFn(finalSumTotal, 'rounding') - roundOffFn(finalSumTotal, 'withoutrounding')).toFixed(2),
+		(roundOffFn(finalSumTotal, 'rounding') - roundOffFn(finalSumTotal, 'without-rounding')).toFixed(2),
 		500,
 		y + 75,
 		{
@@ -1385,15 +1510,15 @@ function formatDate(date) {
 	return year + '/' + month + '/' + day;
 }
 
-function getSumByTaxtypeAndTaxPercent(dataArr, tax_type, tax_percent) {
+function getSumByTaxTypeAndTaxPercent(dataArr, tax_type, tax_percent) {
 	return dataArr
 		.filter((arr) => {
-			if (tax_type === 'IGST') {
-				return arr.igst === tax_percent;
-			} else if (tax_type === 'CGST') {
-				return arr.cgst === tax_percent / 2;
-			} else if (tax_type === 'SGST') {
-				return arr.sgst === tax_percent / 2;
+			if (tax_type === 'igs_t') {
+				return arr.igs_t === tax_percent;
+			} else if (tax_type === 'cgs_t') {
+				return arr.cgs_t === tax_percent / 2;
+			} else if (tax_type === 'sgs_t') {
+				return arr.sgs_t === tax_percent / 2;
 			}
 		})
 		.reduce((a, c) => {
@@ -1405,7 +1530,7 @@ function getSumByDiscountPercent(dataArr, tax_percent) {
 	return dataArr
 		.filter((arr) => arr.tax === tax_percent)
 		.reduce((a, c) => {
-			return a + c.disc_value;
+			return Number(a + c.disc_value);
 		}, 0);
 }
 
@@ -1413,7 +1538,7 @@ function getSumByTaxableByPercent(dataArr, tax_percent) {
 	return dataArr
 		.filter((arr) => arr.tax === tax_percent)
 		.reduce((a, c) => {
-			return a + c.after_tax_value;
+			return Number(a + c.after_tax_value);
 		}, 0);
 }
 
@@ -1421,14 +1546,14 @@ function getSumByTotalByPercent(dataArr, tax_percent) {
 	return dataArr
 		.filter((arr) => arr.tax === tax_percent)
 		.reduce((a, c) => {
-			return a + c.total_value;
+			return Number(a + c.total_value);
 		}, 0);
 }
 
 function roundOffFn(value, param) {
 	if (param === 'rounding') {
 		return Math.round(+value.toFixed(2));
-	} else if (param === 'withoutrounding') {
+	} else if (param === 'without-rounding') {
 		return +value.toFixed(2);
 	}
 }

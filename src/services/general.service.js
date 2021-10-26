@@ -12,8 +12,8 @@ const searchProductInformation = async (requestBody) => {
 	// initially checks if product has custom discount for the selected customer. if yes, takes that discount
 	// if no custom discount available, it then gets the default discount. brand = 0 for defaults
 
-	let query = ` select a.product_code as product_code, a.product_description, b.mrp, a.tax_rate, b.available_stock,
-	a.packet_size as qty, a.unit_price, a.id as product_id, b.id as stock_pk, a.rack_info,
+	let query = ` select a.product_code as product_code, a.hsn_code, a.product_description, b.mrp, a.tax_rate as tax, b.available_stock,
+	a.packet_size as packet_size, a.unit_price, a.id as product_id, b.id as stock_id, a.rack_info,
 IFNULL(
 (
 select concat(value,'~',type)  

@@ -11,7 +11,7 @@ const searchProductInformation = catchAsync(async (req, res) => {
 });
 
 const searchProduct = catchAsync(async (req, res) => {
-	const data = await productsService.searchProduct(req.body.center_id, req.body.product_search_text);
+	const data = await productsService.searchProduct(req.body.center_id, req.body.search_text);
 
 	return responseForward(data, 'searchProduct', res);
 });

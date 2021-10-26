@@ -16,7 +16,7 @@ router.route('/delete-sale/:id').get(auth('getUsers'), salesController.deleteSal
 
 router.route('/delete-sale-master/:id').get(auth('getUsers'), salesController.deleteSaleMaster);
 
-router.route('/get-sale-master/:sale_id').get(auth('getUsers'), salesController.getSaleMaster);
+router.route('/get-sale-master/:sale_id').get(auth('getUsers'), salesController.getSalesMaster);
 
 router.route('/get-sale-details/:sale_id').get(auth('getUsers'), salesController.getSalesDetails);
 

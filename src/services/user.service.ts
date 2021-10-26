@@ -12,7 +12,7 @@ export const findOne = async (username: any) => {
 };
 
 export const insertUser = async (insertValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let hashed_password = await encryptPassword(insertValues.password);
 
@@ -76,7 +76,7 @@ export const checkUserExist = async (insertValues: any) => {
 };
 
 export const updateUserStatus = async (updateValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 	let id = updateValues.id;
 	let status = updateValues.status;
 

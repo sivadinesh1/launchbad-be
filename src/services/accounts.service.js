@@ -10,7 +10,7 @@ const { handleError, ErrorHandler } = require('../config/error');
 
 const addPaymentReceived = async (requestBody) => {
 	var today = new Date();
-	today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 	const cloneReq = { ...requestBody };
 	const [customer, center_id, accountarr] = Object.values(requestBody);
 
@@ -75,7 +75,7 @@ function processItems(cloneReq, newPK, sale_ref_id, receivedamount) {
 const addSaleLedgerRecord = async (insertValues, invoice_ref_id) => {
 	console.log('ssssssssss');
 	try {
-		let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+		let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 		// balance amount is taken from querying ledger table, with Limit 1, check the subquery.
 		let query = `
@@ -102,7 +102,7 @@ VALUES
 // if multiple invoices are there the balance amount has to be taken from the last record, so consiously we ignore invoice ref id
 
 const addReverseSaleLedgerRecord = (insertValues, invoice_ref_id) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	// balance amount is taken from querying ledger table, with Limit 1, check the subquery.
 	let query = `
@@ -151,7 +151,7 @@ VALUES
 };
 
 const addSaleLedgerAfterReversalRecord = (insertValues, invoice_ref_id) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	// balance amount is taken from querying ledger table, with Limit 1, check the subquery.
 	let query = `
@@ -178,7 +178,7 @@ VALUES
 };
 
 const addPaymentLedgerRecord = async (insertValues, payment_ref_id, receivedamount, sale_ref_id) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
 	INSERT INTO ledger ( center_id, customer_id, invoice_ref_id, payment_ref_id, ledger_detail, debit_amt, balance_amt, ledger_date)
@@ -199,7 +199,7 @@ const addPaymentLedgerRecord = async (insertValues, payment_ref_id, receivedamou
 const addPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 	// (1) Updates payment seq in tbl financial_year, then {returns} formated sequence {YY/MM/PYMTSEQ}
 
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	if (cloneReq.bank_id === 0 || cloneReq.bank_id === '') {
 		cloneReq.bank_id = null;
@@ -267,8 +267,8 @@ const getPymtSequenceNo = (cloneReq) => {
 	let pymtNoQry = '';
 
 	pymtNoQry = ` select 
-	concat("RP-",'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'YY')}', "/", 
-	'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'MM')}', "/", lpad(pymt_seq, 5, "0")) as pymtNo from financial_year 
+	concat("RP-",'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'YY')}', "/", 
+	'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'MM')}', "/", lpad(pymt_seq, 5, "0")) as pymtNo from financial_year 
 				where 
 				center_id = '${cloneReq.center_id}' and  
 				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
@@ -713,7 +713,7 @@ const updateCustomerBalanceAmount = (customer_id) => {
 };
 
 const updateCustomerLastPaidDate = (customer_id, last_paid_date) => {
-	let dt = toTimeZoneFormat(last_paid_date, 'Asia/Kolkata', 'YYYY-MM-DD');
+	let dt = toTimeZoneFormat(last_paid_date, 'YYYY-MM-DD');
 	let qryUpdate = `
 	update customer c set c.last_paid_date = '${dt}' 
 		where c.id = '${customer_id}' 

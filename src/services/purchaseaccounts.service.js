@@ -5,7 +5,7 @@ const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = 
 const { handleError, ErrorHandler } = require('../config/error');
 
 const addPurchaseLedgerRecord = (insertValues, purchase_ref_id, callback) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	// balance amount is taken from querying purchase_ledger table, with Limit 1, check the subquery.
 	let query = `
@@ -32,7 +32,7 @@ VALUES
 };
 
 const addReversePurchaseLedgerRecord = (insertValues, purchase_ref_id) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	// balance amount is taken from querying purchase ledger table, with Limit 1, check the subquery.
 	let query = `
@@ -81,7 +81,7 @@ VALUES
 };
 
 const addPurchaseLedgerAfterReversalRecord = (insertValues, purchase_ref_id) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	// balance amount is taken from querying purchase ledger table, with Limit 1, check the subquery.
 	let query = `
@@ -207,9 +207,9 @@ const updateVendorPymtSequenceGenerator = (center_id) => {
 const getVendorPymtSequenceNo = (cloneReq) => {
 	let pymtNoQry = '';
 
-	pymtNoQry = ` select concat("VP-",'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'Asia/Kolkata', 'YY')}', "/", '${toTimeZoneFormat(
+	pymtNoQry = ` select concat("VP-",'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'YY')}', "/", '${toTimeZoneFormat(
 		cloneReq.accountarr[0].receiveddate,
-		'Asia/Kolkata',
+
 		'MM',
 	)}', "/", lpad(vendor_pymt_seq, 5, "0")) as pymtNo from financial_year 
 				where 
@@ -229,7 +229,7 @@ const getVendorPymtSequenceNo = (cloneReq) => {
 const addVendorPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 	// (1) Updates payment seq in tbl financial_year, then {returns} formated sequence {YY/MM/PYMTSEQ}
 
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	if (cloneReq.bank_id === 0 || cloneReq.bank_id === '') {
 		cloneReq.bank_id = null;
@@ -275,7 +275,7 @@ const addVendorPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 };
 
 const addVendorPaymentLedgerRecord = (insertValues, payment_ref_id, receivedamount, purchase_ref_id, callback) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
 	INSERT INTO purchase_ledger ( center_id, vendor_id, purchase_ref_id, payment_ref_id, ledger_detail, debit_amt, balance_amt, ledger_date)
@@ -340,7 +340,7 @@ const updateVendorCreditMinus = (creditusedamount, center_id, vendor_id) => {
 };
 
 const updateVendorLastPaidDate = (vendor_id, last_paid_date) => {
-	let dt = toTimeZoneFormat(last_paid_date, 'Asia/Kolkata', 'YYYY-MM-DD');
+	let dt = toTimeZoneFormat(last_paid_date, 'YYYY-MM-DD');
 
 	let qryUpdate = `
 	update vendor c set c.last_paid_date = '${dt}' 
@@ -561,7 +561,7 @@ const getLedgerByVendors = (center_id, vendor_id) => {
 
 const addVendorPaymentReceived = async (requestBody) => {
 	var today = new Date();
-	today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	const cloneReq = { ...requestBody };
 

@@ -33,7 +33,7 @@ function purchaseMasterEntry(cloneReq) {
 		revisionCnt = cloneReq.revision + 1;
 	}
 
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
+	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
 
 	let orderdate = cloneReq.orderdate !== '' ? toTimeZone(cloneReq.orderdate, 'Asia/Kolkata') : '';
 	let lrdate = cloneReq.lrdate !== '' ? toTimeZone(cloneReq.lrdate, 'Asia/Kolkata') : '';
@@ -53,7 +53,7 @@ function purchaseMasterEntry(cloneReq) {
 			'${cloneReq.sgst}', '${cloneReq.igst}', '${cloneReq.totalvalue}', '${cloneReq.transport_charges}', 
 			'${cloneReq.unloading_charges}', '${cloneReq.misc_charges}', '${cloneReq.net_total}', 
 			'${cloneReq.noofboxes}', '${cloneReq.status}' , 
-			'${currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss')}',
+			'${currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss')}',
 			'${cloneReq.roundoff}', '${revisionCnt}' )`;
 
 	let updQry = ` update purchase set center_id = '${cloneReq.center_id}', vendor_id = '${cloneReq.vendorctrl.id}',
@@ -95,7 +95,7 @@ async function processItems(cloneReq, newPK, res) {
 		let insQuery1 = ` INSERT INTO purchase_detail(purchase_id, product_id, qty, purchase_price, mrp, batchdate, tax,
 			igst, cgst, sgst, after_tax_value, total_value, stock_id) VALUES
 			( '${newPK}', '${k.product_id}', '${k.qty}', '${k.purchase_price}', '${k.mrp}', 
-			'${currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY')}',
+			'${currentTimeInTimeZone('DD-MM-YYYY')}',
 			'${k.taxrate}', '${k.igst}', 
 			'${k.cgst}', '${k.sgst}', '${k.after_tax_value}', '${k.total_value}', 
 			
@@ -104,7 +104,7 @@ async function processItems(cloneReq, newPK, res) {
 
 		let updQuery1 = ` update purchase_detail set purchase_id = '${k.purchase_id}', product_id = '${k.product_id}', 
 			qty = '${k.qty}', purchase_price = '${k.purchase_price}', mrp = '${k.mrp}', 
-			batchdate = '${currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY')}', 
+			batchdate = '${currentTimeInTimeZone('DD-MM-YYYY')}', 
 			tax = '${k.taxrate}', igst = '${k.igst}', cgst = '${k.cgst}', sgst = '${k.sgst}', 
 			after_tax_value =  '${k.after_tax_value}', total_value = '${k.total_value}', stock_id = '${k.stock_pk}' where
 			id = '${k.pur_det_id}' `;
@@ -164,7 +164,7 @@ async function processItems(cloneReq, newPK, res) {
 }
 
 function insertStock(k) {
-	todayYYMMDD = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD');
+	todayYYMMDD = currentTimeInTimeZone('YYYY-MM-DD');
 	let query2 = `
 	insert into stock (product_id, mrp, available_stock, open_stock, updateddate)
 	values ('${k.product_id}', '${k.mrp}', '${k.qty}', 0, '${todayYYMMDD}')`;
@@ -181,7 +181,7 @@ function insertStock(k) {
 }
 
 function updatePurchaseDetail(purchaseDetailId, stockid) {
-	todayYYMMDD = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD');
+	todayYYMMDD = currentTimeInTimeZone('YYYY-MM-DD');
 
 	let query3 = `
 
@@ -218,7 +218,7 @@ where id = '${k.product_id}'  `;
 //vPurchase_id - purchase_id && vPurchase_det_id - new purchase_detail id
 // k - looped purchase details array
 const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, res) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
+	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
 	let purchase = 'Purchase';
 	// if purchase details id is missing its new else update
 	let purchase_det_id = k.pur_det_id === '' ? vPurchase_det_id : k.pur_det_id;

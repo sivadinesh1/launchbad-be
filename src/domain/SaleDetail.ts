@@ -7,6 +7,7 @@ export interface ISaleDetail {
 
 	sale_id: number;
 	product_id: number;
+	hsn_code: string;
 	stock_id: number;
 	quantity: number;
 	unit_price: number;
@@ -43,6 +44,9 @@ export class SaleDetail implements ISaleDetail {
 	sale_id: number;
 	@Type(() => Number)
 	product_id: number;
+
+	hsn_code: string;
+
 	@Type(() => Number)
 	stock_id: number;
 	@Type(() => Number)
@@ -90,6 +94,7 @@ export class SaleDetail implements ISaleDetail {
 
 		sale_id: number,
 		product_id: number,
+		hsn_code: string,
 		stock_id: number,
 		quantity: number,
 		unit_price: number,
@@ -118,6 +123,7 @@ export class SaleDetail implements ISaleDetail {
 
 		this.sale_id = sale_id;
 		this.product_id = product_id;
+		this.hsn_code = hsn_code;
 		this.stock_id = stock_id;
 		this.quantity = quantity;
 		this.unit_price = unit_price;

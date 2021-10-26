@@ -1273,7 +1273,7 @@ function generateSummaryRightTableRow(doc, y, subtotal, discount, sgst, cgst, fi
 	let finalSumTotal = +(+finalTotalAllTax + +salemasterdata.transport_charges + +salemasterdata.unloading_charges + +salemasterdata.misc_charges);
 
 	doc.text('ROUNDED OFF', 450, y + 75, { width: 70, align: 'left' }).text(
-		(roundOffFn(finalSumTotal, 'rounding') - roundOffFn(finalSumTotal, 'withoutrounding')).toFixed(2),
+		(roundOffFn(finalSumTotal, 'rounding') - roundOffFn(finalSumTotal, 'without-rounding')).toFixed(2),
 		500,
 		y + 75,
 		{
@@ -1351,7 +1351,7 @@ function getSumByTotalByPercent(dataArr, tax_percent) {
 function roundOffFn(value, param) {
 	if (param === 'rounding') {
 		return Math.round(+value.toFixed(2));
-	} else if (param === 'withoutrounding') {
+	} else if (param === 'without-rounding') {
 		return +value.toFixed(2);
 	}
 }

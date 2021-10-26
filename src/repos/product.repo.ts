@@ -137,7 +137,7 @@ class ProductRepo implements IProductRepo {
       ( a.product_code like '%${search_text}%' or
       a.product_description like '%${search_text}%' ) limit 50
     `;
-
+		console.log('dinesh >> ' + query);
 		return promisifyQuery(query);
 	}
 }

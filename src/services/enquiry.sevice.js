@@ -5,7 +5,7 @@ const { handleError, ErrorHandler } = require('../config/error');
 const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
 const insertEnquiryDetail = async (k, jsonObj, tmpid) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `INSERT INTO enquiry_detail ( enquiry_id, product_id, askqty, product_code, notes, status)
         values ( '${tmpid}', (select id from product where product_code='${k.product_code}' and center_id = '${jsonObj.center_id}'), '${k.quantity}', '${k.product_code}', '${k.notes}', 'O')`;
@@ -14,7 +14,7 @@ const insertEnquiryDetail = async (k, jsonObj, tmpid) => {
 };
 
 const fetchEnquiryDetailByEnqId = async (enqid) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
 	select orig.*, s.available_stock, s.id as stock_pk
@@ -42,7 +42,7 @@ from
 };
 
 const fetchCustomerDetailsByEnqId = async (enqid) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
 	select c.*, e.* from 
@@ -57,14 +57,14 @@ e.id = ${enqid}
 };
 
 const updateEnquiry = async (status, enqId, updatedby) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `update enquiry 
 			set
 				e_status = '${status}',
 				processed_date = '${today}',
-				updatedby = '${updatedby}',
-				updateddate = '${today}'
+				updated_by = '${updatedby}',
+				updatedAt = '${today}'
 
 			where
 				id = '${enqId}' `;
@@ -73,7 +73,7 @@ const updateEnquiry = async (status, enqId, updatedby) => {
 };
 
 const updateEnquiryDetail = async (product_id, stock_id, allotedQty, processed, status, enquiry_detail_id, updatedby) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `update enquiry_detail `;
 
@@ -112,8 +112,8 @@ const updateEnquiryDetail = async (product_id, stock_id, allotedQty, processed, 
 };
 
 const insertBackOrder = async (center_id, customer_id, enquiry_detail_id, askQty, reason, status, createdby) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-	let now = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
+	let now = currentTimeInTimeZone('DD-MM-YYYY');
 
 	let query = `
 		insert into
@@ -193,8 +193,8 @@ const moveToSale = async (requestBody) => {
 	let today = new Date();
 	let now = new Date();
 
-	today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-	now = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY');
+	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
+	now = currentTimeInTimeZone('DD-MM-YYYY');
 
 	var objectKeysArray = Object.keys(jsonObj);
 
@@ -353,7 +353,7 @@ const insertEnquiryDetails = async (requestBody) => {
 	var today = new Date();
 	let count = 0;
 
-	today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `INSERT INTO enquiry ( center_id, customer_id, enquiry_date, e_status, remarks) 
 							values ( '${jsonObj.center_id}', '${jsonObj.customerctrl.id}', '${today}', 'O','${jsonObj.remarks}')`;
@@ -394,7 +394,7 @@ const addMoreEnquiryDetails = async (requestBody) => {
 
 	var today = new Date();
 
-	today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query1 = `INSERT INTO enquiry_detail ( enquiry_id, product_id, askqty, product_code, notes, status)
 							values ( '${jsonObj.enquiry_id}', 
@@ -647,11 +647,11 @@ const deleteEnquiryDetails = async (requestBody) => {
 	let id = requestBody.id;
 	let enq_id = requestBody.enquiry_id;
 
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	// step 1
 	let auditQuery = `
-	INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
+	INSERT INTO audit (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
 	VALUES
 		('Enquiry', '${enq_id}', '${id}', 'delete', 
 		(SELECT CONCAT('[{', result, '}]') as final

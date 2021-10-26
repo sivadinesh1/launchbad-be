@@ -16,7 +16,7 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 0,
 			value: insertValues.gstzero,
-			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
 		},
@@ -26,7 +26,7 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 5,
 			value: insertValues.gstfive,
-			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
 		},
@@ -36,7 +36,7 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 12,
 			value: insertValues.gsttwelve,
-			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
 		},
@@ -46,7 +46,7 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 18,
 			value: insertValues.gsteighteen,
-			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
 		},
@@ -56,7 +56,7 @@ const insertCustomer = async (insertValues: any) => {
 			type: insertValues.disctype,
 			gst_slab: 28,
 			value: insertValues.gsttwentyeight,
-			start_date: currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY'),
+			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
 		},
@@ -386,7 +386,7 @@ s1.code as csa_code
 
 // insert row in customer tbl
 export const insertDiscountsByBrands = (insertValues: any, callback: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let taxSlabArr = [
 		{ gstslab: 0, gstvalue: insertValues.gstzero },
@@ -471,7 +471,7 @@ export const updateAllAddress = async (insertValues: any) => {
 };
 
 export const updateCustomerShippingAddress = async (updateValues: any, id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	if (updateValues.def_address) {
 		const data = await updateCSAByCustomerId(updateValues);
@@ -484,7 +484,7 @@ export const updateCustomerShippingAddress = async (updateValues: any, id: any) 
 };
 
 export const updateCSAByCustomerId = async (updateValues: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	const result = await prisma.customer_shipping_address.updateMany({
 		where: {
@@ -499,7 +499,7 @@ export const updateCSAByCustomerId = async (updateValues: any) => {
 };
 
 export const updateCSAById = async (updateValues: any, id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	const result = await prisma.customer_shipping_address.update({
 		where: {
@@ -519,7 +519,7 @@ export const updateCSAById = async (updateValues: any, id: any) => {
 };
 
 export const inactivateCSA = async (id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	const result = await prisma.customer_shipping_address.update({
 		where: {

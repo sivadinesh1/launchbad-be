@@ -5,6 +5,7 @@ const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = re
 
 class SaleLedgerRepo {
 	public async addSaleLedgerEntry(ledger: ILedger, prisma: any) {
+		console.log('dinesh ::: ' + JSON.stringify(ledger));
 		try {
 			const result = await prisma.ledger.create({
 				data: {
@@ -31,6 +32,7 @@ class SaleLedgerRepo {
 	}
 
 	public async getCustomerBalance(customer_id: number, center_id: number, prisma: any) {
+		console.log('dinesh :::LLD ' + customer_id + ' ' + center_id);
 		const result = await prisma.ledger.findMany({
 			select: {
 				balance_amt: true,
@@ -46,28 +48,34 @@ class SaleLedgerRepo {
 			take: 1,
 		});
 
-		return bigIntToString(result[0].balance_amt);
+		return result.length === 0 ? 0 : result[0].balance_amt;
 	}
 
 	public async getCreditAmtForInvoiceReversal(customer_id: number, center_id: number, invoice_ref_id: number, prisma: any) {
-		const result = await prisma.ledger.findMany({
-			select: {
-				credit_amt: true,
-			},
-			where: {
-				customer_id: Number(customer_id),
-				center_id: Number(center_id),
-				invoice_ref_id: Number(invoice_ref_id),
-				ledger_detail: 'Invoice',
-			},
+		console.log('dinesh :::LL ' + customer_id + ' ' + center_id + ' ' + invoice_ref_id);
+		try {
+			const result = await prisma.ledger.findMany({
+				select: {
+					credit_amt: true,
+				},
+				where: {
+					customer_id: Number(customer_id),
+					center_id: Number(center_id),
+					invoice_ref_id: Number(invoice_ref_id),
+					ledger_detail: 'Invoice',
+				},
 
-			orderBy: {
-				id: 'desc',
-			},
-			take: 1,
-		});
+				orderBy: {
+					id: 'desc',
+				},
+			});
 
-		return bigIntToString(result[0].credit_amt);
+			console.log('dinesh cc ' + bigIntToString(result));
+			return bigIntToString(result[0].credit_amt);
+		} catch (error) {
+			console.log('error :: sale-ledger.repo.ts getCreditAmtForInvoiceReversal: ' + error);
+			throw error;
+		}
 	}
 
 	public async updateSaleLedgerCustomerChange(center_id: number, invoice_ref_id: number, old_customer_id: number, prisma: any) {

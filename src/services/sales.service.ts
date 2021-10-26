@@ -67,10 +67,10 @@ const getSalesDetails = async (sales_id: any) => {
 	// return promisifyQuery(query);
 };
 
-export const insertSale = async (saleMaster: ISale, saleDetails: ISaleDetail[], timezone: string) => {
+export const insertSale = async (saleMaster: ISale, saleDetails: ISaleDetail[]) => {
 	console.log('check timezone' + getTimezone());
 	try {
-		const status = await prisma.$transaction(async (prisma) => {
+		const status = await prisma.$transaction(async (prisma: any) => {
 			// 1. Update Sequence Generator and form a formatted sale invoice
 			let invNo = saleMaster.invoice_no === undefined || saleMaster.invoice_no === null ? '' : saleMaster.invoice_no;
 
@@ -90,13 +90,17 @@ export const insertSale = async (saleMaster: ISale, saleDetails: ISaleDetail[], 
 			}
 
 			// sale master insert/update
-
-			let sale_master = await SaleRepo.addSaleMaster(saleMaster, prisma);
+			let sale_master;
+			if (saleMaster.id === null) {
+				sale_master = await SaleRepo.addSaleMaster(saleMaster, prisma);
+			} else {
+				sale_master = await SaleRepo.editSaleMaster(saleMaster, prisma);
+			}
 
 			let detailsInserted = await insertSaleDetails(saleMaster, saleDetails, sale_master, prisma);
 
 			if (saleMaster.status === 'C' && saleMaster.id === null) {
-				let result = await prepareAndAddSaleLedgerEntry(saleMaster, prisma);
+				let result = await prepareAndAddSaleLedgerEntry(sale_master, prisma);
 				let result991 = await updateCustomerBalanceAmt(sale_master, prisma);
 			} else if (saleMaster.status === 'C' && saleMaster.id !== null) {
 				let saleLedger = await prepareAndAddSaleLedgerReversalEntry(sale_master, prisma);
@@ -133,7 +137,13 @@ async function insertSaleDetails(saleMaster: ISale, saleDetails: ISaleDetail[], 
 		// for (const item of saleDetails) {
 		let result3 = '';
 
-		let result = await SaleDetailRepo.addSaleDetail(item, sale_master.id, prisma);
+		let result;
+		console.log('item.id' + JSON.stringify(item));
+		if (item.id === null || item.id === 0) {
+			result = await SaleDetailRepo.addSaleDetail(item, sale_master.id, prisma);
+		} else {
+			result = await SaleDetailRepo.editSaleDetail(item, sale_master.id, prisma);
+		}
 
 		// after sale details is updated, then update stock (as this is sale, reduce available stock) tbl & product tbl
 		let qty_to_update = item.quantity - item.old_val;
@@ -171,6 +181,9 @@ function prepareAndAddSaleLedgerEntry(sale_master: ISale, prisma: any) {
 		try {
 			let previousBalance = await SaleLedgerRepo.getCustomerBalance(sale_master.customer_id, sale_master.center_id, prisma);
 
+			console.log('object prev bal: ' + previousBalance);
+			console.log('object sale_master.net_total bal: ' + sale_master.net_total);
+
 			saleLedger.center_id = sale_master.center_id;
 			saleLedger.customer_id = sale_master.customer_id;
 			saleLedger.invoice_ref_id = sale_master.id;
@@ -191,6 +204,7 @@ function prepareAndAddSaleLedgerEntry(sale_master: ISale, prisma: any) {
 }
 
 function prepareSaleLedgerEntryAfterReversal(sale_master: ISale, prisma: any) {
+	console.log('add:: ' + JSON.stringify(sale_master));
 	return new Promise(async (resolve, reject) => {
 		let saleLedger = new Ledger();
 		try {
@@ -200,12 +214,14 @@ function prepareSaleLedgerEntryAfterReversal(sale_master: ISale, prisma: any) {
 			saleLedger.customer_id = sale_master.customer_id;
 			saleLedger.invoice_ref_id = sale_master.id;
 			saleLedger.ledger_detail = 'Invoice';
-			saleLedger.balance_amt = previousBalance + sale_master.net_total;
+			saleLedger.balance_amt = Number(previousBalance) + Number(sale_master.net_total);
 			saleLedger.credit_amt = sale_master.net_total;
 			saleLedger.created_by = sale_master.updated_by;
 			saleLedger.updated_by = sale_master.updated_by;
+
+			let result = await SaleLedgerRepo.addSaleLedgerEntry(saleLedger, prisma);
 		} catch (error) {
-			console.log('error in prepareSaleLedgerEntry:: ' + error);
+			console.log('error in prepareSaleLedgerEntryAfterReversal:: ' + error);
 			reject(error);
 		}
 		resolve(saleLedger);
@@ -217,20 +233,21 @@ async function prepareAndAddSaleLedgerReversalEntry(sale_master: ISale, prisma: 
 		let saleLedger = new Ledger();
 		try {
 			let previousBalance = await SaleLedgerRepo.getCustomerBalance(sale_master.customer_id, sale_master.center_id, prisma);
-
+			console.log('dinesh 11y ' + previousBalance);
 			let credit_amt = await SaleLedgerRepo.getCreditAmtForInvoiceReversal(
 				sale_master.customer_id,
 				sale_master.center_id,
 				sale_master.id,
 				prisma,
 			);
+			console.log('dinesh 11x ' + credit_amt);
 
 			saleLedger.center_id = sale_master.center_id;
 			saleLedger.customer_id = sale_master.customer_id;
 			saleLedger.invoice_ref_id = sale_master.id;
 			saleLedger.ledger_detail = 'Invoice Reversal';
 			saleLedger.debit_amt = credit_amt;
-			saleLedger.balance_amt = previousBalance - credit_amt;
+			saleLedger.balance_amt = Number(previousBalance) - Number(credit_amt);
 			saleLedger.credit_amt = sale_master.net_total;
 			saleLedger.created_by = sale_master.updated_by;
 			saleLedger.updated_by = sale_master.updated_by;
@@ -350,21 +367,21 @@ async function getSequenceNo(cloneReq: any) {
 	let invNoQry = '';
 	if (cloneReq.invoice_type === 'gstInvoice' && cloneReq.status !== 'D') {
 		invNoQry = ` select 
-		concat('${currentTimeInTimeZone('Asia/Kolkata', 'YY')}', "/", 
-		'${currentTimeInTimeZone('Asia/Kolkata', 'MM')}', "/", lpad(inv_seq, 5, "0")) as invNo from financial_year 
+		concat('${currentTimeInTimeZone('YY')}', "/", 
+		'${currentTimeInTimeZone('MM')}', "/", lpad(inv_seq, 5, "0")) as invNo from financial_year 
 				where 
 				center_id = '${cloneReq.center_id}' and  
 				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 	} else if (cloneReq.invoice_type === 'gstInvoice' && cloneReq.status === 'D') {
 		invNoQry = ` select concat("D/", 
-		'${currentTimeInTimeZone('Asia/Kolkata', 'YY')}', "/", 
-		'${currentTimeInTimeZone('Asia/Kolkata', 'MM')}', "/", lpad(draft_inv_seq, 5, "0")) as invNo from financial_year 
+		'${currentTimeInTimeZone('YY')}', "/", 
+		'${currentTimeInTimeZone('MM')}', "/", lpad(draft_inv_seq, 5, "0")) as invNo from financial_year 
 							where 
 							center_id = '${cloneReq.center_id}' and  
 							CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 	} else if (cloneReq.invoice_type === 'stockIssue') {
-		invNoQry = ` select concat('SI',"-",'${currentTimeInTimeZone('Asia/Kolkata', 'YY')}', "/", 
-		'${currentTimeInTimeZone('Asia/Kolkata', 'MM')}', "/", lpad(stock_issue_seq, 5, "0")) as invNo from financial_year 
+		invNoQry = ` select concat('SI',"-",'${currentTimeInTimeZone('YY')}', "/", 
+		'${currentTimeInTimeZone('MM')}', "/", lpad(stock_issue_seq, 5, "0")) as invNo from financial_year 
 				where 
 				center_id = '${cloneReq.center_id}' and  
 				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
@@ -403,17 +420,17 @@ const updateProductAsync = async (k: any) => {
 // };
 
 const insertAuditTblforDeleteSaleDetailsRecAsync = async (element: any, sale_id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
-	INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
+	INSERT INTO audit (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
 	VALUES
 		('Sales', '${sale_id}', '${element.id}', 'delete', 
 		(SELECT CONCAT('[{', result, '}]') as final
 		FROM (
-			SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', sale_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"qty": "', qty, '"')) SEPARATOR '},{') as result
+			SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', sale_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"quantity": "', quantity, '"')) SEPARATOR '},{') as result
 			FROM (
-				SELECT sale_id, product_id, qty
+				SELECT sale_id, product_id, quantity
 				FROM sale_detail where id = '${element.id}'
 			) t1
 		) t2)
@@ -438,7 +455,7 @@ const deleteSaleDetail = async (id: any) => {
 };
 
 const updatePrintCounter = (sale_id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
+	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
 
 	let query = ` update sale
 	set print_count = CASE
@@ -451,7 +468,7 @@ const updatePrintCounter = (sale_id: any) => {
 };
 
 const getPrintCounter = (sale_id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
+	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
 
 	let query = ` select print_count from sale where id = '${sale_id}'  `;
 
@@ -459,7 +476,7 @@ const getPrintCounter = (sale_id: any) => {
 };
 
 const duplicateinvoice_noCheck = (invoice_no: any, center_id: any) => {
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY HH:mm:ss');
+	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
 
 	let query = ` select count(*) as count from sale where invoice_no = '${invoice_no}' and center_id = '${center_id}' `;
 
@@ -475,20 +492,20 @@ const deleteSalesDetails = async (requestBody: any) => {
 	let product_id = requestBody.product_id;
 	let stock_id = requestBody.stock_id;
 	let mrp = requestBody.mrp;
-	let autidneeded = requestBody.autidneeded;
+	let audit_needed = requestBody.audit_needed;
 
-	if (autidneeded) {
-		let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
+	if (audit_needed) {
+		let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 		let query = `
-		INSERT INTO audit_tbl (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
+		INSERT INTO audit (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
 		VALUES
 			('Sales', '${sales_id}', '${id}', 'delete', 
 			(SELECT CONCAT('[{', result, '}]') as final
 			FROM (
-				SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', sale_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"qty": "', qty, '"')) SEPARATOR '},{') as result
+				SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', sale_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"qty": "', quantity, '"')) SEPARATOR '},{') as result
 				FROM (
-					SELECT sale_id, product_id, qty
+					SELECT sale_id, product_id, quantity
 					FROM sale_detail where id = '${id}'
 				) t1
 			) t2)
@@ -565,7 +582,7 @@ const convertSale = async (requestBody: any) => {
 	let customer_id = requestBody.customer_id;
 	let net_total = requestBody.net_total;
 
-	let today = currentTimeInTimeZone('Asia/Kolkata', 'DD-MM-YYYY');
+	let today = currentTimeInTimeZone('DD-MM-YYYY');
 
 	// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
 	await updateSequenceGenerator({
@@ -629,7 +646,7 @@ function deleteSaleDetailsRecs(saleDetails: any, sale_id: any) {
 
 		// step 3
 
-		let p_stock_update = await updateStockViaId(element.qty, element.product_id, element.stock_id, 'add');
+		let p_stock_update = await updateStockViaId(element.quantity, element.product_id, element.stock_id, 'add');
 	});
 
 	if (saleDetails.length === idx) {

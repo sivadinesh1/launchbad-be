@@ -9,7 +9,7 @@ class SaleRepo {
 
 	public async addSaleMaster(sale: ISale, prisma: any) {
 		try {
-			let formattedDate = toTimeZoneFormat(sale.invoice_date, 'Asia/Kolkata', 'YYYY-MM-DD');
+			let formattedDate = toTimeZoneFormat(sale.invoice_date, 'YYYY-MM-DD');
 
 			const result = await prisma.sale.create({
 				data: {
@@ -18,10 +18,10 @@ class SaleRepo {
 					invoice_no: sale.invoice_no,
 					invoice_date: new Date(formattedDate),
 					lr_no: sale.lr_no,
-					lr_date: sale.lr_date != null ? sale.lr_date : undefined,
+					lr_date: sale.lr_date !== null ? sale.lr_date : undefined,
 					invoice_type: sale.invoice_type,
 					order_no: sale.order_no,
-					order_date: sale.order_date != null ? sale.order_date : undefined,
+					order_date: sale.order_date !== null ? sale.order_date : undefined,
 					total_quantity: sale.total_quantity,
 					no_of_items: sale.no_of_items,
 					after_tax_value: sale.after_tax_value,
@@ -70,11 +70,10 @@ class SaleRepo {
 					invoice_no: sale.invoice_no,
 					invoice_date: sale.invoice_date,
 					lr_no: sale.lr_no,
-					lr_date: sale.lr_date != null ? sale.lr_date : undefined,
-
+					lr_date: sale.lr_date !== null ? sale.lr_date : undefined,
 					invoice_type: sale.invoice_type,
 					order_no: sale.order_no,
-					order_date: sale.order_date != null ? sale.order_date : undefined,
+					order_date: sale.order_date !== null ? sale.order_date : undefined,
 					total_quantity: sale.total_quantity,
 					no_of_items: sale.no_of_items,
 					after_tax_value: sale.after_tax_value,
@@ -99,7 +98,7 @@ class SaleRepo {
 					retail_customer_phone: sale.retail_customer_phone,
 					print_count: sale.print_count,
 					inv_gen_mode: sale.inv_gen_mode,
-					created_by: sale.created_by,
+					created_by: sale.updated_by,
 					updated_by: sale.updated_by,
 				},
 			});

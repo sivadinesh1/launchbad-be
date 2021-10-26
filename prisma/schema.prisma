@@ -347,6 +347,7 @@ model sale_detail {
   center_id	              BigInt?
   sale_id                 BigInt
   product_id              BigInt
+  hsn_code                String?	    @db.VarChar(50)
   stock_id                BigInt
   quantity                Int
   unit_price              Decimal?	  @db.Decimal(12,2) @default(0.00)

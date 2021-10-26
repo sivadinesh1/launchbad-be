@@ -31,7 +31,7 @@ const getProductInventoryReport = (requestBody) => {
   sr.customer_id as sale_return_customer_id,
   (select c1.name as customer_name from customer c1 where c1.id =   s.customer_id ) as customer_name,
   ih.purchase_id as purchase_id, pr.vendor_id,
-  (select v1.name as vendor_name from vendor v1 where v1.id =   pr.vendor_id ) as vendor_name,
+  (select v1.vendor_name as vendor_name from vendor v1 where v1.id =   pr.vendor_id ) as vendor_name,
   (select c1.name as customer_name from customer c1 where c1.id =   sr.customer_id ) as sale_return_customer_name
   from 
   item_history ih
@@ -89,7 +89,7 @@ const getProductInventoryReportShort = (requestBody) => {
   sr.customer_id as sale_return_customer_id,
   (select c1.name as customer_name from customer c1 where c1.id =   s.customer_id ) as customer_name,
   ih.purchase_id as purchase_id, pr.vendor_id,
-  (select v1.name as vendor_name from vendor v1 where v1.id =   pr.vendor_id ) as vendor_name,
+  (select v1.vendor_name as vendor_name from vendor v1 where v1.id =   pr.vendor_id ) as vendor_name,
   (select c1.name as customer_name from customer c1 where c1.id =   sr.customer_id ) as sale_return_customer_name
   from 
   item_history ih

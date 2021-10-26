@@ -25,7 +25,7 @@ const insertSale = catchAsync(async (req: any, res: any) => {
 	saleMaster.updated_by = Number(req.user.id);
 	saleDetails.updated_by = Number(req.user.id);
 
-	const data = await salesService.insertSale(saleMaster, saleDetails, req.user.timezone);
+	const data = await salesService.insertSale(saleMaster, saleDetails);
 
 	console.log('in ctrl >> ' + data);
 	return responseForward(data, 'insertSale>>', res);
@@ -46,9 +46,9 @@ const deleteSaleMaster = catchAsync(async (req: any, res: any) => {
 	return responseForward(data, 'deleteSaleMaster', res);
 });
 
-const getSaleMaster = catchAsync(async (req: any, res: any) => {
-	const data = await salesService.getSaleMaster(req.params.sale_id);
-	return responseForward(data, 'getSaleMaster', res);
+const getSalesMaster = catchAsync(async (req: any, res: any) => {
+	const data = await salesService.getSalesMaster(req.params.sale_id);
+	return responseForward(data, 'getSalesMaster', res);
 });
 
 const getSalesDetails = catchAsync(async (req: any, res: any) => {
@@ -78,7 +78,7 @@ module.exports = {
 	convertSale,
 	deleteSale,
 	deleteSaleMaster,
-	getSaleMaster,
+	getSalesMaster,
 	getSalesDetails,
 	updateGetPrintCounter,
 	getPrintCounter,
