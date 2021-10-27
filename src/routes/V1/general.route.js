@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-const { auth } = require('../../middleware/auth');
+const { auth } = require('../../middleware/auth.ts');
 //import { auth } from '../../middleware/auth';
 
 const generalController = require('../../controllers/general.controller');

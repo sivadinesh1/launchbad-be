@@ -1,6 +1,7 @@
 const https = require('https');
 const http = require('http');
 const app = require('./app');
+const fs = require('fs');
 
 // var options = {
 // 	key: fs.readFileSync('/etc/letsencrypt/live/demo.squapl.com/privkey.pem'),
@@ -32,3 +33,5 @@ http.createServer(app).listen(5050);
 
 // 	https.createServer(options, app).listen(process.env.PORT);
 // }
+
+// pm2 log --lines 500

@@ -1,9 +1,9 @@
-import { setTimezone } from '../utils/utils';
+const { setTimezone } = require('../utils/utils.ts');
 
 const JWT = require('jsonwebtoken');
 const cookie = require('cookie');
 
-export const auth =
+const auth =
 	(...requiredRights: any) =>
 	async (req: any, res: any, next: any) => {
 		let cCookie = cookie.parse(req ? req.headers.cookie || '' : document.cookie);
