@@ -5,11 +5,15 @@ generator client {
 
 // // DEV_DATABASE_URL="postgres://postgres:tesla@127.0.0.1:5432/redapple"
 // let connstring = ""
+// url      = "mysql://root:uCbPr2hmHeAfZLkAr8lu@redot-prod-db.c6pujq35d5nd.ap-south-1.rds.amazonaws.com:3377/redot_prod_db"
+
+
+// url      = "mysql://root:tesla@127.0.0.1:3306/reddotdb"
 
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:tesla@127.0.0.1:3306/reddotdb"
+  url      = "mysql://root:uCbPr2hmHeAfZLkAr8lu@redot-prod-db.c6pujq35d5nd.ap-south-1.rds.amazonaws.com:3377/redot_prod_db"
 }
 
 

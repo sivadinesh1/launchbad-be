@@ -1,10 +1,11 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
 const CopyPlugin = require('copy-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 const { NODE_ENV = 'production' } = process.env;
 module.exports = {
-	entry: './index.js',
+	entry: './src/index.js',
 	mode: NODE_ENV,
 	target: 'node',
 	output: {
@@ -12,13 +13,14 @@ module.exports = {
 		filename: 'index.js',
 	},
 	resolve: {
-		extensions: ['.ts', '.js'],
+		extensions: ['.ts', '.js', '.json', '.prisma', '.env'],
 	},
 	module: {
 		rules: [
 			{
 				test: /\.js$/i,
 				exclude: /node_modules/,
+				include: path.resolve(__dirname, 'src'),
 				use: {
 					loader: 'babel-loader',
 				},
@@ -27,8 +29,13 @@ module.exports = {
 	},
 	plugins: [
 		new CopyPlugin({
-			patterns: [{ from: './upload', to: 'upload' }],
+			patterns: [
+				{ from: './upload', to: 'upload' },
+				{ from: './prisma', to: 'prisma' },
+				{ from: 'package.json', to: 'package.json' },
+			],
 		}),
+		new Dotenv(),
 	],
 
 	externals: [nodeExternals()],
