@@ -1,4 +1,4 @@
-var pool = require('../config/db');
+let pool = require('../config/db');
 const moment = require('moment-timezone');
 const bcrypt = require('bcryptjs');
 const httpStatus = require('http-status');

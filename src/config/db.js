@@ -1,7 +1,7 @@
 const util = require('util');
-var mysql = require('mysql');
+let mysql = require('mysql');
 
-var pool = mysql.createPool({
+let pool = mysql.createPool({
 	connectionLimit: 100, //important
 	host: '127.0.0.1',
 	user: 'root',

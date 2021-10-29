@@ -3,11 +3,11 @@ const http = require('http');
 const app = require('./app');
 const fs = require('fs');
 
-// var options = {
-// 	key: fs.readFileSync('/etc/letsencrypt/live/demo.squapl.com/privkey.pem'),
-// 	cert: fs.readFileSync('/etc/letsencrypt/live/demo.squapl.com/cert.pem'),
-// 	ca: fs.readFileSync('/etc/letsencrypt/live/demo.squapl.com/chain.pem'),
-// };
+var options = {
+	key: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/privkey.pem'),
+	cert: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/cert.pem'),
+	ca: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/chain.pem'),
+};
 
 // var options = {
 // 	key: fs.readFileSync('/etc/letsencrypt/live/launchpad.squapl.com/privkey.pem'),
