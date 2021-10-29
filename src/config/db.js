@@ -1,24 +1,24 @@
 const util = require('util');
 var mysql = require('mysql');
 
-// var pool = mysql.createPool({
-// 	connectionLimit: 100, //important
-// 	host: '127.0.0.1',
-// 	user: 'root',
-// 	password: 'tesla',
-// 	database: 'reddotdb',
-// 	debug: false,
-// });
-
 var pool = mysql.createPool({
 	connectionLimit: 100, //important
-	host: 'redot-prod-db.c6pujq35d5nd.ap-south-1.rds.amazonaws.com',
+	host: '127.0.0.1',
 	user: 'root',
-	password: 'uCbPr2hmHeAfZLkAr8lu',
-	port: 3377,
-	database: 'redot_prod_db',
+	password: 'tesla',
+	database: 'reddotdb',
 	debug: false,
 });
+
+// var pool = mysql.createPool({
+// 	connectionLimit: 100, //important
+// 	host: 'redot-prod-db.c6pujq35d5nd.ap-south-1.rds.amazonaws.com',
+// 	user: 'root',
+// 	password: 'uCbPr2hmHeAfZLkAr8lu',
+// 	port: 3377,
+// 	database: 'redot_prod_db',
+// 	debug: false,
+// });
 
 // var pool = mysql.createPool({
 // 	connectionLimit: 100, //important
