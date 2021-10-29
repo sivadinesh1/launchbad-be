@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 const moment = require('moment-timezone');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const httpStatus = require('http-status');
 const ApiError = require('./ApiError');
 
