@@ -22,7 +22,7 @@ update financial_year set startdate = '9999-01-20' where startdate = '';
 ALTER TABLE financial_year 
 modify startdate date;
 
-update financial_year set startdate = null where startdate = '9999-01-20'
+update financial_year set startdate = null where startdate = '9999-01-20';
 
 update financial_year set enddate = (select date_format(str_to_date(enddate,'%d-%m-%Y'),'%Y-%m-%d'))
 where enddate != '';
