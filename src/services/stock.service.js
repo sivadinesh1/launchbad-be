@@ -186,7 +186,7 @@ const searchAllDraftPurchase = async (center_id) => {
 // str_to_date('2020-05-01 00:00:00', '%Y-%m-%d %T') and
 // str_to_date('2020-05-08 23:59:00', '%Y-%m-%d %T')
 
-const searchPurchase = async (requestBod) => {
+const searchPurchase = async (requestBody) => {
 	let center_id = requestBody.center_id;
 	let status = requestBody.status;
 	let vendor_id = requestBody.vendorid;
@@ -227,7 +227,7 @@ const searchPurchase = async (requestBod) => {
 
 	sql = sql + `order by str_to_date(received_date,  '%d-%m-%Y %T') ${order}`;
 
-	return promisifyQuery(query);
+	return promisifyQuery(sql);
 };
 
 // center_id: "2"

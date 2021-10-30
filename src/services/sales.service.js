@@ -1,6 +1,13 @@
 const { prisma } = require('../config/prisma');
 
-const { FinancialYearRepo } = require('../repos/financial-year.repo');
+const {
+	financialYearRepoGetFinancialYearRow,
+	financialYearRepoGetNextInvSequenceNo,
+	financialYearRepoGetNextStockIssueSequenceNoasync,
+	financialYearRepoUpdateInvoiceSequence,
+	financialYearRepoUpdateDraftInvoiceSequenceGenerator,
+	financialYearRepoUpdateStockIssueSequenceGenerator,
+} = require('../repos/financial-year.repo');
 const { SaleRepo } = require('../repos/sale.repo');
 const { SaleDetailRepo } = require('../repos/sale-detail.repo');
 const { ItemHistoryRepo } = require('../repos/item-history.repo');
@@ -25,9 +32,9 @@ const { insertItemHistoryTable, updateStockViaId } = require('./stock.service');
 const getNextInvSequenceNo = async (center_id, invoice_type) => {
 	let nextInvSeqNo;
 	if (invoice_type === 'gstInvoice') {
-		nextInvSeqNo = await FinancialYearRepo.getNextInvSequenceNo(center_id);
+		nextInvSeqNo = await financialYearRepoGetNextInvSequenceNo(center_id);
 	} else if (invoice_type === 'stockIssue') {
-		nextInvSeqNo = await FinancialYearRepo.getNextStockIssueSequenceNo(center_id);
+		nextInvSeqNo = await financialYearRepoGetNextStockIssueSequenceNo(center_id);
 	}
 
 	return nextInvSeqNo;
@@ -70,7 +77,7 @@ const insertSale = async (saleMaster, saleDetails) => {
 
 			// confirmed sale
 			if (saleMaster.status === 'C' && saleMaster.revision === 0 && saleMaster.inv_gen_mode === 'A') {
-				let result = await FinancialYearRepo.updateInvoiceSequence(saleMaster.center_id, prisma);
+				let result = await financialYearRepoUpdateInvoiceSequence(saleMaster.center_id, prisma);
 				invNo = formatSequenceNumber(result.inv_seq);
 			} else if (
 				// draft or stock issue
@@ -79,7 +86,7 @@ const insertSale = async (saleMaster, saleDetails) => {
 				saleMaster.invoice_no.startsWith('D') === false &&
 				saleMaster.invoice_no.startsWith('SI') === false
 			) {
-				let result = await FinancialYearRepo.updateDraftInvoiceSequenceGenerator(saleMaster.center_id, prisma);
+				let result = await financialYearRepoUpdateDraftInvoiceSequenceGenerator(saleMaster.center_id, prisma);
 				invNo = formatSequenceNumber(result.draft_inv_seq);
 			}
 

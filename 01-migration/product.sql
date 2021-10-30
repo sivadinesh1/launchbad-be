@@ -61,3 +61,7 @@ change createdon createdAt datetime;
 
 ALTER TABLE product 
 change updatedon updatedAt datetime;
+
+
+ALTER TABLE product CHANGE unom uom varchar(50);
+

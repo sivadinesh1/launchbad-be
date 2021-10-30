@@ -2,7 +2,7 @@ const { prisma } = require('../config/prisma');
 
 const { formatSequenceNumber, currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
-const getFinancialYearRow = async (center_id, prisma) => {
+const financialYearRepoGetFinancialYearRow = async (center_id, prisma) => {
 	const recordToUpdate = await prisma.financial_year.findMany({
 		where: {
 			center_id: Number(center_id),
@@ -18,7 +18,7 @@ const getFinancialYearRow = async (center_id, prisma) => {
 	return recordToUpdate[0].id;
 };
 
-const getNextInvSequenceNo = async (center_id) => {
+const financialYearRepoGetNextInvSequenceNo = async (center_id) => {
 	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.findUnique({
@@ -37,7 +37,7 @@ const getNextInvSequenceNo = async (center_id) => {
 	return nextInvNo;
 };
 
-const getNextStockIssueSequenceNoasync = async (center_id) => {
+const financialYearRepoGetNextStockIssueSequenceNoasync = async (center_id) => {
 	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.findUnique({
@@ -54,7 +54,7 @@ const getNextStockIssueSequenceNoasync = async (center_id) => {
 	return nextInvNo;
 };
 
-const updateInvoiceSequence = async (center_id, prisma) => {
+const financialYearRepoUpdateInvoiceSequence = async (center_id, prisma) => {
 	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.update({
@@ -71,7 +71,7 @@ const updateInvoiceSequence = async (center_id, prisma) => {
 	return bigIntToString(result);
 };
 
-const updateDraftInvoiceSequenceGenerator = async (center_id, prisma) => {
+const financialYearRepoUpdateDraftInvoiceSequenceGenerator = async (center_id, prisma) => {
 	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.update({
@@ -88,7 +88,7 @@ const updateDraftInvoiceSequenceGenerator = async (center_id, prisma) => {
 	return bigIntToString(result);
 };
 
-const updateStockIssueSequenceGenerator = async (center_id, prisma) => {
+const financialYearRepoUpdateStockIssueSequenceGenerator = async (center_id, prisma) => {
 	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
 	const result = await prisma.financial_year.update({
 		where: {
@@ -111,11 +111,12 @@ const updateStockIssueSequenceGenerator = async (center_id, prisma) => {
 };
 
 module.exports = {
-	getNextInvSequenceNo,
-	getNextStockIssueSequenceNoasync,
-	updateInvoiceSequence,
-	updateDraftInvoiceSequenceGenerator,
-	updateStockIssueSequenceGenerator,
+	financialYearRepoGetFinancialYearRow,
+	financialYearRepoGetNextInvSequenceNo,
+	financialYearRepoGetNextStockIssueSequenceNoasync,
+	financialYearRepoUpdateInvoiceSequence,
+	financialYearRepoUpdateDraftInvoiceSequenceGenerator,
+	financialYearRepoUpdateStockIssueSequenceGenerator,
 };
 
 // const user = await prisma.user.findFirst({

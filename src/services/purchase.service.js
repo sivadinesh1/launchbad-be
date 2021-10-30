@@ -4,7 +4,7 @@ const { handleError, ErrorHandler } = require('../config/error');
 
 const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
-export const insertPurchaseDetails = async (requestBody) => {
+const insertPurchaseDetails = async (requestBody) => {
 	const cloneReq = { ...requestBody };
 
 	let newPK = await purchaseMasterEntry(cloneReq);
@@ -12,9 +12,9 @@ export const insertPurchaseDetails = async (requestBody) => {
 	let processItemsPromise = processItems(cloneReq, newPK, res);
 
 	// ledger entry should NOT be done if status is draft ("D")
-	if (cloneReq.status === 'C' && cloneReq.purchaseid === '') {
+	if (cloneReq.status === 'C' && cloneReq.purchase_id === '') {
 		await addPurchaseLedgerRecord(cloneReq, newPK);
-	} else if (cloneReq.status === 'C' && cloneReq.purchaseid !== '') {
+	} else if (cloneReq.status === 'C' && cloneReq.purchase_id !== '') {
 		await addReversePurchaseLedgerRecord(cloneReq, newPK);
 		await addPurchaseLedgerAfterReversalRecord(cloneReq, newPK);
 	} else {
@@ -35,54 +35,54 @@ function purchaseMasterEntry(cloneReq) {
 
 	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
 
-	let orderdate = cloneReq.orderdate !== '' ? toTimeZone(cloneReq.orderdate, 'Asia/Kolkata') : '';
-	let lrdate = cloneReq.lrdate !== '' ? toTimeZone(cloneReq.lrdate, 'Asia/Kolkata') : '';
-	let orderrcvddt = cloneReq.orderrcvddt !== '' ? toTimeZone(cloneReq.orderrcvddt, 'Asia/Kolkata') : '';
+	let order_date = cloneReq.order_date !== '' ? toTimeZone(cloneReq.order_date, 'Asia/Kolkata') : '';
+	let lr_date = cloneReq.lr_date !== '' ? toTimeZone(cloneReq.lr_date, 'Asia/Kolkata') : '';
+	let received_date = cloneReq.received_date !== '' ? toTimeZone(cloneReq.received_date, 'Asia/Kolkata') : '';
 
 	let insQry = `
 			INSERT INTO purchase ( center_id, vendor_id, invoice_no, invoice_date, lr_no, lr_date, received_date, 
-			purchase_type, order_no, order_date, total_qty, no_of_items, after_tax_value, cgst, sgst, igst, 
-			total_value, transport_charges, unloading_charges, misc_charges, net_total, no_of_boxes, status, stock_inwards_datetime, roundoff, revision)
+			purchase_type, order_no, order_date, total_quantity, no_of_items, after_tax_value, cgs_t, sgs_t, igs_t, 
+			total_value, transport_charges, unloading_charges, misc_charges, net_total, no_of_boxes, status, stock_inwards_datetime, round_off, revision)
 			VALUES
-			( '${cloneReq.center_id}', '${cloneReq.vendorctrl.id}', '${cloneReq.invoiceno}', 
+			( '${cloneReq.center_id}', '${cloneReq.vendor_ctrl.id}', '${cloneReq.invoice_no}', 
 			
-			'${toTimeZone(cloneReq.invoicedate, 'Asia/Kolkata')}', 
-			'${cloneReq.lrno}', '${lrdate}', 
-			'${orderrcvddt}', 'GST Inovoice', '${cloneReq.orderno}', '${orderdate}', 
-			'${cloneReq.totalqty}', '${cloneReq.noofitems}', '${cloneReq.after_tax_value}', '${cloneReq.cgst}', 
-			'${cloneReq.sgst}', '${cloneReq.igst}', '${cloneReq.totalvalue}', '${cloneReq.transport_charges}', 
+			'${toTimeZone(cloneReq.invoice_date, 'Asia/Kolkata')}', 
+			'${cloneReq.lr_no}', '${lr_date}', 
+			'${received_date}', 'GST Inovoice', '${cloneReq.order_no}', '${order_date}', 
+			'${cloneReq.total_quantity}', '${cloneReq.no_of_items}', '${cloneReq.after_tax_value}', '${cloneReq.cgs_t}', 
+			'${cloneReq.sgs_t}', '${cloneReq.igs_t}', '${cloneReq.total_value}', '${cloneReq.transport_charges}', 
 			'${cloneReq.unloading_charges}', '${cloneReq.misc_charges}', '${cloneReq.net_total}', 
-			'${cloneReq.noofboxes}', '${cloneReq.status}' , 
+			'${cloneReq.no_of_boxes}', '${cloneReq.status}' , 
 			'${currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss')}',
-			'${cloneReq.roundoff}', '${revisionCnt}' )`;
+			'${cloneReq.round_off}', '${revisionCnt}' )`;
 
-	let updQry = ` update purchase set center_id = '${cloneReq.center_id}', vendor_id = '${cloneReq.vendorctrl.id}',
-			invoice_no = '${cloneReq.invoiceno}', 
-			invoice_date = '${toTimeZone(cloneReq.invoicedate, 'Asia/Kolkata')}', 
-			lr_no = '${cloneReq.lrno}',
-			lr_date = '${lrdate}', received_date = '${orderrcvddt}', purchase_type = 'GST Inovoice',
-			order_no = '${cloneReq.orderno}', order_date = '${orderdate}', total_qty = '${cloneReq.totalqty}', 
-			no_of_items = '${cloneReq.noofitems}', after_tax_value = '${cloneReq.after_tax_value}', cgst = '${cloneReq.cgst}', 
-			sgst = '${cloneReq.sgst}', igst = '${cloneReq.igst}', total_value = '${cloneReq.totalvalue}', 
+	let updQry = ` update purchase set center_id = '${cloneReq.center_id}', vendor_id = '${cloneReq.vendor_ctrl.id}',
+			invoice_no = '${cloneReq.invoice_no}', 
+			invoice_date = '${toTimeZone(cloneReq.invoice_date, 'Asia/Kolkata')}', 
+			lr_no = '${cloneReq.lr_no}',
+			lr_date = '${lr_date}', received_date = '${received_date}', purchase_type = 'GST Inovoice',
+			order_no = '${cloneReq.order_no}', order_date = '${order_date}', total_quantity = '${cloneReq.total_quantity}', 
+			no_of_items = '${cloneReq.no_of_items}', after_tax_value = '${cloneReq.after_tax_value}', cgs_t = '${cloneReq.cgs_t}', 
+			sgs_t = '${cloneReq.sgs_t}', igs_t = '${cloneReq.igs_t}', total_value = '${cloneReq.total_value}', 
 			transport_charges = '${cloneReq.transport_charges}', unloading_charges = '${cloneReq.unloading_charges}', 
-			misc_charges = '${cloneReq.misc_charges}', net_total = '${cloneReq.net_total}', no_of_boxes = '${cloneReq.noofboxes}',
-			status =  '${cloneReq.status}', stock_inwards_datetime =  '${today}', roundoff = '${cloneReq.roundoff}',
+			misc_charges = '${cloneReq.misc_charges}', net_total = '${cloneReq.net_total}', no_of_boxes = '${cloneReq.no_of_boxes}',
+			status =  '${cloneReq.status}', stock_inwards_datetime =  '${today}', round_off = '${cloneReq.round_off}',
 			revision = '${revisionCnt}'
-			where id = '${cloneReq.purchaseid}' `;
+			where id = '${cloneReq.purchase_id}' `;
 
 	return new Promise(function (resolve, reject) {
-		pool.query(cloneReq.purchaseid === '' ? insQry : updQry, function (err, data) {
+		pool.query(cloneReq.purchase_id === '' ? insQry : updQry, function (err, data) {
 			if (err) {
-				if (cloneReq.purchaseid === '') {
+				if (cloneReq.purchase_id === '') {
 					return reject(new ErrorHandler('500', `Error Purchase master entry INSERT QRY. ${insQry}`, err), res);
 				} else {
 					return reject(new ErrorHandler('500', `Error Purchase master entry UPDATE QRY. ${updQry}`, err), res);
 				}
 			}
-			if (cloneReq.purchaseid === '') {
+			if (cloneReq.purchase_id === '') {
 				newPK = data.insertId;
-			} else if (cloneReq.purchaseid != '') {
-				newPK = cloneReq.purchaseid;
+			} else if (cloneReq.purchase_id != '') {
+				newPK = cloneReq.purchase_id;
 			}
 
 			return resolve(newPK);
@@ -91,21 +91,21 @@ function purchaseMasterEntry(cloneReq) {
 }
 
 async function processItems(cloneReq, newPK, res) {
-	for (const k of cloneReq.productarr) {
-		let insQuery1 = ` INSERT INTO purchase_detail(purchase_id, product_id, qty, purchase_price, mrp, batchdate, tax,
-			igst, cgst, sgst, after_tax_value, total_value, stock_id) VALUES
-			( '${newPK}', '${k.product_id}', '${k.qty}', '${k.purchase_price}', '${k.mrp}', 
+	for (const k of cloneReq.product_arr) {
+		let insQuery1 = ` INSERT INTO purchase_detail(purchase_id, product_id, quantity, purchase_price, mrp, batch_date, tax,
+			igs_t, cgs_t, sgs_t, after_tax_value, total_value, stock_id) VALUES
+			( '${newPK}', '${k.product_id}', '${k.quantity}', '${k.purchase_price}', '${k.mrp}', 
 			'${currentTimeInTimeZone('DD-MM-YYYY')}',
-			'${k.taxrate}', '${k.igst}', 
-			'${k.cgst}', '${k.sgst}', '${k.after_tax_value}', '${k.total_value}', 
+			'${k.tax}', '${k.igs_t}', 
+			'${k.cgs_t}', '${k.sgs_t}', '${k.after_tax_value}', '${k.total_value}', 
 			
 			(select id from stock where product_id = '${k.product_id}' and mrp = '${k.mrp}' order by id desc limit 1	)
 			)`;
 
 		let updQuery1 = ` update purchase_detail set purchase_id = '${k.purchase_id}', product_id = '${k.product_id}', 
-			qty = '${k.qty}', purchase_price = '${k.purchase_price}', mrp = '${k.mrp}', 
-			batchdate = '${currentTimeInTimeZone('DD-MM-YYYY')}', 
-			tax = '${k.taxrate}', igst = '${k.igst}', cgst = '${k.cgst}', sgst = '${k.sgst}', 
+			quantity = '${k.quantity}', purchase_price = '${k.purchase_price}', mrp = '${k.mrp}', 
+			batch_date = '${currentTimeInTimeZone('DD-MM-YYYY')}', 
+			tax = '${k.tax}', igs_t = '${k.igs_t}', cgs_t = '${k.cgs_t}', sgs_t = '${k.sgs_t}', 
 			after_tax_value =  '${k.after_tax_value}', total_value = '${k.total_value}', stock_id = '${k.stock_pk}' where
 			id = '${k.pur_det_id}' `;
 
@@ -145,8 +145,8 @@ async function processItems(cloneReq, newPK, res) {
 
 						//	if (cloneReq.status === "C") {
 						// update stock for both status C & D (Completed & Draft)
-						let qty_to_update = k.qty - k.old_val;
-						let isupdated = await updateStock(qty_to_update, k.product_id, k.mrp, 'add', res);
+						let quantity_to_update = k.quantity - k.old_val;
+						let isupdated = await updateStock(quantity_to_update, k.product_id, k.mrp, 'add', res);
 						insertItemHistory(k, newPK, data.insertId, cloneReq);
 
 						//		}
@@ -167,7 +167,7 @@ function insertStock(k) {
 	todayYYMMDD = currentTimeInTimeZone('YYYY-MM-DD');
 	let query2 = `
 	insert into stock (product_id, mrp, available_stock, open_stock, updateddate)
-	values ('${k.product_id}', '${k.mrp}', '${k.qty}', 0, '${todayYYMMDD}')`;
+	values ('${k.product_id}', '${k.mrp}', '${k.quantity}', 0, '${todayYYMMDD}')`;
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query2, function (err, data) {
@@ -222,39 +222,39 @@ const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, re
 	let purchase = 'Purchase';
 	// if purchase details id is missing its new else update
 	let purchase_det_id = k.pur_det_id === '' ? vPurchase_det_id : k.pur_det_id;
-	let txn_qty = k.pur_det_id === '' ? k.qty : k.qty - k.old_val;
+	let txn_quantity = k.pur_det_id === '' ? k.quantity : k.quantity - k.old_val;
 	// let action_type = "ADD";
 	let purchase_id = vPurchase_id === '' ? k.purchase_id : vPurchase_id;
 
-	// scenario: purchase added > draft status > now create purchase entry. txn_qty will be zero, because old_val & current_val will be same
+	// scenario: purchase added > draft status > now create purchase entry. txn_quantity will be zero, because old_val & current_val will be same
 	// this is a fix for above scenario
-	if (cloneReq.revision === 0 && txn_qty === 0) {
-		txn_qty = k.qty;
+	if (cloneReq.revision === 0 && txn_quantity === 0) {
+		txn_quantity = k.quantity;
 	}
 
 	//let purchase_det_id = k.pur_det_id;
-	//let txn_qty = k.qty;
+	//let txn_quantity = k.quantity;
 	let action_type = 'Purchased';
 	//	let purchase_id = k.purchase_id;
 
-	//txn -ve means subtract from qty
-	// if (txn_qty < 0) {
+	//txn -ve means subtract from quantity
+	// if (txn_quantity < 0) {
 	// 	action_type = 'Mod/Del';
 	// }
 
-	if (txn_qty < 0) {
-		action_type = `Edited: ${k.old_val} To: ${k.qty}`;
-		txn_qty = k.old_val - k.qty;
-	} else if (txn_qty > 0 && cloneReq.revision > 0) {
-		action_type = `Edited: ${k.old_val} To: ${k.qty}`;
-		txn_qty = k.qty - k.old_val;
+	if (txn_quantity < 0) {
+		action_type = `Edited: ${k.old_val} To: ${k.quantity}`;
+		txn_quantity = k.old_val - k.quantity;
+	} else if (txn_quantity > 0 && cloneReq.revision > 0) {
+		action_type = `Edited: ${k.old_val} To: ${k.quantity}`;
+		txn_quantity = k.quantity - k.old_val;
 	}
 
 	if (k.mrp_change_flag === 'Y') {
 		purchase = purchase + ' MRP Change - ' + k.mrp;
 	}
 
-	if (txn_qty !== 0) {
+	if (txn_quantity !== 0) {
 		let itemHistory = await insertItemHistoryTable(
 			cloneReq.center_id,
 			purchase,
@@ -265,7 +265,7 @@ const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, re
 			'0', //sale_det_id
 			'PUR',
 			action_type,
-			txn_qty, //txn_qty
+			txn_quantity, //txn_quantity
 			'0', // sale_return_id
 			'0', // sale_return_det_id
 			'0', // purchase_return_id

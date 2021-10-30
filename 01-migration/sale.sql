@@ -24,6 +24,9 @@ ALTER TABLE sale MODIFY order_date date;
 
 update sale set order_date = null where order_date = '9999-01-20';
 
+update sale set invoice_date = (select date_format(str_to_date(invoice_date,'%d-%m-%Y'),'%Y-%m-%d')) where invoice_date != ''; 
+
+
   -- Processing Sale table : Drop sale_datetime
 update sale set sale_datetime =
 (select date_format(str_to_date(sale_datetime,'%d-%m-%Y %k:%i:%s'),'%Y-%m-%d %k:%i:%s'));
@@ -31,6 +34,12 @@ update sale set sale_datetime =
 ALTER TABLE sale CHANGE sale_datetime sale_date_time datetime;
 
 ALTER TABLE sale CHANGE total_qty total_quantity int(20);
+
+ALTER TABLE sale CHANGE sale_type invoice_type varchar(50);
+
+update sale set invoice_type = 'gstInvoice' where invoice_type = 'gstinvoice';
+
+update sale set invoice_type = 'stockIssue' where invoice_type = 'stockissue';
 
 ALTER TABLE sale CHANGE taxable_value after_tax_value decimal(10,2);
 

@@ -7,18 +7,18 @@ const { insertItemHistoryTable, insertToStock } = require('./stock.service');
 const { plainToClass } = require('class-transformer');
 const { Product } = require('../domain/Product');
 
-const { ProductRepo } = require('../repos/product.repo');
+const { productRepoAddProduct, productRepoUpdateProduct, productRepoIsProductExists, productRepoSearchProduct } = require('../repos/product.repo');
 
 async function insertProduct(product) {
-	return ProductRepo.addProduct(product);
+	return productRepoAddProduct(product);
 }
 
 async function updateProduct(product) {
-	return ProductRepo.updateProduct(product);
+	return productRepoUpdateProduct(product);
 }
 
 async function searchProduct(center_id, product_search_text) {
-	return ProductRepo.searchProduct(center_id, product_search_text);
+	return productRepoSearchProduct(center_id, product_search_text);
 }
 
 // const updateProduct = (updateValues, res) => {
@@ -42,12 +42,8 @@ async function searchProduct(center_id, product_search_text) {
 // 	return promisifyQuery(query);
 // };
 
-const isProductExists = async (pcode, center_id) => {
-	let query = `
-	select * from product p where 
- 	p.product_code = '${pcode}' and center_id = ${center_id}  `;
-
-	return promisifyQuery(query);
+const isProductExists = async (product_code, center_id) => {
+	return isProductExists(product_code, center_id);
 };
 
 module.exports = {

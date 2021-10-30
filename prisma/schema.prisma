@@ -13,7 +13,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:tesla@127.0.0.1:3306/reddotdb"
+  url      = "mysql://root:tesla@127.0.0.1:3306/testing"
 }
 
 

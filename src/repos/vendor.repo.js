@@ -2,7 +2,7 @@ const { prisma } = require('../config/prisma');
 
 const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
-const addVendor = async (vendor) => {
+const vendorRepoAddVendor = async (vendor) => {
 	try {
 		const result = await prisma.vendor.create({
 			data: {
@@ -31,7 +31,7 @@ const addVendor = async (vendor) => {
 	}
 };
 
-const updateVendor = async (vendor) => {
+const vendorRepoUpdateVendor = async (vendor) => {
 	try {
 		const result = await prisma.vendor.update({
 			where: {
@@ -62,7 +62,7 @@ const updateVendor = async (vendor) => {
 	}
 };
 
-const searchVendors = async (center_id, search_text) => {
+const vendorRepoSearchVendors = async (center_id, search_text) => {
 	try {
 		const filteredVendors = await prisma.vendor.findMany({
 			take: 50,
@@ -85,7 +85,7 @@ const searchVendors = async (center_id, search_text) => {
 	}
 };
 
-const getVendorDetails = async (center_id, vendor_id) => {
+const vendorRepoGetVendorDetails = async (center_id, vendor_id) => {
 	try {
 		const vendorDetails = await prisma.vendor.findMany({
 			where: {
@@ -107,7 +107,7 @@ const getVendorDetails = async (center_id, vendor_id) => {
 	}
 };
 
-const isVendorExists = async (center_id, vendor_name) => {
+const vendorRepoIsVendorExists = async (center_id, vendor_name) => {
 	let vendorCount = await prisma.vendor.count({
 		where: {
 			vendor_name: vendor_name,
@@ -118,7 +118,7 @@ const isVendorExists = async (center_id, vendor_name) => {
 	return { result: vendorCount };
 };
 
-const deleteVendor = async (id) => {
+const vendorRepoDeleteVendor = async (id) => {
 	const result = await prisma.vendor.update({
 		where: {
 			id: Number(id),
@@ -132,10 +132,10 @@ const deleteVendor = async (id) => {
 };
 
 module.exports = {
-	addVendor,
-	updateVendor,
-	searchVendors,
-	getVendorDetails,
-	isVendorExists,
-	deleteVendor,
+	vendorRepoAddVendor,
+	vendorRepoUpdateVendor,
+	vendorRepoSearchVendors,
+	vendorRepoGetVendorDetails,
+	vendorRepoIsVendorExists,
+	vendorRepoDeleteVendor,
 };

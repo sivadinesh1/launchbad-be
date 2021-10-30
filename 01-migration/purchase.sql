@@ -48,6 +48,7 @@ change igst igs_t decimal(10,2),
 change roundoff round_off decimal(10,2)
 ;
 
+ALTER TABLE product CHANGE unom uom varchar(50);
 
 alter table purchase
 add column createdAt datetime,

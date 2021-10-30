@@ -13,19 +13,19 @@ INSERT INTO purchase_ledger ( center_id, vendor_id, purchase_ref_id, ledger_deta
 VALUES
   ( ? , ?, ?, 'purchase', ?, IFNULL((select balance_amt from (select (balance_amt) as balance_amt
     FROM purchase_ledger
-    where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
+    where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendor_ctrl.id}'
     ORDER BY  id DESC
     LIMIT 1) a), 0) + '${insertValues.net_total}', '${today}'
   ) `;
 
-	let values = [insertValues.center_id, insertValues.vendorctrl.id, purchase_ref_id, insertValues.net_total];
+	let values = [insertValues.center_id, insertValues.vendor_ctrl.id, purchase_ref_id, insertValues.net_total];
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query, values, async function (err, data) {
 			if (err) {
 				reject(err);
 			}
-			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendorctrl.id);
+			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendor_ctrl.id);
 			resolve(data);
 		});
 	});
@@ -42,7 +42,7 @@ VALUES
 	
 	IFNULL((select credit_amt from (select (credit_amt) as credit_amt
     FROM purchase_ledger
-		where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
+		where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendor_ctrl.id}'
 		and ledger_detail = 'Invoice' and purchase_ref_id = '${purchase_ref_id}'
     ORDER BY  id DESC
 		LIMIT 1) a), 0),
@@ -52,14 +52,14 @@ VALUES
 	
 	 IFNULL((select balance_amt from (select (balance_amt ) as balance_amt
     FROM purchase_ledger
-		where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
+		where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendor_ctrl.id}'
 		
     ORDER BY  id DESC
 		LIMIT 1) a), 0)
 		-
 		IFNULL((select credit_amt from (select (credit_amt) as credit_amt
 			FROM purchase_ledger
-			where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
+			where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendor_ctrl.id}'
 			and ledger_detail = 'purchase' and purchase_ref_id = '${purchase_ref_id}'
 			ORDER BY  id DESC
 			LIMIT 1) a), 0)
@@ -67,14 +67,14 @@ VALUES
 		), '${today}'
   ) `;
 
-	let values = [insertValues.center_id, insertValues.vendorctrl.id, purchase_ref_id];
+	let values = [insertValues.center_id, insertValues.vendor_ctrl.id, purchase_ref_id];
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query, values, async function (err, data) {
 			if (err) {
 				return reject(err);
 			}
-			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendorctrl.id);
+			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendor_ctrl.id);
 			return resolve(data);
 		});
 	});
@@ -89,19 +89,19 @@ INSERT INTO purchase_ledger ( center_id, vendor_id, purchase_ref_id, ledger_deta
 VALUES
   ( ? , ?, ?, 'purchase', ?, (credit_amt + IFNULL((select balance_amt from (select (balance_amt) as balance_amt
     FROM purchase_ledger
-    where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendorctrl.id}'
+    where center_id = '${insertValues.center_id}'  and vendor_id = '${insertValues.vendor_ctrl.id}'
     ORDER BY  id DESC
     LIMIT 1) a), 0)), '${today}'
   ) `;
 
-	let values = [insertValues.center_id, insertValues.vendorctrl.id, purchase_ref_id, insertValues.net_total];
+	let values = [insertValues.center_id, insertValues.vendor_ctrl.id, purchase_ref_id, insertValues.net_total];
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query, values, async function (err, data) {
 			if (err) {
 				return reject(err);
 			}
-			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendorctrl.id);
+			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendor_ctrl.id);
 			return resolve(data);
 		});
 	});

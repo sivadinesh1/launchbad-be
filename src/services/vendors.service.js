@@ -1,31 +1,34 @@
-const { prisma } = require('../config/prisma');
-
-const { VendorRepo } = require('../repos/vendor.repo');
-
-const { currentTimeInTimeZone, promisifyQuery, bigIntToString } = require('../utils/utils');
+const {
+	vendorRepoAddVendor,
+	vendorRepoUpdateVendor,
+	vendorRepoSearchVendors,
+	vendorRepoGetVendorDetails,
+	vendorRepoIsVendorExists,
+	vendorRepoDeleteVendor,
+} = require('../repos/vendor.repo');
 
 async function insertVendor(vendor) {
-	return VendorRepo.addVendor(vendor);
+	return vendorRepoAddVendor(vendor);
 }
 
 async function updateVendor(vendor) {
-	return VendorRepo.updateVendor(vendor);
+	return vendorRepoUpdateVendor(vendor);
 }
 
 async function getSearchVendors(center_id, search_text) {
-	return VendorRepo.searchVendors(center_id, search_text);
+	return vendorRepoSearchVendors(center_id, search_text);
 }
 
 async function getVendorDetails(center_id, vendor_id) {
-	return VendorRepo.getVendorDetails(center_id, vendor_id);
+	return vendorRepoGetVendorDetails(center_id, vendor_id);
 }
 
 async function isVendorExists(center_id, name) {
-	return VendorRepo.isVendorExists(center_id, name);
+	return vendorRepoIsVendorExists(center_id, name);
 }
 
 async function deleteVendor(id) {
-	return VendorRepo.deleteVendor(id);
+	return vendorRepoDeleteVendor(id);
 }
 
 // export const deleteVendor = async (id) => {

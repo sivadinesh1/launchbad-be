@@ -2,7 +2,7 @@ const { prisma } = require('../config/prisma');
 
 const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
-const addProduct = async (product) => {
+const productRepoAddProduct = async (product) => {
 	try {
 		const result = await prisma.product.create({
 			data: {
@@ -43,7 +43,7 @@ const addProduct = async (product) => {
 	}
 };
 
-const updateProduct = async (product) => {
+const productRepoUpdateProduct = async (product) => {
 	try {
 		const result = await prisma.product.update({
 			where: {
@@ -87,7 +87,7 @@ const updateProduct = async (product) => {
 	}
 };
 
-const isProductExists = async (product_code, center_id) => {
+const productRepoIsProductExists = async (product_code, center_id) => {
 	const result = await prisma.product.count({
 		where: {
 			center_id: Number(center_id),
@@ -99,7 +99,7 @@ const isProductExists = async (product_code, center_id) => {
 };
 
 //public async updateProduct(product: IProduct) {
-const searchProduct = async (center_id, search_text) => {
+const productRepoSearchProduct = async (center_id, search_text) => {
 	let query = `
     select a.product_type as product_type, a.product_code as product_code, 
         a.product_description, 
@@ -136,8 +136,8 @@ const searchProduct = async (center_id, search_text) => {
 };
 
 module.exports = {
-	addProduct,
-	updateProduct,
-	isProductExists,
-	searchProduct,
+	productRepoAddProduct,
+	productRepoUpdateProduct,
+	productRepoIsProductExists,
+	productRepoSearchProduct,
 };
