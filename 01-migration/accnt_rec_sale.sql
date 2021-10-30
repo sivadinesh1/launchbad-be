@@ -1,0 +1,1 @@
+ALTER TABLE accnt_rec_sale change centerid center_id bigint;
