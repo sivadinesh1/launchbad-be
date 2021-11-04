@@ -1,6 +1,6 @@
 var pool = require('../config/db');
 
-const { toTimeZone, toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
+const { toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
@@ -189,21 +189,21 @@ const searchAllDraftPurchase = async (center_id) => {
 const searchPurchase = async (requestBody) => {
 	let center_id = requestBody.center_id;
 	let status = requestBody.status;
-	let vendor_id = requestBody.vendorid;
-	let from_date = requestBody.fromdate;
-	let to_date = requestBody.todate;
+	let vendor_id = requestBody.vendor_id;
+	let from_date;
+	let to_date;
 	let order = requestBody.order;
 
 	if (from_date !== '') {
-		from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata') + ' 00:00:00';
+		from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
 	}
 
 	if (to_date !== '') {
-		to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata') + ' 23:59:00';
+		to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
 	}
 
-	let vendsql = `and p.vendor_id = '${vendor_id}' `;
-	let statussql = `and p.status = '${status}' `;
+	let vend_sql = `and p.vendor_id = '${vendor_id}' `;
+	let status_sql = `and p.status = '${status}' `;
 
 	let sql = `select p.*, v.id as vendor_id, v.vendor_name as vendor_name
 	from
@@ -213,19 +213,20 @@ const searchPurchase = async (requestBody) => {
 	v.id = p.vendor_id and
 	
 	p.center_id = '${center_id}' and
-	str_to_date(received_date,  '%d-%m-%Y %T') between
-	str_to_date('${from_date}',  '%d-%m-%Y %T') and
-	str_to_date('${to_date}',  '%d-%m-%Y %T') `;
+	received_date between '${from_date}' and '${to_date}'
+	`;
 
 	if (vendor_id !== 'all') {
-		sql = sql + vendsql;
+		sql = sql + vend_sql;
 	}
 
 	if (status !== 'all') {
-		sql = sql + statussql;
+		sql = sql + status_sql;
 	}
 
 	sql = sql + `order by str_to_date(received_date,  '%d-%m-%Y %T') ${order}`;
+
+	console.log('dinesh :: ' + sql);
 
 	return promisifyQuery(sql);
 };
@@ -312,9 +313,6 @@ const searchSales = async (requestBody) => {
 		`;
 	}
 
-	console.log('dinesh:: search-sql' + sql);
-	console.log('dinesh:: search-query' + query);
-
 	return promisifyQuery(search_type === 'all' ? sql : query);
 };
 
@@ -354,15 +352,15 @@ const purchaseDetails = async (purchase_id) => {
 pd.id as id, 
 pd.purchase_id as purchase_id,
 pd.product_id as product_id,
-pd.qty as qty,
+pd.quantity as quantity,
 pd.purchase_price as purchase_price,
 pd.mrp as mrp,
-pd.batchdate as batchdate,
+pd.batch_date as batch_date,
 pd.tax as tax,
-pd.igst as igst,
-pd.cgst as cgst,
-pd.sgst as sgst,
-pd.after_tax_value as tax_value,
+pd.igs_t as igs_t,
+pd.cgs_t as cgs_t,
+pd.sgs_t as sgs_t,
+pd.after_tax_value as after_tax_value,
 pd.total_value as total_value,
 ps.revision as revision,
 p.product_code, p.product_description, p.packet_size, p.tax_rate,
@@ -379,13 +377,13 @@ s.id = pd.stock_id and
 pd.purchase_id = '${purchase_id}' 
 	 `;
 
-	return promisifyQuery(query);
+	return promisifyQuery(sql);
 };
 
 const deletePurchaseDetails = async (requestBody) => {
 	let center_id = requestBody.center_id;
 	let id = requestBody.id;
-	let purchase_id = requestBody.purchaseid;
+	let purchase_id = requestBody.purchase_id;
 	let qty = requestBody.qty;
 	let product_id = requestBody.product_id;
 	let stock_id = requestBody.stock_id;

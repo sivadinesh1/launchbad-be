@@ -104,7 +104,7 @@ const productRepoSearchProduct = async (center_id, search_text) => {
     select a.product_type as product_type, a.product_code as product_code, 
         a.product_description, 
         a.mrp, 
-        a.tax_rate, 
+        a.tax_rate as tax,  
         IFNULL((select sum(s2.available_stock) from stock s2 where s2.product_id = a.id ), 0) as available_stock, 
         IFNULL((		select stock_level from item_history ih 
           where ih.product_ref_id = a.id order by ih.id desc limit 1), 0) as true_stock,
@@ -135,9 +135,31 @@ const productRepoSearchProduct = async (center_id, search_text) => {
 	return promisifyQuery(query);
 };
 
+const productRepoUpdateLatestPurchasePrice = async (purchase_price, mrp, id, prisma) => {
+	console.log('productRepoUpdateLatestPurchasePrice >> ' + purchase_price + ' ' + mrp + ' ' + id);
+	try {
+		const result = await prisma.product.update({
+			where: {
+				id: Number(id),
+			},
+			data: {
+				purchase_price: Number(purchase_price),
+				unit_price: Number(purchase_price),
+				mrp: Number(mrp),
+			},
+		});
+
+		return bigIntToString(result);
+	} catch (error) {
+		console.log('error :: product.repo.js ' + error.message);
+		throw error;
+	}
+};
+
 module.exports = {
 	productRepoAddProduct,
 	productRepoUpdateProduct,
 	productRepoIsProductExists,
 	productRepoSearchProduct,
+	productRepoUpdateLatestPurchasePrice,
 };

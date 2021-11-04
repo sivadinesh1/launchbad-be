@@ -13,6 +13,9 @@ const {
 	centerService,
 	userService,
 } = require('../services');
+const { plainToClass } = require('class-transformer');
+
+const { Brand } = require('../domain/Brand');
 
 const getProductsCount = catchAsync(async (req, res) => {
 	const data = await adminService.getProductsCount(req.user.center_id);

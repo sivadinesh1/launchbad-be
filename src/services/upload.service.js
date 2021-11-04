@@ -1,7 +1,5 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
-
 const { handleError, ErrorHandler } = require('../config/error');
 const { updateLogo } = require('../services/admin.service');
 const IncomingForm = require('formidable').IncomingForm;

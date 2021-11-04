@@ -4,11 +4,18 @@ const { responseForward } = require('../utils/utils');
 const catchAsync = require('../utils/catchAsync');
 const { purchaseService } = require('../services');
 
-const insertPurchaseDetails = catchAsync(async (req, res) => {
-	const data = await purchaseService.insertPurchaseDetails(req.body);
-	return responseForward(data, 'insertPurchaseDetails', res);
+const insertPurchase = catchAsync(async (req, res) => {
+	try {
+		let purchaseObject = req.body;
+		purchaseObject.updated_by = Number(req.user.id);
+
+		const data = await purchaseService.insertPurchase(purchaseObject);
+		return responseForward(data, 'insertPurchaseDetails', res);
+	} catch (error) {
+		console.log('ERROR:' + JSON.stringify(error));
+	}
 });
 
 module.exports = {
-	insertPurchaseDetails,
+	insertPurchase,
 };

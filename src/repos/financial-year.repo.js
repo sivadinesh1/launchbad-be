@@ -19,7 +19,7 @@ const financialYearRepoGetFinancialYearRow = async (center_id, prisma) => {
 };
 
 const financialYearRepoGetNextInvSequenceNo = async (center_id) => {
-	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.findUnique({
 		where: {
@@ -38,7 +38,7 @@ const financialYearRepoGetNextInvSequenceNo = async (center_id) => {
 };
 
 const financialYearRepoGetNextStockIssueSequenceNoasync = async (center_id) => {
-	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.findUnique({
 		where: {
@@ -55,7 +55,7 @@ const financialYearRepoGetNextStockIssueSequenceNoasync = async (center_id) => {
 };
 
 const financialYearRepoUpdateInvoiceSequence = async (center_id, prisma) => {
-	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.update({
 		where: {
@@ -72,7 +72,7 @@ const financialYearRepoUpdateInvoiceSequence = async (center_id, prisma) => {
 };
 
 const financialYearRepoUpdateDraftInvoiceSequenceGenerator = async (center_id, prisma) => {
-	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.update({
 		where: {
@@ -89,7 +89,7 @@ const financialYearRepoUpdateDraftInvoiceSequenceGenerator = async (center_id, p
 };
 
 const financialYearRepoUpdateStockIssueSequenceGenerator = async (center_id, prisma) => {
-	let rowId = await this.getFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
 	const result = await prisma.financial_year.update({
 		where: {
 			center_id: Number(rowId),

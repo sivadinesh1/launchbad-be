@@ -2,7 +2,7 @@ var pool = require('../config/db');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
-const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
+const { promisifyQuery } = require('../utils/utils');
 
 const { getSearchCustomers } = require('./customers.service');
 

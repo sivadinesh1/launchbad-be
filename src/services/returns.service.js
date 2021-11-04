@@ -1,8 +1,8 @@
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
+const { currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
 
 const { insertItemHistoryTable, updateStock } = require('../services/stock.service');
 
-const { updatePymtSequenceGenerator, getPymtSequenceNo } = require('../services/accounts.service');
+const { updatePaymentSequenceGenerator, getPaymentSequenceNo } = require('../services/accounts.service');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
@@ -32,7 +32,7 @@ const insertSaleReturnDetail = async (srd, sale_return_id, smd, res) => {
 			let updateSaleDetailFlag = await updateSaleDetail(k);
 			let updateStockAfterReturnFlag = await updateStock(k.received_now, k.product_id, k.mrp, 'add', res);
 
-			let updateitemhistorytbl = await insertItemHistoryTable(
+			let updateItemHistoryTbl = await insertItemHistoryTable(
 				smd.center_id,
 				'SaleReturn',
 				k.product_id,
@@ -177,26 +177,26 @@ const saleReturnPaymentMaster = (center_id, customer_id, payment_no, payment_now
 const searchSaleReturn = async (requestBody) => {
 	let center_id = requestBody.center_id;
 
-	let customer_id = requestBody.customerid;
-	let from_date = requestBody.fromdate;
-	let to_date = requestBody.todate;
+	let customer_id = requestBody.customer_id;
+	let from_date = requestBody.from_date;
+	let to_date = requestBody.to_date;
 
-	let search_type = requestBody.searchtype;
-	let search_by = requestBody.searchby;
+	let search_type = requestBody.search_type;
+	let search_by = requestBody.search_by;
 
 	let sql = '';
 	let query = '';
 
 	if (search_type === 'all') {
 		if (from_date !== '') {
-			from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata') + ' 00:00:00';
+			from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
 		}
 
 		if (to_date !== '') {
-			to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata') + ' 23:59:00';
+			to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
 		}
 
-		let custsql = `and s.customer_id = '${customer_id}' `;
+		let cust_sql = `and s.customer_id = '${customer_id}' `;
 
 		sql = `select c.name, sr.id as sale_return_id, sr.sale_id as sale_id,  s.invoice_no as invoice_no, s.invoice_date as invoice_date,
 		sr.return_date as return_date,
@@ -242,7 +242,7 @@ const searchSaleReturn = async (requestBody) => {
 						 `;
 
 		if (customer_id !== 'all') {
-			sql = sql + custsql;
+			sql = sql + cust_sql;
 		}
 
 		sql = sql + ' order by sr.return_date desc ';
@@ -364,19 +364,19 @@ const addSaleReturn = async (requestBody) => {
 	//let cr_note_updated = await updateCRAmntToCustomer(smd.sale_id, smd.to_return_amount);
 
 	// add a payment entry
-	await updatePymtSequenceGenerator(smd.center_id);
+	await updatePaymentSequenceGenerator(smd.center_id);
 
 	let cloneReq = {
 		center_id: smd.center_id,
 		bank_id: 0,
-		accountarr: [{ receivedamount: smd.to_return_amount, receiveddate: today }],
+		account_arr: [{ received_amount: smd.to_return_amount, received_date: today }],
 	};
-	let pymtNo = await getPymtSequenceNo(cloneReq);
+	let paymentNo = await getPaymentSequenceNo(cloneReq);
 
 	// add payment master
 	// nst saleReturnPaymentMaster = (center_id, customer_id, payment_no,
 	// 	payment_now_amt, advance_amt_used, payment_date ) => {
-	let newPK = await saleReturnPaymentMaster(smd.center_id, smd.customer_id, pymtNo, smd.to_return_amount, '0', today, res);
+	let newPK = await saleReturnPaymentMaster(smd.center_id, smd.customer_id, paymentNo, smd.to_return_amount, '0', today, res);
 
 	// (3) - updates pymt details
 	let process = await processItems(newPK.insertId, smd.sale_id, sale_return_id, smd.to_return_amount);
@@ -386,9 +386,9 @@ const addSaleReturn = async (requestBody) => {
 	});
 };
 
-function processItems(newPK, sale_ref_id, sale_return_ref_id, receivedamount) {
+function processItems(newPK, sale_ref_id, sale_return_ref_id, received_amount) {
 	let sql = `INSERT INTO payment_detail(pymt_ref_id, sale_ref_id, sale_return_ref_id, applied_amount) VALUES
-		( '${newPK}', '${sale_ref_id}', '${sale_return_ref_id}', '${receivedamount}'  )`;
+		( '${newPK}', '${sale_ref_id}', '${sale_return_ref_id}', '${received_amount}'  )`;
 
 	return promisifyQuery(query);
 }

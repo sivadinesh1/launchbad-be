@@ -1,5 +1,5 @@
 var pool = require('../../config/db');
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../../utils/utils');
+const { currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../../utils/utils');
 
 const getStatement = (requestBody) => {
 	const [center_id, customer_id, start, end, invoice_type] = Object.values(requestBody);
@@ -96,8 +96,8 @@ const getItemWiseSale = (requestBody) => {
 	let brand_id = requestBody.brand_id;
 	let invoice_type = requestBody.invoice_type;
 
-	let start_date = toTimeZone(requestBody.start_date, 'Asia/Kolkata') + ' 00:00:00';
-	let end_date = toTimeZone(requestBody.end_date, 'Asia/Kolkata') + ' 23:59:59';
+	let start_date = toTimeZoneFormat(requestBody.start_date, 'YYYY-MM-DD') + ' 00:00:00';
+	let end_date = toTimeZoneFormat(requestBody.end_date, 'YYYY-MM-DD') + ' 23:59:59';
 
 	let query = ` 
 		select 

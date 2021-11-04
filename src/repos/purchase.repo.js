@@ -1,62 +1,107 @@
 // const {prisma} = require('../config/prisma');
-import moment from 'moment';
-import { Sale, ISale } from '../domain/Sale';
 
 const { toTimeZoneFormat, currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
-class PurchaseRepo {
-	// createProduct
+const addPurchaseMaster = async (purchase, prisma) => {
+	try {
+		const result = await prisma.purchase.create({
+			data: {
+				center_id: Number(purchase.center_id),
+				vendor_id: Number(purchase.vendor_id),
+				invoice_no: purchase.invoice_no,
+				invoice_date: new Date(purchase.invoice_date),
 
-	async addSaleMaster(sale, prisma) {
-		try {
-			let formattedDate = toTimeZoneFormat(sale.invoice_date, 'YYYY-MM-DD');
+				lr_date: purchase.lr_date,
 
-			const result = await prisma.sale.create({
-				data: {
-					center_id: sale.center_id,
-					customer_id: sale.customer_id,
-					invoice_no: sale.invoice_no,
-					invoice_date: new Date(formattedDate),
-					lr_no: sale.lr_no,
-					lr_date: sale.lr_date !== null ? sale.lr_date : undefined,
-					invoice_type: sale.invoice_type,
-					order_no: sale.order_no,
-					order_date: sale.order_date !== null ? sale.order_date : undefined,
-					total_quantity: sale.total_quantity,
-					no_of_items: sale.no_of_items,
-					after_tax_value: sale.after_tax_value,
-					cgs_t: sale.cgs_t,
-					sgs_t: sale.sgs_t,
-					igs_t: sale.igs_t,
-					total_value: sale.total_value,
-					transport_charges: sale.transport_charges,
-					unloading_charges: sale.unloading_charges,
-					misc_charges: sale.misc_charges,
-					net_total: sale.net_total,
-					no_of_boxes: sale.no_of_boxes,
-					status: sale.status,
+				received_date: new Date(purchase.received_date),
 
-					revision: sale.revision,
+				order_no: purchase.order_no,
+				order_date: purchase.order_date,
 
-					stock_issue_ref: sale.stock_issue_ref,
-					stock_issue_date_ref: sale.stock_issue_date_ref != null ? sale.stock_issue_date_ref : undefined,
-					round_off: sale.round_off,
-					retail_customer_name: sale.retail_customer_name,
-					retail_customer_address: sale.retail_customer_address,
-					retail_customer_phone: sale.retail_customer_phone,
-					print_count: sale.print_count,
-					inv_gen_mode: sale.inv_gen_mode,
-					created_by: sale.updated_by,
-					updated_by: sale.updated_by,
-				},
-			});
+				total_quantity: Number(purchase.total_quantity),
+				no_of_items: purchase.no_of_items,
+				after_tax_value: Number(purchase.after_tax_value),
+				cgs_t: Number(purchase.cgs_t),
+				sgs_t: Number(purchase.sgs_t),
+				igs_t: Number(purchase.igs_t),
+				total_value: Number(purchase.total_value),
+				transport_charges: Number(purchase.transport_charges),
+				unloading_charges: Number(purchase.unloading_charges),
+				misc_charges: Number(purchase.misc_charges),
+				net_total: Number(purchase.net_total),
+				no_of_boxes: Number(purchase.no_of_boxes),
+				status: purchase.status,
 
-			return bigIntToString(result);
-		} catch (error) {
-			console.log('error :: addSale sale.repo.js ' + error);
-			throw error;
-		}
+				stock_inwards_date_time: new Date(currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')),
+				round_off: purchase.round_off,
+				revision: purchase.revision,
+
+				created_by: purchase.updated_by,
+				updated_by: purchase.updated_by,
+				createdAt: currentTimeInTimeZone(),
+				updatedAt: currentTimeInTimeZone(),
+			},
+		});
+
+		return bigIntToString(result);
+	} catch (error) {
+		console.log('error :: addPurchase purchase.repo.js ' + error);
+		throw error;
 	}
-}
+};
 
-export default new PurchaseRepo();
+const editPurchaseMaster = async (purchase, prisma) => {
+	try {
+		const result = await prisma.purchase.update({
+			where: {
+				id: Number(purchase.id),
+			},
+			data: {
+				center_id: Number(purchase.center_id),
+				vendor_id: Number(purchase.vendor_id),
+				invoice_no: purchase.invoice_no,
+				invoice_date: new Date(purchase.invoice_date),
+
+				lr_date: purchase.lr_date,
+
+				received_date: new Date(purchase.received_date),
+
+				order_no: purchase.order_no,
+				order_date: purchase.order_date,
+
+				total_quantity: Number(purchase.total_quantity),
+				no_of_items: purchase.no_of_items,
+				after_tax_value: Number(purchase.after_tax_value),
+				cgs_t: Number(purchase.cgs_t),
+				sgs_t: Number(purchase.sgs_t),
+				igs_t: Number(purchase.igs_t),
+				total_value: Number(purchase.total_value),
+				transport_charges: Number(purchase.transport_charges),
+				unloading_charges: Number(purchase.unloading_charges),
+				misc_charges: Number(purchase.misc_charges),
+				net_total: Number(purchase.net_total),
+				no_of_boxes: Number(purchase.no_of_boxes),
+				status: purchase.status,
+
+				stock_inwards_date_time: new Date(currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')),
+				round_off: purchase.round_off,
+				revision: purchase.revision,
+
+				created_by: purchase.updated_by,
+				updated_by: purchase.updated_by,
+				createdAt: currentTimeInTimeZone(),
+				updatedAt: currentTimeInTimeZone(),
+			},
+		});
+
+		return bigIntToString(result);
+	} catch (error) {
+		console.log('error :: addPurchase purchase.repo.js ' + error);
+		throw error;
+	}
+};
+
+module.exports = {
+	addPurchaseMaster,
+	editPurchaseMaster,
+};

@@ -4,6 +4,6 @@ const { auth } = require('../../middleware/auth');
 
 const purchaseController = require('../../controllers/purchase.controller');
 
-router.route('/insert-purchase-details').post(auth('getUsers'), purchaseController.insertPurchaseDetails);
+router.route('/insert-purchase-details').post(auth('getUsers'), purchaseController.insertPurchase);
 
 module.exports = router;

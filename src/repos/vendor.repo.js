@@ -131,6 +131,19 @@ const vendorRepoDeleteVendor = async (id) => {
 	return bigIntToString(result);
 };
 
+const updateVendorBalance = async (vendor_id, balance_amt, prisma) => {
+	const result = await prisma.vendor.update({
+		where: {
+			id: Number(vendor_id),
+		},
+		data: {
+			balance_amt: balance_amt,
+		},
+	});
+
+	return bigIntToString(result);
+};
+
 module.exports = {
 	vendorRepoAddVendor,
 	vendorRepoUpdateVendor,
@@ -138,4 +151,5 @@ module.exports = {
 	vendorRepoGetVendorDetails,
 	vendorRepoIsVendorExists,
 	vendorRepoDeleteVendor,
+	updateVendorBalance,
 };

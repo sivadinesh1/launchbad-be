@@ -1,8 +1,12 @@
+const { plainToClass } = require('class-transformer');
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { responseForward } = require('../utils/utils');
 const catchAsync = require('../utils/catchAsync');
 const { salesService } = require('../services');
+
+const { Sale } = require('../domain/Sale');
+const { SaleDetail } = require('../domain/SaleDetail');
 
 const getNextSaleInvoiceNoAsync = catchAsync(async (req, res) => {
 	const data = await salesService.getNextInvSequenceNo(req.user.center_id, req.params.invoice_type);

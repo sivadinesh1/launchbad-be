@@ -2,7 +2,7 @@ const { prisma } = require('../config/prisma');
 
 const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
-const updateCustomerBalanceAmt = async (customer_id, balance_amt, prisma) => {
+const updateCustomerBalance = async (customer_id, balance_amt, prisma) => {
 	const result = await prisma.customer.update({
 		where: {
 			id: Number(customer_id),
@@ -16,5 +16,5 @@ const updateCustomerBalanceAmt = async (customer_id, balance_amt, prisma) => {
 };
 
 module.exports = {
-	updateCustomerBalanceAmt,
+	updateCustomerBalance,
 };

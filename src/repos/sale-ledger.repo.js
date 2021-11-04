@@ -3,7 +3,6 @@ const { prisma } = require('../config/prisma');
 const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
 const addSaleLedgerEntry = async (ledger, prisma) => {
-	console.log('dinesh ::: ' + JSON.stringify(ledger));
 	try {
 		const result = await prisma.ledger.create({
 			data: {
@@ -30,7 +29,6 @@ const addSaleLedgerEntry = async (ledger, prisma) => {
 };
 
 const getCustomerBalance = async (customer_id, center_id, prisma) => {
-	console.log('dinesh :::LLD ' + customer_id + ' ' + center_id);
 	const result = await prisma.ledger.findMany({
 		select: {
 			balance_amt: true,
@@ -50,7 +48,6 @@ const getCustomerBalance = async (customer_id, center_id, prisma) => {
 };
 
 const getCreditAmtForInvoiceReversal = async (customer_id, center_id, invoice_ref_id, prisma) => {
-	console.log('dinesh :::LL ' + customer_id + ' ' + center_id + ' ' + invoice_ref_id);
 	try {
 		const result = await prisma.ledger.findMany({
 			select: {

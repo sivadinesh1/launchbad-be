@@ -8,7 +8,7 @@ ALTER TABLE payment
 change pymt_date payment_date datetime;
 
 ALTER TABLE payment 
-change pymt_mode_ref_id paymentt_mode_ref_id bigint;
+change pymt_mode_ref_id payment_mode_ref_id bigint;
 
 ALTER TABLE payment 
 change pymt_ref payment_ref varchar(200),

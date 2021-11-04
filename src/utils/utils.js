@@ -96,10 +96,10 @@ function convert_number(number) {
 	return res;
 }
 
-function toTimeZone(time, zone) {
-	var format = 'YYYY-MM-DDTHH:mm:ssZ';
-	return moment(time, format).tz(zone).format('DD-MM-YYYY');
-}
+// function toTimeZone(time, zone) {
+// 	var format = 'YYYY-MM-DDTHH:mm:ssZ';
+// 	return moment(time, format).tz(zone).format('DD-MM-YYYY');
+// }
 
 function toTimeZoneFormat(time, format) {
 	var default_format = 'YYYY-MM-DDTHH:mm:ssZ';
@@ -116,6 +116,7 @@ function getCurrentYear() {
 }
 
 function setTimezone(timezone) {
+	console.log('setting timezone :: ' + timezone);
 	center_timezone = timezone;
 }
 
@@ -177,7 +178,7 @@ const bigIntToString = (data) => {
 
 module.exports = {
 	number2text,
-	toTimeZone,
+	// toTimeZone,
 	currentTimeInTimeZone,
 	toTimeZoneFormat,
 	encryptPassword,

@@ -4,7 +4,7 @@ const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = re
 
 // createProduct
 
-const addBrand = async (brand) => {
+const brandRepoAddBrand = async (brand) => {
 	try {
 		const result = await prisma.brand.create({
 			data: {
@@ -23,7 +23,7 @@ const addBrand = async (brand) => {
 	}
 };
 
-const updateBrand = async (brand) => {
+const brandRepoUpdateBrand = async (brand) => {
 	const result = await prisma.brand.update({
 		where: {
 			id: Number(brand.id),
@@ -36,7 +36,7 @@ const updateBrand = async (brand) => {
 	return bigIntToString(result);
 };
 
-const getAllBrands = async (center_id, status) => {
+const brandRepoGetAllBrands = async (center_id, status) => {
 	const result = await prisma.brand.findMany({
 		where: {
 			center_id: center_id,
@@ -49,7 +49,7 @@ const getAllBrands = async (center_id, status) => {
 	return bigIntToString(result);
 };
 
-const getSearchBrands = async (center_id, search_text) => {
+const brandRepoGetSearchBrands = async (center_id, search_text) => {
 	const filteredBrands = await prisma.brand.findMany({
 		where: {
 			brand_name: {
@@ -67,7 +67,7 @@ const getSearchBrands = async (center_id, search_text) => {
 	return bigIntToString(filteredBrands);
 };
 
-const getBrandsMissingDiscountsByCustomer = async (center_id, status, customer_id) => {
+const brandRepoGetBrandsMissingDiscountsByCustomer = async (center_id, status, customer_id) => {
 	const distinctBrands = await prisma.discount.findMany({
 		distinct: ['brand_id'],
 		where: {
@@ -86,7 +86,7 @@ const getBrandsMissingDiscountsByCustomer = async (center_id, status, customer_i
 	return bigIntToString(missingBrands);
 };
 
-const deleteBrand = async (id) => {
+const brandRepoDeleteBrand = async (id) => {
 	const result = await prisma.brand.update({
 		where: {
 			id: Number(id),
@@ -99,7 +99,7 @@ const deleteBrand = async (id) => {
 	return bigIntToString(result);
 };
 
-const isBrandExists = async (center_id, brand_name) => {
+const brandRepoIsBrandExists = async (center_id, brand_name) => {
 	let brandCount = await prisma.brand.count({
 		where: {
 			brand_name: brand_name,
@@ -111,12 +111,12 @@ const isBrandExists = async (center_id, brand_name) => {
 };
 
 module.exports = {
-	addBrand,
-	updateBrand,
-	getAllBrands,
-	getSearchBrands,
-	getBrandsMissingDiscountsByCustomer,
-	deleteBrand,
-	isBrandExists,
+	brandRepoAddBrand,
+	brandRepoUpdateBrand,
+	brandRepoGetAllBrands,
+	brandRepoGetSearchBrands,
+	brandRepoGetBrandsMissingDiscountsByCustomer,
+	brandRepoDeleteBrand,
+	brandRepoIsBrandExists,
 };
 // export default new BrandRepo();

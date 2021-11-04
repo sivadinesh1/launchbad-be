@@ -2,8 +2,6 @@ var pool = require('../config/db');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
-const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
-
 const { createInvoice } = require('./createInvoice.service');
 const { createEstimate } = require('./createEstimate.service');
 

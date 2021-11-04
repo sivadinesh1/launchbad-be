@@ -1,7 +1,7 @@
 const { prisma } = require('../config/prisma');
 var pool = require('../config/db');
 
-const { toTimeZone, toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery, bigIntToString } = require('../utils/utils');
+const { toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery, bigIntToString } = require('../utils/utils');
 
 // insert row in customer tbl
 const insertCustomer = async (insertValues) => {
@@ -13,9 +13,9 @@ const insertCustomer = async (insertValues) => {
 		{
 			center_id: Number(insertValues.center_id),
 			customer_id: Number(data.id),
-			type: insertValues.disctype,
+			type: insertValues.disc_type,
 			gst_slab: 0,
-			value: insertValues.gstzero,
+			value: insertValues.gst_zero,
 			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
@@ -23,9 +23,9 @@ const insertCustomer = async (insertValues) => {
 		{
 			center_id: Number(insertValues.center_id),
 			customer_id: Number(data.id),
-			type: insertValues.disctype,
+			type: insertValues.disc_type,
 			gst_slab: 5,
-			value: insertValues.gstfive,
+			value: insertValues.gst_five,
 			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
@@ -33,9 +33,9 @@ const insertCustomer = async (insertValues) => {
 		{
 			center_id: Number(insertValues.center_id),
 			customer_id: Number(data.id),
-			type: insertValues.disctype,
+			type: insertValues.disc_type,
 			gst_slab: 12,
-			value: insertValues.gsttwelve,
+			value: insertValues.gst_twelve,
 			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
@@ -43,9 +43,9 @@ const insertCustomer = async (insertValues) => {
 		{
 			center_id: Number(insertValues.center_id),
 			customer_id: Number(data.id),
-			type: insertValues.disctype,
+			type: insertValues.disc_type,
 			gst_slab: 18,
-			value: insertValues.gsteighteen,
+			value: insertValues.gst_eighteen,
 			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
@@ -53,9 +53,9 @@ const insertCustomer = async (insertValues) => {
 		{
 			center_id: Number(insertValues.center_id),
 			customer_id: Number(data.id),
-			type: insertValues.disctype,
+			type: insertValues.disc_type,
 			gst_slab: 28,
-			value: insertValues.gsttwentyeight,
+			value: insertValues.gst_twenty_eight,
 			start_date: currentTimeInTimeZone('DD-MM-YYYY'),
 			end_date: '01-04-9999',
 			brand_id: 0,
@@ -151,16 +151,16 @@ const getCustomerDiscount = async (center_id, customer_id) => {
 	return customerDiscountDetails;
 };
 
-// fetch rows for default (brandid as zero) customer discounts from discount tbl
+// fetch rows for default (brand id as zero) customer discounts from discount tbl
 const getAllCustomerDefaultDiscounts = async (center_id, customer_id) => {
 	let query = ` 
 	SELECT 
 	c.name, 'default' as 'brand_name',   d.type, d.brand_id as brand_id, 
-     sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gstzero,  
-     sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gstfive, 
-     sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
-     sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gsteighteen, 
-		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gsttwentyeight,
+     sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gst_zero,  
+     sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gst_five, 
+     sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gst_twelve, 
+     sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gst_eighteen, 
+		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gst_twenty_eight,
 		 c.id as id, d.start_date  
 FROM 
 	customer c,
@@ -187,16 +187,16 @@ FROM
 	return promisifyQuery(query, values);
 };
 
-// fetch rows for default (brandid as zero) customer discounts from discount tbl
-const getDiscountsByCustomer = async (center_id, customerid) => {
+// fetch rows for default (brand id as zero) customer discounts from discount tbl
+const getDiscountsByCustomer = async (center_id, customer_id) => {
 	let query = ` 
 	SELECT 
 	c.name,  '' as 'brand_name',  d.type, d.brand_id as brand_id, 
-     sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gstzero,  
-     sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gstfive, 
-     sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
-     sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gsteighteen, 
-		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gsttwentyeight,
+     sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gst_zero,  
+     sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gst_five, 
+     sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gst_twelve, 
+     sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gst_eighteen, 
+		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gst_twenty_eight,
 		 c.id as id, d.start_date  
 FROM 
 	customer c,
@@ -212,21 +212,21 @@ FROM
     c.name
 	`;
 
-	let values = [center_id, customerid, customerid, customerid];
+	let values = [center_id, customer_id, customer_id, customer_id];
 
 	return promisifyQuery(query, values);
 };
 
-// fetch rows for default (brandid as NON zero) customer discounts from discount tbl
-const getDiscountsByCustomerByBrand = async (center_id, customerid) => {
+// fetch rows for default (brand id as NON zero) customer discounts from discount tbl
+const getDiscountsByCustomerByBrand = async (center_id, customer_id) => {
 	let query = ` 
 	SELECT 
 	c.name,  b.brand_name as 'brand_name',  d.type, d.brand_id as brand_id, 
-     sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gstzero,  
-     sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gstfive, 
-     sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
-     sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gsteighteen, 
-		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gsttwentyeight,
+     sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gst_zero,  
+     sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gst_five, 
+     sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gst_twelve, 
+     sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gst_eighteen, 
+		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gst_twenty_eight,
 		 c.id as id, d.start_date  
 FROM 
 	customer c,
@@ -246,21 +246,21 @@ FROM
 
 	`;
 
-	let values = [center_id, customerid];
+	let values = [center_id, customer_id];
 
 	return promisifyQuery(query, values);
 };
 
-// fetch rows for default (brandid as NON zero) customer discounts from discount tbl
+// fetch rows for default (brand_id as NON zero) customer discounts from discount tbl
 const getDiscountsByAllCustomerByBrand = (center_id, callback) => {
 	let query = ` 
 	SELECT 
 	c.name,  b.brand_name as 'brand_name',  d.type, d.brand_id as brand_id, 
-     sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gstzero,  
-     sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gstfive, 
-     sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gsttwelve, 
-     sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gsteighteen, 
-		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gsttwentyeight,
+     sum(if( d.gst_slab = 0, d.value, 0 ) ) AS gst_zero,  
+     sum(if( d.gst_slab = 5, d.value, 0 ) ) AS gst_five, 
+     sum(if( d.gst_slab = 12, d.value, 0 ) ) AS gst_twelve, 
+     sum(if( d.gst_slab = 18, d.value, 0 ) ) AS gst_eighteen, 
+		 sum(if( d.gst_slab = 28, d.value, 0 ) ) AS gst_twenty_eight,
 		 c.id as id, d.start_date  
 FROM 
 	customer c,
@@ -298,15 +298,15 @@ const insertCustomerDiscount = async (taxSlabArr) => {
 const updateDefaultCustomerDiscount = async (updateValues) => {
 	let query = ` 
 	UPDATE discount
-	SET value = (case when gst_slab = 0 then '${updateValues.gstzero}'
-	when gst_slab = 5 then '${updateValues.gstfive}'
-	when gst_slab = 12 then '${updateValues.gsttwelve}'
-	when gst_slab = 18 then '${updateValues.gsteighteen}'
-	when gst_slab = 28 then '${updateValues.gsttwentyeight}'
+	SET value = (case when gst_slab = 0 then '${updateValues.gst_zero}'
+	when gst_slab = 5 then '${updateValues.gst_five}'
+	when gst_slab = 12 then '${updateValues.gst_twelve}'
+	when gst_slab = 18 then '${updateValues.gst_eighteen}'
+	when gst_slab = 28 then '${updateValues.gst_twenty_eight}'
 
 									end),
-									start_date = '${toTimeZone(updateValues.effDiscStDate, 'Asia/Kolkata')}',
-			type= '${updateValues.disctype}'
+									start_date = '${toTimeZoneFormat(updateValues.effDiscStDate, 'YYYY-MM-DD')}',
+			type= '${updateValues.disc_type}'
 	WHERE 
 	brand_id = '${updateValues.brand_id}' and
 	center_id = '${updateValues.center_id}' and
@@ -318,8 +318,8 @@ const updateDefaultCustomerDiscount = async (updateValues) => {
 	return result.affectedRows > 0 ? 'true' : 'false';
 };
 
-// fetch rows from customer tbl & customer shipping addres tbl
-const getCustomerDetails = async (center_id, customerid) => {
+// fetch rows from customer tbl & customer shipping address tbl
+const getCustomerDetails = async (center_id, customer_id) => {
 	let query = `select c.*, s.code,  s.description,
 	csa.state_id as csa_state,
 	csa.address1 as csa_address1,
@@ -342,7 +342,7 @@ const getCustomerDetails = async (center_id, customerid) => {
 	csa.customer_id = c.id and
 	csa.def_address= 'Y' and
 	
-	c.id = '${customerid}' and
+	c.id = '${customer_id}' and
 	c.center_id = '${center_id}' `;
 
 	return new Promise(function (resolve, reject) {
@@ -355,7 +355,7 @@ const getCustomerDetails = async (center_id, customerid) => {
 	});
 };
 
-// fetch rows from customer tbl & customer shipping addres tbl
+// fetch rows from customer tbl & customer shipping address tbl
 const getSearchCustomers = (center_id, search_text) => {
 	let query = `
 	select c.id, c.center_id, c.name, c.address1, c.address2, c.address3, c.district, s.code, s.description,
@@ -389,11 +389,11 @@ const insertDiscountsByBrands = (insertValues, callback) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let taxSlabArr = [
-		{ gstslab: 0, gstvalue: insertValues.gstzero },
-		{ gstslab: 5, gstvalue: insertValues.gstfive },
-		{ gstslab: 12, gstvalue: insertValues.gsttwelve },
-		{ gstslab: 18, gstvalue: insertValues.gsteighteen },
-		{ gstslab: 28, gstvalue: insertValues.gsttwentyeight },
+		{ gst_slab: 0, gst_value: insertValues.gst_zero },
+		{ gst_slab: 5, gst_value: insertValues.gst_five },
+		{ gst_slab: 12, gst_value: insertValues.gst_twelve },
+		{ gst_slab: 18, gst_value: insertValues.gst_eighteen },
+		{ gst_slab: 28, gst_value: insertValues.gst_twenty_eight },
 	];
 
 	taxSlabArr.forEach((e) => {
@@ -401,10 +401,10 @@ const insertDiscountsByBrands = (insertValues, callback) => {
 			center_id: insertValues.center_id,
 			customer_id: insertValues.customer_id,
 			brand_id: insertValues.brand_id,
-			type: insertValues.disctype,
-			value: e.gstvalue,
-			gst_slab: e.gstslab,
-			start_date: toTimeZone(insertValues.effDiscStDate, 'Asia/Kolkata'),
+			type: insertValues.disc_type,
+			value: e.gst_value,
+			gst_slab: e.gst_slab,
+			start_date: toTimeZoneFormat(insertValues.effDiscStDate, 'YYYY-MM-DD'),
 			end_date: '01-04-9999',
 		};
 

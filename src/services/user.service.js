@@ -1,6 +1,6 @@
 const { prisma } = require('../config/prisma');
 
-const { toTimeZone, toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery, encryptPassword, bigIntToString } = require('../utils/utils');
+const { currentTimeInTimeZone, promisifyQuery, encryptPassword, bigIntToString } = require('../utils/utils');
 
 const findOne = async (username) => {
 	const users = await prisma.users.findUnique({

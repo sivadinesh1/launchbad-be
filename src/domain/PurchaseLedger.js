@@ -1,62 +1,18 @@
-import { Transform, Type } from 'class-transformer';
-import { IsString, IsInt } from 'class-validator';
+let PurchaseLedger = {
+	id: 0,
+	center_id: 0,
+	vendor_id: 0,
+	purchase_ref_id: 0,
+	payment_ref_id: 0,
 
-export class PurchaseLedger {
-	id;
+	ledger_date: new Date(),
 
-	center_id;
+	ledger_detail: '',
+	credit_amt: 0.0,
+	debit_amt: 0.0,
+	balance_amt: 0.0,
+	created_by: '',
+	updated_by: '',
+};
 
-	vendor_id;
-	purchase_ref_id;
-	payment_ref_id;
-
-	ledger_date;
-
-	ledger_detail;
-	credit_amt;
-	debit_amt;
-	balance_amt;
-
-	createdAt;
-
-	updatedAt;
-
-	created_by;
-
-	updated_by;
-
-	constructor(
-		id,
-		center_id,
-		vendor_id,
-		purchase_ref_id,
-		payment_ref_id,
-		ledger_date,
-		ledger_detail,
-		credit_amt,
-		debit_amt,
-		balance_amt,
-
-		createdAt,
-		updatedAt,
-		created_by,
-		updated_by,
-	) {
-		this.id = id;
-		this.center_id = center_id;
-
-		this.vendor_id = vendor_id;
-		this.purchase_ref_id = purchase_ref_id;
-		this.payment_ref_id = payment_ref_id;
-		this.ledger_date = ledger_date;
-		this.ledger_detail = ledger_detail;
-		this.credit_amt = credit_amt;
-		this.debit_amt = debit_amt;
-		this.balance_amt = balance_amt;
-
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-		this.created_by = created_by;
-		this.updated_by = updated_by;
-	}
-}
+module.exports = { PurchaseLedger };

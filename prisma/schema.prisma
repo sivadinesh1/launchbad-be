@@ -803,7 +803,7 @@ model purchase {
   invoice_date          DateTime
   lr_no                 String?      @db.VarChar(50) @default("")
   lr_date               DateTime?
-  received_date         String?
+  received_date         DateTime?
   purchase_type         String      @db.VarChar(50) @default("")
   order_no              String?      @db.VarChar(50) @default("")
   order_date            DateTime?

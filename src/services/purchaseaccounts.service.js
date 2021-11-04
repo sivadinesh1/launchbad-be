@@ -1,13 +1,13 @@
 var pool = require('../config/db');
 
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
+const { currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
 const addPurchaseLedgerRecord = (insertValues, purchase_ref_id, callback) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	// balance amount is taken from querying purchase_ledger table, with Limit 1, check the subquery.
+	// balance amount is taken from querying purchase_ledger table, with Limit 1, check the sub query.
 	let query = `
 INSERT INTO purchase_ledger ( center_id, vendor_id, purchase_ref_id, ledger_detail, credit_amt, balance_amt, ledger_date)
 VALUES
@@ -25,7 +25,7 @@ VALUES
 			if (err) {
 				reject(err);
 			}
-			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendor_ctrl.id);
+			let updateVendorBalance = await update_vendor_balance_amount(insertValues.vendor_ctrl.id);
 			resolve(data);
 		});
 	});
@@ -34,7 +34,7 @@ VALUES
 const addReversePurchaseLedgerRecord = (insertValues, purchase_ref_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	// balance amount is taken from querying purchase ledger table, with Limit 1, check the subquery.
+	// balance amount is taken from querying purchase ledger table, with Limit 1, check the sub query.
 	let query = `
 INSERT INTO purchase_ledger ( center_id, vendor_id, purchase_ref_id, ledger_detail, debit_amt, balance_amt, ledger_date)
 VALUES
@@ -74,7 +74,7 @@ VALUES
 			if (err) {
 				return reject(err);
 			}
-			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendor_ctrl.id);
+			let updateVendorBalance = await update_vendor_balance_amount(insertValues.vendor_ctrl.id);
 			return resolve(data);
 		});
 	});
@@ -83,7 +83,7 @@ VALUES
 const addPurchaseLedgerAfterReversalRecord = (insertValues, purchase_ref_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	// balance amount is taken from querying purchase ledger table, with Limit 1, check the subquery.
+	// balance amount is taken from querying purchase ledger table, with Limit 1, check the sub query.
 	let query = `
 INSERT INTO purchase_ledger ( center_id, vendor_id, purchase_ref_id, ledger_detail, credit_amt, balance_amt, ledger_date)
 VALUES
@@ -101,13 +101,13 @@ VALUES
 			if (err) {
 				return reject(err);
 			}
-			let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendor_ctrl.id);
+			let updateVendorBalance = await update_vendor_balance_amount(insertValues.vendor_ctrl.id);
 			return resolve(data);
 		});
 	});
 };
 
-const updateVendorBalanceAmount = (vendor_id) => {
+const update_vendor_balance_amount = (vendor_id) => {
 	let qryUpdate = '';
 
 	qryUpdate = `
@@ -129,7 +129,7 @@ const updateVendorBalanceAmount = (vendor_id) => {
 	});
 };
 
-const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, searchtype, invoiceno) => {
+const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, search_type, invoice_no) => {
 	let query = `	select p.id as purchase_id, 
 	p.center_id as center_id, 
 	p.vendor_id as vendor_id, 
@@ -167,7 +167,7 @@ const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, se
 	
 	`;
 
-	if (vendor_id !== undefined && searchtype === 'all') {
+	if (vendor_id !== undefined && search_type === 'all') {
 		query =
 			query +
 			` and STR_TO_DATE(p.invoice_date,'%d-%m-%Y') between
@@ -175,27 +175,27 @@ const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, se
 		str_to_date('${to_date}', '%d-%m-%YYYY')`;
 	}
 
-	if (vendor_id !== undefined && vendor_id !== 'all' && searchtype === 'all') {
+	if (vendor_id !== undefined && vendor_id !== 'all' && search_type === 'all') {
 		query = query + ` and	p.vendor_id = '${vendor_id}' `;
 	}
 
-	if (searchtype === 'invonly') {
-		query = query + ` and p.invoice_no like '%${invoiceno}%' `;
+	if (search_type === 'invonly') {
+		query = query + ` and p.invoice_no like '%${invoice_no}%' `;
 	}
 
 	return promisifyQuery(query);
 };
 
-const updateVendorPymtSequenceGenerator = (center_id) => {
-	let qryUpdateSqnc = '';
+const updateVendorPaymentSequenceGenerator = (center_id) => {
+	let qry_Update_Sequence = '';
 
-	qryUpdateSqnc = `
+	qry_Update_Sequence = `
 		update financial_year set vendor_pymt_seq = vendor_pymt_seq + 1 where 
 		center_id = '${center_id}' and  
 		CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 
 	return new Promise(function (resolve, reject) {
-		pool.query(qryUpdateSqnc, function (err, data) {
+		pool.query(qry_Update_Sequence, function (err, data) {
 			if (err) {
 				reject(err);
 			}
@@ -204,11 +204,11 @@ const updateVendorPymtSequenceGenerator = (center_id) => {
 	});
 };
 
-const getVendorPymtSequenceNo = (cloneReq) => {
+const getVendorPaymentSequenceNo = (cloneReq) => {
 	let pymtNoQry = '';
 
-	pymtNoQry = ` select concat("VP-",'${toTimeZoneFormat(cloneReq.accountarr[0].receiveddate, 'YY')}', "/", '${toTimeZoneFormat(
-		cloneReq.accountarr[0].receiveddate,
+	pymtNoQry = ` select concat("VP-",'${toTimeZoneFormat(cloneReq.account_arr[0].received_date, 'YY')}', "/", '${toTimeZoneFormat(
+		cloneReq.account_arr[0].received_date,
 
 		'MM',
 	)}', "/", lpad(vendor_pymt_seq, 5, "0")) as pymtNo from financial_year 
@@ -227,7 +227,7 @@ const getVendorPymtSequenceNo = (cloneReq) => {
 };
 
 const addVendorPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
-	// (1) Updates payment seq in tbl financial_year, then {returns} formated sequence {YY/MM/PYMTSEQ}
+	// (1) Updates payment seq in tbl financial_year, then {returns} formatted sequence {YY/MM/PAYMENT SEQ}
 
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
@@ -243,38 +243,38 @@ const addVendorPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 		cloneReq.center_id,
 		cloneReq.vendor.id,
 		pymtNo,
-		insertValues.receivedamount,
+		insertValues.received_amount,
 		cloneReq.vendor.credit_amt,
-		toTimeZone(insertValues.receiveddate, 'Asia/Kolkata'),
-		insertValues.pymtmode,
-		insertValues.bankref,
-		insertValues.pymtref,
+		toTimeZoneFormat(insertValues.received_date, 'YYYY-MM-DD'),
+		insertValues.pymt_mode,
+		insertValues.bank_ref,
+		insertValues.pymt_ref,
 		cloneReq.bank_id,
 		cloneReq.bank_name,
-		cloneReq.createdby,
+		cloneReq.created_by,
 	];
 
 	let query = `
-		INSERT INTO vendor_payment ( center_id, vendor_id, vendor_payment_no, payment_now_amt, advance_amt_used, payment_date, pymt_mode_ref_id, bank_ref, pymt_ref, last_updated, bank_id, bank_name, createdby)
+		INSERT INTO vendor_payment ( center_id, vendor_id, vendor_payment_no, payment_now_amt, advance_amt_used, payment_date, pymt_mode_ref_id, bank_ref, pymt_ref, last_updated, bank_id, bank_name, created_by)
 		VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, '${today}', ?, ?, ? ) `;
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query, values, async function (err, data) {
 			if (err) {
 				return handleError(
-					new ErrorHandler('500', `Error addVendorPaymentMaster of purchaseaccounts.js ${query} and values are ${values}`, err),
+					new ErrorHandler('500', `Error addVendorPaymentMaster of purchase_accounts.js ${query} and values are ${values}`, err),
 					res,
 				);
 			}
 
-			await updateVendorLastPaidDate(cloneReq.vendor.id, insertValues.receiveddate);
+			await updateVendorLastPaidDate(cloneReq.vendor.id, insertValues.received_date);
 
 			return resolve(data.insertId);
 		});
 	});
 };
 
-const addVendorPaymentLedgerRecord = (insertValues, payment_ref_id, receivedamount, purchase_ref_id, callback) => {
+const addVendorPaymentLedgerRecord = (insertValues, payment_ref_id, received_amount, purchase_ref_id, callback) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
@@ -284,34 +284,34 @@ const addVendorPaymentLedgerRecord = (insertValues, payment_ref_id, receivedamou
 			FROM purchase_ledger
 			where center_id = '${insertValues.vendor.center_id}'  and vendor_id = '${insertValues.vendor.id}'
 			ORDER BY  id DESC
-			LIMIT 1) a), 0) - '${receivedamount}', '${today}'
+			LIMIT 1) a), 0) - '${received_amount}', '${today}'
 		) `;
 
-	let values = [insertValues.vendor.center_id, insertValues.vendor.id, payment_ref_id, receivedamount];
+	let values = [insertValues.vendor.center_id, insertValues.vendor.id, payment_ref_id, received_amount];
 
 	pool.query(query, values, async function (err, data) {
 		if (err) {
 			return callback(err);
 		}
-		let updateVendorBalance = await updateVendorBalanceAmount(insertValues.vendor.id);
+		let updateVendorBalance = await update_vendor_balance_amount(insertValues.vendor.id);
 		return callback(null, data);
 	});
 };
 
-const updateVendorCredit = (balanceamount, center_id, vendor_id) => {
-	let qryUpdateSqnc = '';
+const updateVendorCredit = (balance_amount, center_id, vendor_id) => {
+	let qry_Update_Sequence = '';
 
 	//~ bitwise operator. Bitwise does not negate a number exactly. eg:  ~1000 is -1001, not -1000 (a = ~a + 1)
-	balanceamount = ~balanceamount + 1;
+	balance_amount = ~balance_amount + 1;
 
-	qryUpdateSqnc = `
-		update vendor set credit_amt = credit_amt + ${balanceamount} where 
+	qry_Update_Sequence = `
+		update vendor set credit_amt = credit_amt + ${balance_amount} where 
 		center_id = '${center_id}' and  
 		id = '${vendor_id}'
 		 `;
 
 	return new Promise(function (resolve, reject) {
-		pool.query(qryUpdateSqnc, function (err, data) {
+		pool.query(qry_Update_Sequence, function (err, data) {
 			if (err) {
 				reject(err);
 			}
@@ -320,17 +320,17 @@ const updateVendorCredit = (balanceamount, center_id, vendor_id) => {
 	});
 };
 
-const updateVendorCreditMinus = (creditusedamount, center_id, vendor_id) => {
-	let qryUpdateSqnc = '';
+const updateVendorCreditMinus = (credit_used_amount, center_id, vendor_id) => {
+	let qry_Update_Sequence = '';
 
-	qryUpdateSqnc = `
-		update vendor set credit_amt = credit_amt - ${creditusedamount} where 
+	qry_Update_Sequence = `
+		update vendor set credit_amt = credit_amt - ${credit_used_amount} where 
 		center_id = '${center_id}' and  
 		id = '${vendor_id}'
 		 `;
 
 	return new Promise(function (resolve, reject) {
-		pool.query(qryUpdateSqnc, function (err, data) {
+		pool.query(qry_Update_Sequence, function (err, data) {
 			if (err) {
 				reject(err);
 			}
@@ -359,11 +359,11 @@ const updateVendorLastPaidDate = (vendor_id, last_paid_date) => {
 
 const getVendorPaymentsByCenter = (requestBody) => {
 	let center_id = requestBody.center_id;
-	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
-	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
-	let vendor_id = requestBody.vendorid;
-	let searchtype = requestBody.searchtype;
-	let invoiceno = requestBody.invoiceno;
+	let from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD');
+	let to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD');
+	let vendor_id = requestBody.vendor_id;
+	let search_type = requestBody.searcht_ype;
+	let invoice_no = requestBody.invoice_no;
 
 	let query = `
 	select 
@@ -394,7 +394,7 @@ const getVendorPaymentsByCenter = (requestBody) => {
 				 pd.purchase_ref_id = s.id and
 				 p.center_id = '${center_id}' `;
 
-	if (vendor_id !== undefined && searchtype === 'all') {
+	if (vendor_id !== undefined && search_type === 'all') {
 		query =
 			query +
 			` and STR_TO_DATE(s.invoice_date,'%d-%m-%Y') between
@@ -402,12 +402,12 @@ const getVendorPaymentsByCenter = (requestBody) => {
 		str_to_date('${to_date}', '%d-%m-%YYYY')`;
 	}
 
-	if (vendor_id !== undefined && vendor_id !== 'all' && searchtype === 'all') {
+	if (vendor_id !== undefined && vendor_id !== 'all' && search_type === 'all') {
 		query = query + ` and	p.vendor_id = '${vendor_id}' `;
 	}
 
-	if (searchtype === 'invonly') {
-		query = query + ` and s.invoice_no like '%${invoiceno}%' `;
+	if (search_type === 'invonly') {
+		query = query + ` and s.invoice_no like '%${invoice_no}%' `;
 	}
 
 	query = query + ` order by payment_date desc  `;
@@ -417,11 +417,11 @@ const getVendorPaymentsByCenter = (requestBody) => {
 
 const getPurchaseInvoiceByVendors = (requestBody) => {
 	let center_id = requestBody.center_id;
-	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
-	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
-	let vendor_id = requestBody.vendorid;
-	let searchtype = requestBody.searchtype;
-	let invoiceno = requestBody.invoiceno;
+	let from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD');
+	let to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD');
+	let vendor_id = requestBody.vendor_id;
+	let search_type = requestBody.search_type;
+	let invoice_no = requestBody.invoice_no;
 
 	let query = `	select s.id as purchase_id, s.center_id as center_id, s.vendor_id as vendor_id, s.invoice_no as invoice_no, 
 	s.invoice_date as invoice_date, 
@@ -454,7 +454,7 @@ const getPurchaseInvoiceByVendors = (requestBody) => {
 
 	`;
 
-	if (vendor_id !== undefined && searchtype === 'all') {
+	if (vendor_id !== undefined && search_type === 'all') {
 		query =
 			query +
 			` and STR_TO_DATE(s.invoice_date,'%d-%m-%Y') between
@@ -462,12 +462,12 @@ const getPurchaseInvoiceByVendors = (requestBody) => {
 		str_to_date('${to_date}', '%d-%m-%YYYY')`;
 	}
 
-	if (vendor_id !== undefined && vendor_id !== 'all' && searchtype === 'all') {
+	if (vendor_id !== undefined && vendor_id !== 'all' && search_type === 'all') {
 		query = query + ` and	s.vendor_id = '${vendor_id}' `;
 	}
 
-	if (searchtype === 'invonly') {
-		query = query + ` and s.invoice_no = '${invoiceno}' `;
+	if (search_type === 'invonly') {
+		query = query + ` and s.invoice_no = '${invoice_no}' `;
 	}
 
 	// stock issue should also be pulled out, check
@@ -476,11 +476,11 @@ const getPurchaseInvoiceByVendors = (requestBody) => {
 
 const getPaymentsByVendors = (requestBody) => {
 	let center_id = requestBody.center_id;
-	let from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
-	let to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
-	let vendor_id = requestBody.vendorid;
-	let searchtype = requestBody.searchtype;
-	let invoiceno = requestBody.invoiceno;
+	let from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD');
+	let to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD');
+	let vendor_id = requestBody.vendor_id;
+	let search_type = requestBody.search_type;
+	let invoice_no = requestBody.invoice_no;
 
 	let query = ` select p.*, pd.applied_amount as applied_amount, s.invoice_no as invoice_no, 
 	s.invoice_date as invoice_date, s.net_total as invoice_amount,  pm.pymt_mode_name as pymt_mode from 
@@ -494,7 +494,7 @@ const getPaymentsByVendors = (requestBody) => {
         pd.purchase_ref_id = s.id and
         p.center_id =   '${center_id}' `;
 
-	if (vendor_id !== undefined && searchtype === 'all') {
+	if (vendor_id !== undefined && search_type === 'all') {
 		query =
 			query +
 			` and STR_TO_DATE(s.invoice_date,'%d-%m-%Y') between
@@ -502,12 +502,12 @@ const getPaymentsByVendors = (requestBody) => {
 					str_to_date('${to_date}', '%d-%m-%YYYY')`;
 	}
 
-	if (vendor_id !== undefined && vendor_id !== 'all' && searchtype === 'all') {
+	if (vendor_id !== undefined && vendor_id !== 'all' && search_type === 'all') {
 		query = query + ` and	p.vendor_id = '${vendor_id}' `;
 	}
 
-	if (searchtype === 'invonly') {
-		query = query + ` and s.invoice_no = '${invoiceno}' `;
+	if (search_type === 'invonly') {
+		query = query + ` and s.invoice_no = '${invoice_no}' `;
 	}
 
 	query = query + ` order by id desc  `;
@@ -528,7 +528,7 @@ const getPymtTransactionByVendors = (center_id, vendor_id, callback) => {
 		p.pymt_ref as pymt_ref,
 		p.is_cancelled as is_cancelled,
 		p.cancelled_date as cancelled_date,
-		p.createdby as createdby,
+		p.created_by as created_by,
 		p.last_updated as last_updated,
 	
 	pm.pymt_mode_name as pymt_mode
@@ -565,40 +565,40 @@ const addVendorPaymentReceived = async (requestBody) => {
 
 	const cloneReq = { ...requestBody };
 
-	const [vendor, center_id, accountarr] = Object.values(requestBody);
+	const [vendor, center_id, account_arr] = Object.values(requestBody);
 
 	let index = 0;
 
-	for (const k of accountarr) {
-		await updateVendorPymtSequenceGenerator(center_id);
+	for (const k of account_arr) {
+		await updateVendorPaymentSequenceGenerator(center_id);
 
-		let pymtNo = await getVendorPymtSequenceNo(cloneReq);
+		let pymtNo = await getVendorPaymentSequenceNo(cloneReq);
 
 		// add payment master
 		let newPK = await addVendorPaymentMaster(cloneReq, pymtNo, k, res);
 
 		// (3) - updates pymt details
-		let process = processItems(cloneReq, newPK, k.purchase_ref_id, k.receivedamount);
+		let process = processItems(cloneReq, newPK, k.purchase_ref_id, k.received_amount);
 
-		if (index == accountarr.length - 1) {
+		if (index == account_arr.length - 1) {
 			return { result: 'success' };
 		}
 		index++;
 	}
 };
 
-function processItems(cloneReq, newPK, purchase_ref_id, receivedamount) {
+function processItems(cloneReq, newPK, purchase_ref_id, received_amount) {
 	let sql = `INSERT INTO vendor_payment_detail(vend_pymt_ref_id, purchase_ref_id, applied_amount) VALUES
-		( '${newPK}', '${purchase_ref_id}', '${receivedamount}' )`;
+		( '${newPK}', '${purchase_ref_id}', '${received_amount}' )`;
 
-	let pymtdetailsTblPromise = new Promise(function (resolve, reject) {
+	let payment_details_tbl_promise = new Promise(function (resolve, reject) {
 		pool.query(sql, function (err, data) {
 			if (err) {
 				reject(err);
 			} else {
 				// check if there is any credit balance for the vendor, if yes, first apply that
 
-				addVendorPaymentLedgerRecord(cloneReq, newPK, receivedamount, purchase_ref_id, (err, data) => {
+				addVendorPaymentLedgerRecord(cloneReq, newPK, received_amount, purchase_ref_id, (err, data) => {
 					if (err) {
 						let errTxt = err.message;
 					} else {
@@ -615,25 +615,25 @@ function processItems(cloneReq, newPK, purchase_ref_id, receivedamount) {
 const addBulkVendorPaymentReceived = async (requestBody) => {
 	const cloneReq = { ...requestBody };
 
-	const [vendor, center_id, accountarr, invoicesplit, balanceamount] = Object.values(requestBody);
+	const [vendor, center_id, account_arr, invoice_split, balance_amount] = Object.values(requestBody);
 
 	let index = 0;
 
-	for (const k of accountarr) {
-		await updateVendorPymtSequenceGenerator(center_id);
+	for (const k of account_arr) {
+		await updateVendorPaymentSequenceGenerator(center_id);
 
-		let pymtNo = await getVendorPymtSequenceNo(cloneReq);
+		let pymtNo = await getVendorPaymentSequenceNo(cloneReq);
 
 		// add payment master
 		let newPK = await addVendorPaymentMaster(cloneReq, pymtNo, k, res);
 
-		//dinesh check
+		// check
 		// (3) - updates pymt details
-		let process = processBulkItems(cloneReq, newPK, invoicesplit);
+		let process = processBulkItems(cloneReq, newPK, invoice_split);
 
-		if (index == accountarr.length - 1) {
-			if (req.body.creditsused === 'YES') {
-				updateVendorCreditMinus(req.body.creditusedamount, cloneReq.center_id, cloneReq.vendor.id, (err, data1) => {
+		if (index == account_arr.length - 1) {
+			if (req.body.credits_used === 'YES') {
+				updateVendorCreditMinus(req.body.credit_used_amount, cloneReq.center_id, cloneReq.vendor.id, (err, data1) => {
 					if (err) {
 						let errTxt = err.message;
 					} else {
@@ -643,9 +643,9 @@ const addBulkVendorPaymentReceived = async (requestBody) => {
 			}
 
 			// apply the excess amount to vendor credit
-			// applicable only if balanceamount < 0
-			if (balanceamount < 0) {
-				updateVendorCredit(balanceamount, cloneReq.center_id, cloneReq.vendor.id, (err, data1) => {
+			// applicable only if balance_amount < 0
+			if (balance_amount < 0) {
+				updateVendorCredit(balance_amount, cloneReq.center_id, cloneReq.vendor.id, (err, data1) => {
 					if (err) {
 						let errTxt = err.message;
 					} else {
@@ -659,12 +659,12 @@ const addBulkVendorPaymentReceived = async (requestBody) => {
 	}
 };
 
-function processBulkItems(cloneReq, newPK, invoicesplit) {
-	invoicesplit.forEach((e) => {
+function processBulkItems(cloneReq, newPK, invoice_split) {
+	invoice_split.forEach((e) => {
 		let sql = `INSERT INTO vendor_payment_detail(vend_pymt_ref_id, purchase_ref_id, applied_amount) VALUES
 		( '${newPK}', '${e.id}', '${e.applied_amount}' )`;
 
-		let pymtdetailsTblPromise = new Promise(function (resolve, reject) {
+		let payment_details_tbl_promise = new Promise(function (resolve, reject) {
 			pool.query(sql, function (err, data) {
 				if (err) {
 					reject(err);
@@ -690,13 +690,13 @@ module.exports = {
 	addReversePurchaseLedgerRecord,
 	addPurchaseLedgerAfterReversalRecord,
 	getPurchaseInvoiceByCenter,
-	getVendorPymtSequenceNo,
-	updateVendorPymtSequenceGenerator,
+	getVendorPaymentSequenceNo,
+	updateVendorPaymentSequenceGenerator,
 	addVendorPaymentLedgerRecord,
 	addVendorPaymentMaster,
 	updateVendorCredit,
 	updateVendorCreditMinus,
-	updateVendorBalanceAmount,
+	update_vendor_balance_amount,
 	updateVendorLastPaidDate,
 	getVendorPaymentsByCenter,
 	getPurchaseInvoiceByVendors,

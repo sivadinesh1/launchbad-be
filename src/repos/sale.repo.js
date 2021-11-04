@@ -104,3 +104,8 @@ const editSaleMaster = async (sale, prisma) => {
 		throw error;
 	}
 };
+
+module.exports = {
+	addSaleMaster,
+	editSaleMaster,
+};

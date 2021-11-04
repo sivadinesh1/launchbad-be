@@ -1,7 +1,6 @@
 var pool = require('../config/db');
 
 const { handleError, ErrorHandler } = require('../config/error');
-const { toTimeZone, toTimeZoneFormat, currentTimeInTimeZone, escapeText, promisifyQuery } = require('../utils/utils');
 
 const { insertItemHistoryTable, insertToStock } = require('./stock.service');
 const { plainToClass } = require('class-transformer');

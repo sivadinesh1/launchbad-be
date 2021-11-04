@@ -100,12 +100,33 @@ const stockAdd = async (qty_to_update, stock_pk, updated_by, prisma) => {
 	}
 };
 
+const getStockId = async (product_id, mrp, prisma) => {
+	try {
+		const result = await prisma.stock.findMany({
+			where: {
+				product_id: Number(product_id),
+				mrp: Number(mrp),
+			},
+
+			select: {
+				id: true,
+			},
+		});
+
+		return bigIntToString(result);
+	} catch (error) {
+		console.log('error :: stock.repo.js : getStockId: ' + error);
+		throw error;
+	}
+};
+
 module.exports = {
 	addStock,
 	stockCount,
 	stockCorrection,
 	stockMinus,
 	stockAdd,
+	getStockId,
 };
 
 // const correctStock = async (product_id, mrp, stock_qty) => {

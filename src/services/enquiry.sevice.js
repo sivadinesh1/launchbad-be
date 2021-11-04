@@ -2,25 +2,25 @@ var pool = require('../config/db');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
-const { toTimeZone, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
+const { toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
 
-const insertEnquiryDetail = async (k, jsonObj, tmpid) => {
+const insertEnquiryDetail = async (k, jsonObj, tmp_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	let query = `INSERT INTO enquiry_detail ( enquiry_id, product_id, askqty, product_code, notes, status)
-        values ( '${tmpid}', (select id from product where product_code='${k.product_code}' and center_id = '${jsonObj.center_id}'), '${k.quantity}', '${k.product_code}', '${k.notes}', 'O')`;
+	let query = `INSERT INTO enquiry_detail ( enquiry_id, product_id, ask_quantity, product_code, notes, status)
+        values ( '${tmp_id}', (select id from product where product_code='${k.product_code}' and center_id = '${jsonObj.center_id}'), '${k.quantity}', '${k.product_code}', '${k.notes}', 'O')`;
 
 	return promisifyQuery(query);
 };
 
-const fetchEnquiryDetailByEnqId = async (enqid) => {
+const fetchEnquiryDetailByEnqId = async (enq_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
 	select orig.*, s.available_stock, s.id as stock_pk
 from
 (select ed.*, c.id as customer_id, c.name, c.address1, c.address2, c.district, c.pin, c.gst, c.mobile2, e.remarks, e.e_status,
-	p.id as pid, p.center_id, p.brand_id, p.product_code as pcode, p.product_description as pdesc, p.unit, p.packet_size, p.hsn_code,
+	p.id as pid, p.center_id, p.brand_id, p.product_code as product_code, p.product_description as product_description, p.unit, p.packet_size, p.hsn_code,
 	p.current_stock, p.unit_price, p.mrp, p.purchase_price,
 	p.sales_price, p.rack_info, p.location, p.max_discount, p.tax_rate, 
 	p.minimum_quantity, p.item_discount, p.reorder_quantity, p.average_purchase_price,
@@ -32,7 +32,7 @@ from
 	LEFT outer JOIN product p
 	ON p.id = ed.product_id where
 	e.id = ed.enquiry_id and
-	e.customer_id = c.id and e.id =  ${enqid}) as orig
+	e.customer_id = c.id and e.id =  ${enq_id}) as orig
 	LEFT outer JOIN stock s
 	ON orig.product_id = s.product_id and
 	s.mrp = orig.mrp
@@ -41,7 +41,7 @@ from
 	return promisifyQuery(query);
 };
 
-const fetchCustomerDetailsByEnqId = async (enqid) => {
+const fetchCustomerDetailsByEnqId = async (enq_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
@@ -50,20 +50,20 @@ enquiry e,
 customer c
 where
 c.id = e.customer_id and
-e.id = ${enqid}
+e.id = ${enq_id}
 	`;
 
 	return promisifyQuery(query);
 };
 
-const updateEnquiry = async (status, enqId, updatedby) => {
+const updateEnquiry = async (status, enqId, updated_by) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `update enquiry 
 			set
 				e_status = '${status}',
 				processed_date = '${today}',
-				updated_by = '${updatedby}',
+				updated_by = '${updated_by}',
 				updatedAt = '${today}'
 
 			where
@@ -72,7 +72,7 @@ const updateEnquiry = async (status, enqId, updatedby) => {
 	return promisifyQuery(query);
 };
 
-const updateEnquiryDetail = async (product_id, stock_id, allotedQty, processed, status, enquiry_detail_id, updatedby) => {
+const updateEnquiryDetail = async (product_id, stock_id, allotedQty, processed, status, enquiry_detail_id, updated_by) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `update enquiry_detail `;
@@ -84,21 +84,21 @@ const updateEnquiryDetail = async (product_id, stock_id, allotedQty, processed, 
 		set
 			product_id = '${product_id}',
 			stock_id = '${stock_id}',
-			giveqty = '${allotedQty}',
+			give_quantity = '${allotedQty}',
 			processed = '${processed}',
 			status = '${status}', 
-			updatedby = '${updatedby}',
-			updateddate = '${today}'
+			updated_by = '${updated_by}',
+			updatedAt = '${today}'
 			`;
 	} else {
 		query =
 			query +
 			`
 		set
-			giveqty = '${allotedQty}',
+			give_quantity = '${allotedQty}',
 			status = '${status}',
-			updatedby = '${updatedby}',
-			updateddate = '${today}'
+			updated_by = '${updated_by}',
+			updatedAt = '${today}'
 			`;
 	}
 
@@ -111,14 +111,14 @@ const updateEnquiryDetail = async (product_id, stock_id, allotedQty, processed, 
 	return promisifyQuery(query);
 };
 
-const insertBackOrder = async (center_id, customer_id, enquiry_detail_id, askQty, reason, status, createdby) => {
+const insertBackOrder = async (center_id, customer_id, enquiry_detail_id, ask_quantity, reason, status, created_by) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 	let now = currentTimeInTimeZone('DD-MM-YYYY');
 
 	let query = `
 		insert into
-			backorder (center_id, customer_id, enquiry_detail_id, qty, reason, status, order_date, createdby, createddate)
-		VALUES ('${center_id}', '${customer_id}', '${enquiry_detail_id}', '${askQty}', '${reason}', '${status}', '${now}', '${createdby}', '${today}') 
+			backorder (center_id, customer_id, enquiry_detail_id, qty, reason, status, order_date, created_by, createdAt)
+		VALUES ('${center_id}', '${customer_id}', '${enquiry_detail_id}', '${ask_quantity}', '${reason}', '${status}', '${now}', '${created_by}', '${today}') 
 	`;
 
 	return promisifyQuery(query);
@@ -157,8 +157,8 @@ const draftEnquiry = async (requestBody) => {
 		let upQuery1 = `update enquiry_detail
 		set
 		product_id = '${objValue.product_id}',
-		stock_id = ${objValue.stockid},
-		giveqty = '${objValue.giveqty}',
+		stock_id = ${objValue.stock_id},
+		give_quantity = '${objValue.give_quantity}',
 		processed = '${objValue.processed}',
 		status = 'D'
 		where id = '${objValue.id}' `;
@@ -167,14 +167,14 @@ const draftEnquiry = async (requestBody) => {
 			set
 			product_id = null,
 			stock_id = null,
-			giveqty = '${objValue.giveqty}',
+			give_quantity = '${objValue.give_quantity}',
 			processed = '${objValue.processed}',
 			status = 'D'
 			where id = '${objValue.id}' `;
 
-		let uQrys = objValue.product_id === null ? upQuery2 : upQuery1;
+		let u_Qry = objValue.product_id === null ? upQuery2 : upQuery1;
 
-		pool.query(uQrys, function (err, data) {
+		pool.query(u_Qry, function (err, data) {
 			if (err) {
 				return handleError(new ErrorHandler('500', '/draft-enquiry update enquiry_detail', err), res);
 			}
@@ -188,7 +188,7 @@ const draftEnquiry = async (requestBody) => {
 
 const moveToSale = async (requestBody) => {
 	let jsonObj = requestBody.enquries;
-	let userid = requestBody.userid;
+	let user_id = requestBody.user_id;
 
 	let today = new Date();
 	let now = new Date();
@@ -204,94 +204,94 @@ const moveToSale = async (requestBody) => {
 	objectKeysArray.forEach(async (objKey, index) => {
 		var objValue = jsonObj[objKey];
 
-		/** No Product Id, obviously its a backorder */
+		/** No Product Id, obviously its a back order */
 		if (objValue.product_id === '' || objValue.product_id === null) {
 			// b - full back order
-			// updt enq_det_tbl status as B , giveqty = 0
-			// insert backorder tbl with reason prodcut code not found
+			// updt enq_det_tbl status as B , give_quantity = 0
+			// insert back order tbl with reason product code not found
 
-			let result = await updateEnquiryDetail('', '', '0', '', 'B', objValue.id, userid);
+			let result = await updateEnquiryDetail('', '', '0', '', 'B', objValue.id, user_id);
 			let result1 = await insertBackOrder(
 				objValue.center_id,
 				objValue.customer_id,
 				objValue.id,
-				objValue.askqty,
+				objValue.ask_quantity,
 				'Product Code Not found',
 				'O',
-				userid,
+				user_id,
 				res,
 			);
-		} else if (objValue.askqty > objValue.giveqty && objValue.giveqty === 0) {
-			// item code is present but given qty is 0, so effectively this goes in to backorder straight
+		} else if (objValue.ask_quantity > objValue.give_quantity && objValue.give_quantity === 0) {
+			// item code is present but given qty is 0, so effectively this goes in to back order straight
 
-			const bqty = objValue.askqty - objValue.giveqty;
+			const b_qty = objValue.ask_quantity - objValue.give_quantity;
 
-			let result = await updateEnquiryDetail(objValue.product_id, objValue.stockid, '0', objValue.processed, 'B', objValue.id, userid);
+			let result = await updateEnquiryDetail(objValue.product_id, objValue.stock_id, '0', objValue.processed, 'B', objValue.id, user_id);
 
-			let result1 = await insertBackOrder(objValue.center_id, objValue.customer_id, objValue.id, bqty, 'Zero Quantity Alloted', 'O', userid);
-		} else if (objValue.askqty > objValue.giveqty && objValue.giveqty !== 0) {
-			// p - partial fullfilment, customer asks 100 Nos, given 50 Nos
-			// updt enq_det_tbl status as P (Partial), give qty = actual given
-			// insert backorder tbl with reason Partial fullfillmeent
+			let result1 = await insertBackOrder(objValue.center_id, objValue.customer_id, objValue.id, b_qty, 'Zero Quantity Alloted', 'O', user_id);
+		} else if (objValue.ask_quantity > objValue.give_quantity && objValue.give_quantity !== 0) {
+			// p - partial fulfillment, customer asks 100 Nos, given 50 Nos
+			// up_dt enq_det_tbl status as P (Partial), give qty = actual given
+			// insert back order tbl with reason Partial fulfillment
 
-			const bqty = objValue.askqty - objValue.giveqty;
+			const b_qty = objValue.ask_quantity - objValue.give_quantity;
 
 			let result = await updateEnquiryDetail(
 				objValue.product_id,
-				objValue.stockid,
-				objValue.giveqty,
+				objValue.stock_id,
+				objValue.give_quantity,
 				objValue.processed,
 				'P',
 				objValue.id,
-				userid,
+				user_id,
 			);
 
 			let result1 = await insertBackOrder(
 				objValue.center_id,
 				objValue.customer_id,
 				objValue.id,
-				bqty,
-				'Partial fullfillmeent',
+				b_qty,
+				'Partial fulfillment',
 				'O',
-				userid,
+				user_id,
 				res,
 			);
-		} else if (objValue.giveqty >= objValue.askqty && objValue.product_id !== '' && objValue.product_id !== null) {
-			// F- fullfilled
-			// updt enq_det_tbl status as F, give qty = actual given
+		} else if (objValue.give_quantity >= objValue.ask_quantity && objValue.product_id !== '' && objValue.product_id !== null) {
+			// F- fulfilled
+			// up dt enq_det_tbl status as F, give qty = actual given
 
 			let result = await updateEnquiryDetail(
 				objValue.product_id,
-				objValue.stockid,
-				objValue.giveqty,
+				objValue.stock_id,
+				objValue.give_quantity,
 				objValue.processed,
 				'F',
 				objValue.id,
-				userid,
+				user_id,
 			);
 		}
 
 		if (objectKeysArray.length === idx) {
-			finalEnquiryStatusUpdte(jsonObj, userid);
+			finalEnquiryStatusUpdate(jsonObj, user_id);
 		}
 		idx = idx + 1;
 	});
 };
 
-const finalEnquiryStatusUpdte = async (jsonObj, userid) => {
+const finalEnquiryStatusUpdate = async (jsonObj, user_id) => {
 	let rows = await getSuccessfullyProcessedItems(jsonObj[0].enquiry_id);
 
-	let finalresult = '';
+	let final_result = '';
 
 	if (rows === 0) {
 		// E - executed means will not appear in open enquiry page
-		finalresult = await updateEnquiry('E', jsonObj[0].enquiry_id, userid);
+		final_result = await updateEnquiry('E', jsonObj[0].enquiry_id, user_id);
 	} else {
-		// P - processed, ready for sale in open qneuiry page
-		finalresult = await updateEnquiry('P', jsonObj[0].enquiry_id, userid);
+		// P - processed, ready for sale in open enquiry page
+		final_result = await updateEnquiry('P', jsonObj[0].enquiry_id, user_id);
 	}
 
-	if (finalresult === 'success') {
+	if (final_result === 'success') {
 		return {
 			result: 'success',
 		};
@@ -302,30 +302,30 @@ const finalEnquiryStatusUpdte = async (jsonObj, userid) => {
 	}
 };
 
-const updateGiveqtyEnquiryDetails = async (requestBody) => {
-	let giveqty = requestBody.giveqty;
-	let id = requestBody.enqdetailid;
+const updateGiveQuantityEnquiryDetails = async (requestBody) => {
+	let give_quantity = requestBody.give_quantity;
+	let id = requestBody.enq_detail_id;
 
 	let query = `update enquiry_detail
 	set
-	giveqty = '${giveqty}'
+	give_quantity = '${give_quantity}'
 	where id = '${id}' `;
 
 	return promisifyQuery(query);
 };
 
-const updateCustomerEnquiry = async (id, enqid) => {
+const updateCustomerEnquiry = async (id, enq_id) => {
 	let query = `update enquiry
 	set
 	customer_id = '${id}'
-	where id = '${enqid}' `;
+	where id = '${enq_id}' `;
 
 	return promisifyQuery(query);
 };
 
 const update_statusEnquiryDetails = async (requestBody) => {
 	let status = requestBody.status;
-	let id = requestBody.enqdetailid;
+	let id = requestBody.enq_detail_id;
 
 	if (status === 'B') {
 		let query = `update enquiry_detail
@@ -356,18 +356,18 @@ const insertEnquiryDetails = async (requestBody) => {
 	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `INSERT INTO enquiry ( center_id, customer_id, enquiry_date, e_status, remarks) 
-							values ( '${jsonObj.center_id}', '${jsonObj.customerctrl.id}', '${today}', 'O','${jsonObj.remarks}')`;
+							values ( '${jsonObj.center_id}', '${jsonObj.customer_ctrl.id}', '${today}', 'O','${jsonObj.remarks}')`;
 
 	pool.query(query, async function (err, data) {
 		if (err) {
 			return handleError(new ErrorHandler('500', 'error /insert-enquiry-details insert enquiry..step1..', err), res);
 		} else {
-			let tmpid = data.insertId;
+			let tmp_id = data.insertId;
 
-			const prodArr = jsonObj['productarr'];
+			const prodArr = jsonObj['product_arr'];
 
 			for (const k of prodArr) {
-				await insertEnquiryDetail(k, jsonObj, tmpid, (err, data) => {
+				await insertEnquiryDetail(k, jsonObj, tmp_id, (err, data) => {
 					if (err) {
 						let errTxt = err.message;
 
@@ -396,11 +396,11 @@ const addMoreEnquiryDetails = async (requestBody) => {
 
 	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	let query1 = `INSERT INTO enquiry_detail ( enquiry_id, product_id, askqty, product_code, notes, status)
+	let query1 = `INSERT INTO enquiry_detail ( enquiry_id, product_id, ask_quantity, product_code, notes, status)
 							values ( '${jsonObj.enquiry_id}', 
 							(select id from product where product_code='${jsonObj.product_code}' 
 							and center_id = '${jsonObj.center_id}'), 
-							'${jsonObj.askqty}', '${jsonObj.product_code}', '${jsonObj.notes}', 'O')`;
+							'${jsonObj.ask_quantity}', '${jsonObj.product_code}', '${jsonObj.notes}', 'O')`;
 
 	pool.query(query1, function (err, data) {
 		if (err) {
@@ -414,10 +414,10 @@ const addMoreEnquiryDetails = async (requestBody) => {
 };
 
 const openEnquiries = async (center_id, status) => {
-	let query = `select e.id, e.enquiry_date, e.e_status, c.name as custname,
+	let query = `select e.id, e.enquiry_date, e.e_status, c.name as customer_name,
   
 	(select count(*) from enquiry_detail where enquiry_id = e.id)
-	as noofitems
+	as no_of_items
 	from enquiry e, customer c
 	where 
 		e.customer_id = c.id and
@@ -428,26 +428,26 @@ const openEnquiries = async (center_id, status) => {
 	return promisifyQuery(query);
 };
 
-const getEnquiryDetails = async (enqid) => {
+const getEnquiryDetails = async (enq_id) => {
 	let enquiryDetails;
 	let customerDetails;
 
-	await fetchEnquiryDetailByEnqId(enqid, (err, data) => {
+	await fetchEnquiryDetailByEnqId(enq_id, (err, data) => {
 		if (err) {
 			let errTxt = err.message;
 
-			return handleError(new ErrorHandler('500', `/get-enquiry-details/:enqid ${enqid}`, err), res);
+			return handleError(new ErrorHandler('500', `/get-enquiry-details/:enqid ${enq_id}`, err), res);
 		} else {
 			enquiryDetails = data;
 			// do nothing...
 		}
 	});
 
-	await fetchCustomerDetailsByEnqId(enqid, (err, data) => {
+	await fetchCustomerDetailsByEnqId(enq_id, (err, data) => {
 		if (err) {
 			let errTxt = err.message;
 
-			return handleError(new ErrorHandler('500', `/get-enquiry-details/:enqid ${enqid} fetchCustomerDetailsByEnqId .`, err), res);
+			return handleError(new ErrorHandler('500', `/get-enquiry-details/:enq-id ${enq_id} fetchCustomerDetailsByEnqId .`, err), res);
 		} else {
 			customerDetails = data;
 			// do nothing...
@@ -460,10 +460,10 @@ const getEnquiryDetails = async (enqid) => {
 	});
 };
 
-const getEnquiryMaster = async (enqid) => {
+const getEnquiryMaster = async (enq_id) => {
 	let query = `
 	select 
-	e.id as enqid,
+	e.id as enq_id,
 	e.enquiry_date as enquiry_date,
 	e.e_status as e_status,
 	e.sale_id as sale_id,
@@ -484,14 +484,14 @@ const getEnquiryMaster = async (enqid) => {
 	where 
 	c.id = e.customer_id and
 	csa.customer_id = c.id and
-	e.id = ${enqid}	
+	e.id = ${enq_id}	
 	
 	`;
 
 	return promisifyQuery(query);
 };
 
-const getCustomerData = async (enqid) => {
+const getCustomerData = async (enq_id) => {
 	let sql = `select c.*, s.code 
 	from
 	customer c,
@@ -500,23 +500,23 @@ const getCustomerData = async (enqid) => {
 	where
 	e.customer_id = c.id and
 	s.id = c.state_id and
-	e.id = ${enqid}
+	e.id = ${enq_id}
 	`;
 
 	return promisifyQuery(query);
 };
 
-const getEnquiredProductData = async (center_id, customerid, enqid, orderdate) => {
-	// fetch values only of enq detail status in {P - processed, F - fullfilled} B- backorder is ignored
+const getEnquiredProductData = async (center_id, customer_id, enq_id, order_date) => {
+	// fetch values only of enq detail status in {P - processed, F - fulfilled} B- back order is ignored
 	let query = `select a.product_code as product_code, a.product_description, a.mrp, a.tax_rate, b.available_stock,
-	ed.giveqty as qty, a.unit_price, a.id as product_id, b.id as stock_pk, e.enquiry_date,
+	ed.give_quantity as qty, a.unit_price, a.id as product_id, b.id as stock_pk, e.enquiry_date,
 	IFNULL(
 	(
 	select concat(value,'~',type)
 	from discount
-	where str_to_date('${orderdate}','%d-%m-%Y')  
+	where str_to_date('${order_date}','%d-%m-%Y')  
 	between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') and
-  customer_id = '${customerid}' and
+  customer_id = '${customer_id}' and
 	gst_slab = a.tax_rate and
 	a.brand_id = discount.brand_id and
   discount.brand_id = a.brand_id
@@ -524,9 +524,9 @@ const getEnquiredProductData = async (center_id, customerid, enqid, orderdate) =
 	
 	(  select concat(value,'~',type) 
 from discount 
-where str_to_date('${orderdate}','%d-%m-%Y')  
+where str_to_date('${order_date}','%d-%m-%Y')  
 between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') and
-customer_id = '${customerid}' and
+customer_id = '${customer_id}' and
 gst_slab = a.tax_rate and
 discount.brand_id = 0 )
 	
@@ -544,8 +544,8 @@ discount.brand_id = 0 )
 	a.id = b.product_id and
 	b.id = ed.stock_id and
 	ed.status in ('P', 'F')  and
-	ed.giveqty != 0 and
-	e.id = ${enqid}
+	ed.give_quantity != 0 and
+	e.id = ${enq_id}
 	`;
 
 	return promisifyQuery(query);
@@ -553,7 +553,7 @@ discount.brand_id = 0 )
 
 const getBackOrder = async (center_id) => {
 	let sql = `SELECT c.name as customer_name, p.product_code as product_code, p.id as product_id,
-	p.product_description as description, ed.notes, ed.askqty, ed.giveqty, b.reason, b.order_date, s.available_stock
+	p.product_description as description, ed.notes, ed.ask_quantity, ed.give_quantity, b.reason, b.order_date, s.available_stock
 	FROM 
 	backorder b, 
 	enquiry_detail ed,
@@ -566,7 +566,7 @@ const getBackOrder = async (center_id) => {
 	b.center_id = '${center_id}' and
 	str_to_date(order_date, '%d-%m-%YYYY') BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()
 	union all
-	SELECT c.name as customer_name, "N/A" as product_code, "N/A" as product_id, "N/A" as description, ed.notes, ed.askqty, ed.giveqty, b.reason, 
+	SELECT c.name as customer_name, "N/A" as product_code, "N/A" as product_id, "N/A" as description, ed.notes, ed.ask_quantity, ed.give_quantity, b.reason, 
 	b.order_date, "N/A" as available_stock FROM 
 	backorder b, customer c,
 	enquiry_detail ed
@@ -584,20 +584,20 @@ const getBackOrder = async (center_id) => {
 const searchEnquiries = async (requestBody) => {
 	let center_id = requestBody.center_id;
 	let status = requestBody.status;
-	let customer_id = requestBody.customerid;
-	let from_date = requestBody.fromdate;
-	let to_date = requestBody.todate;
+	let customer_id = requestBody.customer_id;
+	let from_date = requestBody.from_date;
+	let to_date = requestBody.to_date;
 	let order = requestBody.order;
 
 	if (from_date !== '') {
-		from_date = toTimeZone(requestBody.fromdate, 'Asia/Kolkata');
+		from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD');
 	}
 
 	if (to_date !== '') {
-		to_date = toTimeZone(requestBody.todate, 'Asia/Kolkata');
+		to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD');
 	}
 
-	let custsql = `and e.customer_id = '${customer_id}' `;
+	let customer_sql = `and e.customer_id = '${customer_id}' `;
 
 	let query = `select
 	e.id as id,
@@ -618,7 +618,7 @@ const searchEnquiries = async (requestBody) => {
 				when 'X' then 'Cancelled'
     end as status_txt,
 	(select count(*) from enquiry_detail where enquiry_id = e.id)
-	as noofitems
+	as no_of_items
 	from
 	enquiry e,
 	customer c
@@ -631,7 +631,7 @@ const searchEnquiries = async (requestBody) => {
 	str_to_date('${to_date}', '%d-%m-%YYYY')  `;
 
 	if (customer_id !== 'all') {
-		query = query + custsql;
+		query = query + customer_sql;
 	}
 
 	if (status !== 'all') {
@@ -656,9 +656,9 @@ const deleteEnquiryDetails = async (requestBody) => {
 		('Enquiry', '${enq_id}', '${id}', 'delete', 
 		(SELECT CONCAT('[{', result, '}]') as final
 		FROM (
-			SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', enquiry_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"askqty": "', askqty, '"')) SEPARATOR '},{') as result
+			SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', enquiry_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"ask_quantity": "', ask_quantity, '"')) SEPARATOR '},{') as result
 			FROM (
-				SELECT enquiry_id, product_id, askqty, notes
+				SELECT enquiry_id, product_id, ask_quantity, notes
 				FROM enquiry_detail where id = '${id}'
 			) t1
 		) t2)
@@ -698,29 +698,29 @@ const deleteEnquiry = async (id) => {
 	return promisifyQuery(query);
 };
 
-const getEnquiryById = async (enquiryid) => {
+const getEnquiryById = async (enquiry_id) => {
 	let query = `select * 
   from 
 		enquiry_detail ed,
 		enquiry em, 
 		parts p
   where
-		ed.partno = p.partno and
+		ed.part_no = p.part_no and
 		em.id = ed.enquiry_id and
-		ed.enquiry_id = ${enquiryid}
+		ed.enquiry_id = ${enquiry_id}
   `;
 
 	return promisifyQuery(query);
 };
 
-const getCustomerDetailsById = async (enquiryid) => {
+const getCustomerDetailsById = async (enquiry_id) => {
 	let query = ` select c.*
   from 
 		enquiry em, 
 		customer c
 	where
 		em.customer_id = c.id and
-		em.id = ${enquiryid}`;
+		em.id = ${enquiry_id}`;
 	return promisifyQuery(query);
 };
 
@@ -735,7 +735,7 @@ module.exports = {
 
 	draftEnquiry,
 	moveToSale,
-	updateGiveqtyEnquiryDetails,
+	updateGiveQuantityEnquiryDetails,
 	updateCustomerEnquiry,
 	update_statusEnquiryDetails,
 	updateEnquiryDetails,

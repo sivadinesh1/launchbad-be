@@ -13,6 +13,8 @@ change accountno account_no varchar(50),
 change ifsccode ifsc_code varchar(50),
 change location timezone varchar(100);
 
+update center set timezone='Asia/Kolkata'
+
 alter table center
 add column createdAt datetime,
 add column updatedAt datetime,

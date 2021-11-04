@@ -8,7 +8,7 @@ const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = re
 // where
 // id =  '${enqref}' `;
 
-const updateEnquiryAfterSaleasync = async (enq_id, saleId, prisma) => {
+const updateEnquiryAfterSale = async (enq_id, saleId, prisma) => {
 	const result = await prisma.enquiry.update({
 		where: {
 			id: Number(enq_id),
@@ -23,5 +23,5 @@ const updateEnquiryAfterSaleasync = async (enq_id, saleId, prisma) => {
 };
 
 module.exports = {
-	updateEnquiryAfterSaleasync,
+	updateEnquiryAfterSale,
 };

@@ -1,5 +1,5 @@
 var pool = require('../../config/db');
-const { toTimeZone, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../../utils/utils');
+const { promisifyQuery } = require('../../utils/utils');
 
 const getProductSummaryReport = (requestBody) => {
 	const [center_id, start, end] = Object.values(requestBody);

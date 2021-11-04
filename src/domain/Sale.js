@@ -1,9 +1,5 @@
-import { Transform, Type } from 'class-transformer';
-import { IsString, IsInt } from 'class-validator';
-
-
-export class Sale  {
-	id!;
+class Sale {
+	id;
 
 	center_id;
 
@@ -61,7 +57,7 @@ export class Sale  {
 	print_count;
 	inv_gen_mode;
 
-	enquiry_ref!;
+	enquiry_ref;
 
 	createdAt;
 

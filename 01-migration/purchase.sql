@@ -50,6 +50,14 @@ change roundoff round_off decimal(10,2)
 
 ALTER TABLE product CHANGE unom uom varchar(50);
 
+update purchase set stock_inwards_datetime =
+(select date_format(str_to_date(stock_inwards_datetime,'%d-%m-%Y %k:%i:%s'),'%Y-%m-%d %k:%i:%s'));
+
+ALTER TABLE purchase 
+change stock_inwards_datetime stock_inwards_date_time datetime;
+
+update purchase set purchase_type = 'GST Invoice';
+
 alter table purchase
 add column createdAt datetime,
 add column updatedAt datetime,
