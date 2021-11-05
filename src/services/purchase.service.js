@@ -229,7 +229,7 @@ async function insertPurchaseDetails(purchase_object, purchase_master, newPK, pr
 
 			console.log('after prepare purchase detail: ');
 
-			if (product_item.purchase_detail_id === '') {
+			if (product_item.pur_det_id === '') {
 				await addPurchaseDetail(purchase_detail, prisma);
 			} else {
 				await editPurchaseDetail(purchase_detail, prisma);

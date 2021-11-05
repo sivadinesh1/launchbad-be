@@ -1,4 +1,5 @@
 const { prisma } = require('../config/prisma');
+var pool = require('../config/db');
 
 const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
@@ -84,6 +85,23 @@ const vendorRepoSearchVendors = async (center_id, search_text) => {
 		throw error;
 	}
 };
+
+// const vendorRepoSearchVendors = (centerid, searchstr) => {
+// 	let query = `
+// 	select v.id, v.center_id, v.vendor_name as name, v.address1, v.address2, v.district,
+// 	v.pin, v.gst, v.phone, v.mobile, v.mobile2, v.whatsapp,  v.email, v.is_active, s.code as code
+// 	from
+// 	vendor v,
+// 	state s
+// 	where
+// 	v.state_id = s.id and is_active = 'A' and center_id = '${centerid}' and
+// 	( LOWER(v.vendor_name) like LOWER('%${searchstr}%'))
+// 	limit 50  `;
+
+// 	let values = [centerid, searchstr];
+
+// 	return promisifyQuery(query);
+// };
 
 const vendorRepoGetVendorDetails = async (center_id, vendor_id) => {
 	try {
