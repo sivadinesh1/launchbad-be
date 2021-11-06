@@ -29,6 +29,13 @@ ALTER TABLE sale_detail MODIFY batchdate datetime;
 update sale_detail set batchdate = null where batchdate = '9999-01-20';
 
 alter table sale_detail
+add column hsn_code varchar(50);
+
+ALTER TABLE sale_detail CHANGE batchdate batch_date datetime;
+
+
+
+alter table sale_detail
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,

@@ -47,11 +47,6 @@ add column updated_by bigint;
 ALTER TABLE brand 
 change createdon createdAt datetime;
 
-
-
-
-
-
 #center
 
 ALTER TABLE center 
@@ -60,6 +55,8 @@ change accountname account_name varchar(150),
 change accountno account_no varchar(50),
 change ifsccode ifsc_code varchar(50),
 change location timezone varchar(100);
+
+update center set timezone='Asia/Kolkata';
 
 alter table center
 add column createdAt datetime,
@@ -208,6 +205,10 @@ alter table item_history
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,
+add column updated_by bigint;alter table ledger
+add column createdAt datetime,
+add column updatedAt datetime,
+add column created_by bigint,
 add column updated_by bigint;
 update payment set pymt_date = (select date_format(str_to_date(pymt_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where pymt_date != '';
@@ -244,10 +245,16 @@ add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,
 add column updated_by bigint;
+
+ALTER TABLE payment_detail 
+change pymt_ref_id payment_ref_id bigint;
 #payment_mode
 
 ALTER TABLE payment_mode 
 change commission_fee commission_fee decimal(10,2);
+
+alter table payment_mode
+change pymt_mode_name payment_mode_name varchar(50);
 
 alter table payment_mode
 add column createdAt datetime,
@@ -260,7 +267,7 @@ add column updatedAt datetime,
 add column created_by bigint,
 add column updated_by bigint;
 ALTER TABLE product 
-change unit unom varchar(50),
+change unit uom varchar(50),
 change description product_description varchar(250),
 change packetsize packet_size int(11),
 change hsncode hsn_code varchar(50),
@@ -321,6 +328,11 @@ change createdon createdAt datetime;
 
 ALTER TABLE product 
 change updatedon updatedAt datetime;
+
+
+
+
+
 #purchase
 
 update purchase set invoice_date = (select date_format(str_to_date(invoice_date,'%d-%m-%Y'),'%Y-%m-%d'))
@@ -370,6 +382,15 @@ change igst igs_t decimal(10,2),
 change roundoff round_off decimal(10,2)
 ;
 
+ALTER TABLE product CHANGE unom uom varchar(50);
+
+update purchase set stock_inwards_datetime =
+(select date_format(str_to_date(stock_inwards_datetime,'%d-%m-%Y %k:%i:%s'),'%Y-%m-%d %k:%i:%s'));
+
+ALTER TABLE purchase 
+change stock_inwards_datetime stock_inwards_date_time datetime;
+
+update purchase set purchase_type = 'GST Invoice';
 
 alter table purchase
 add column createdAt datetime,
@@ -435,6 +456,13 @@ ALTER TABLE sale_detail MODIFY batchdate datetime;
 update sale_detail set batchdate = null where batchdate = '9999-01-20';
 
 alter table sale_detail
+add column hsn_code varchar(50);
+
+ALTER TABLE sale_detail CHANGE batchdate batch_date datetime;
+
+
+
+alter table sale_detail
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,
@@ -465,6 +493,10 @@ ALTER TABLE sale MODIFY order_date date;
 
 update sale set order_date = null where order_date = '9999-01-20';
 
+update sale set invoice_date = (select date_format(str_to_date(invoice_date,'%d-%m-%Y'),'%Y-%m-%d')) where invoice_date != ''; 
+
+ALTER TABLE sale CHANGE invoice_date invoice_date date;
+
   -- Processing Sale table : Drop sale_datetime
 update sale set sale_datetime =
 (select date_format(str_to_date(sale_datetime,'%d-%m-%Y %k:%i:%s'),'%Y-%m-%d %k:%i:%s'));
@@ -472,6 +504,12 @@ update sale set sale_datetime =
 ALTER TABLE sale CHANGE sale_datetime sale_date_time datetime;
 
 ALTER TABLE sale CHANGE total_qty total_quantity int(20);
+
+ALTER TABLE sale CHANGE sale_type invoice_type varchar(50);
+
+update sale set invoice_type = 'gstInvoice' where invoice_type = 'gstinvoice';
+
+update sale set invoice_type = 'stockIssue' where invoice_type = 'stockissue';
 
 ALTER TABLE sale CHANGE taxable_value after_tax_value decimal(10,2);
 
@@ -482,6 +520,9 @@ ALTER TABLE sale CHANGE roundoff round_off decimal(10,2);
 
 
 ALTER TABLE sale  DROP COLUMN tax_applicable;
+
+alter table sale
+add column hsn_code varchar(50);
 
 alter table sale
 add column createdAt datetime,
@@ -514,6 +555,28 @@ add column created_by bigint,
 add column updated_by bigint;
 alter table sale_return_detail
 add column center_id bigint after id,
+add column createdAt datetime,
+add column updatedAt datetime,
+add column created_by bigint,
+add column updated_by bigint;
+alter table stock
+add column createdAt datetime,
+add column updatedAt datetime,
+add column created_by bigint,
+add column updated_by bigint;
+
+alter table stock
+add column is_active varchar(1) ;
+
+alter table stock
+add column center_id bigint; 
+
+update stock set is_active = 'A';ALTER TABLE users 
+change centerid center_id bigint;ALTER TABLE vendor CHANGE name vendor_name varchar(150);
+
+ALTER TABLE vendor CHANGE isactive is_active varchar(1);
+
+alter table vendor
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,

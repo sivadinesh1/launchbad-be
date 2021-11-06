@@ -26,6 +26,7 @@ update sale set order_date = null where order_date = '9999-01-20';
 
 update sale set invoice_date = (select date_format(str_to_date(invoice_date,'%d-%m-%Y'),'%Y-%m-%d')) where invoice_date != ''; 
 
+ALTER TABLE sale CHANGE invoice_date invoice_date date;
 
   -- Processing Sale table : Drop sale_datetime
 update sale set sale_datetime =
@@ -50,6 +51,9 @@ ALTER TABLE sale CHANGE roundoff round_off decimal(10,2);
 
 
 ALTER TABLE sale  DROP COLUMN tax_applicable;
+
+alter table sale
+add column hsn_code varchar(50);
 
 alter table sale
 add column createdAt datetime,

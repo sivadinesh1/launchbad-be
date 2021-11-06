@@ -1,6 +1,6 @@
 
 ALTER TABLE product 
-change unit unom varchar(50),
+change unit uom varchar(50),
 change description product_description varchar(250),
 change packetsize packet_size int(11),
 change hsncode hsn_code varchar(50),
@@ -63,5 +63,5 @@ ALTER TABLE product
 change updatedon updatedAt datetime;
 
 
-ALTER TABLE product CHANGE unom uom varchar(50);
+
 
