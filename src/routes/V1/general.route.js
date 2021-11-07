@@ -3,7 +3,6 @@ const router = express.Router();
 const axios = require('axios');
 
 const { auth } = require('../../middleware/auth.js');
-//import { auth } from '../../middleware/auth';
 
 const generalController = require('../../controllers/general.controller');
 
@@ -35,19 +34,19 @@ router.route('/enquiry-delete/:id').get(auth('getUsers'), generalController.dele
 
 router.route('/vendor-delete/:id').get(auth('getUsers'), generalController.deleteVendor);
 
-router.route('/brands-missing-discounts/:status/:customerid').get(auth('getUsers'), generalController.getBrandsMissingDiscountsByCustomer);
+router.route('/brands-missing-discounts/:status/:customer_id').get(auth('getUsers'), generalController.getBrandsMissingDiscountsByCustomer);
 
 router.route('/all-active-customers').get(auth('getUsers'), generalController.getAllActiveCustomersByCenter);
 
 router.route('/add-parts-details-enquiry').post(auth('getUsers'), generalController.addPartsDetailsEnquiry);
 
-router.route('/get-enquiry/:enquiryid').get(auth('getUsers'), generalController.getEnquiryById);
+router.route('/get-enquiry/:enquiry_id').get(auth('getUsers'), generalController.getEnquiryById);
 
-router.route('/get-customer-details/:enquiryid').get(auth('getUsers'), generalController.getCustomerDetailsById);
+router.route('/get-customer-details/:enquiry_id').get(auth('getUsers'), generalController.getCustomerDetailsById);
 
-router.route('/update-taxrate').post(auth('getUsers'), generalController.updateTaxRate);
+router.route('/update-tax-rate').post(auth('getUsers'), generalController.updateTaxRate);
 
-router.route('/all-pymt-modes/:status').get(auth('getUsers'), generalController.getAllPaymentModes);
+router.route('/all-payment-modes/:status').get(auth('getUsers'), generalController.getAllPaymentModes);
 
 module.exports = router;
 

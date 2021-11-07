@@ -35,4 +35,4 @@ http.createServer(app).listen(5050);
 // }
 
 // pm2 log --lines 500
-// rm all_files.sql && cat *.sql  > all_files.sql1
+// rm all_files.sql && cat *.sql  > all_files.sql

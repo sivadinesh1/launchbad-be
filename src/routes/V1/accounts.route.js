@@ -6,7 +6,7 @@ const accountsController = require('../../controllers/accounts.controller');
 
 router.route('/add-payment-received').post(auth('getUsers'), accountsController.addPaymentReceived);
 
-router.route('/get-ledger-customer/:customerid').get(auth('getUsers'), accountsController.getLedgerByCustomers);
+router.route('/get-ledger-customer/:customer_id').get(auth('getUsers'), accountsController.getLedgerByCustomers);
 
 router.route('/get-sale-invoice-customer').post(auth('getUsers'), accountsController.getSaleInvoiceByCustomers);
 
@@ -16,7 +16,7 @@ router.route('/get-payments-customer').post(auth('getUsers'), accountsController
 
 router.route('/get-payments-overview-customer').post(auth('getUsers'), accountsController.getPaymentsOverviewByCustomers);
 
-router.route('/get-pymt-transactions-customer/:customerid').get(auth('getUsers'), accountsController.getPymtTransactionByCustomers);
+router.route('/get-pymt-transactions-customer/:customer_id').get(auth('getUsers'), accountsController.getPymtTransactionByCustomers);
 
 router.route('/get-payments-center').post(auth('getUsers'), accountsController.getPaymentsByCenter);
 

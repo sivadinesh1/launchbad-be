@@ -9,7 +9,7 @@ const { handleError, ErrorHandler } = require('../config/error');
 // param: smd : sale_master_data
 // NR: Not Received, A: Approved
 const insertSaleReturns = (smd) => {
-	let today = currentTimeInTimeZone('DD-MM-YYYY');
+	let today = currentTimeInTimeZone('YYYY-MM-DD');
 
 	return new Promise((resolve, reject) => {
 		let query = ` insert into sale_return (sale_id, customer_id, return_date, center_id, to_return_amount,
@@ -25,12 +25,12 @@ const insertSaleReturns = (smd) => {
 // Insert sale_return_detail table with details of what is returned and at what price
 // Increase the stock
 // srd: sale_return_details array, sale_master_data (smd)
-const insertSaleReturnDetail = async (srd, sale_return_id, smd, res) => {
+const insertSaleReturnDetail = async (srd, sale_return_id, smd) => {
 	return new Promise(async (resolve, reject) => {
 		for (const k of srd) {
 			let sale_return_detail_id = await insertSaleDetailReturn(k, sale_return_id, smd);
 			let updateSaleDetailFlag = await updateSaleDetail(k);
-			let updateStockAfterReturnFlag = await updateStock(k.received_now, k.product_id, k.mrp, 'add', res);
+			let updateStockAfterReturnFlag = await updateStock(k.received_now, k.product_id, k.mrp, 'add');
 
 			let updateItemHistoryTbl = await insertItemHistoryTable(
 				smd.center_id,
@@ -57,12 +57,12 @@ const insertSaleReturnDetail = async (srd, sale_return_id, smd, res) => {
 const insertSaleDetailReturn = (srd, sale_return_id, smd) => {
 	let query = ` INSERT INTO sale_return_detail(sale_return_id, sale_id, sale_detail_id, return_qty, 
               reason, disc_percent, tax, mrp,
-              igst, cgst, sgst, orig_sold_qty, after_tax_value, total_value, hsncode, unit)
+              igs_t, cgs_t, sgs_t, orig_sold_qty, after_tax_value, total_value, hsn_code, unit)
               VALUES
               ( '${sale_return_id}', '${smd.sale_id}', '${srd.id}', '${srd.received_now}', 
               '${srd.reason}', '${srd.disc_percent}', '${srd.tax}', 
-              '${srd.mrp}', '${srd.igst}', '${srd.cgst}', '${srd.sgst}', 
-              '${srd.qty}', '${srd.after_tax_value}', '${srd.total_value}', '${srd.hsncode}', '${srd.unit}' ) `;
+              '${srd.mrp}', '${srd.igs_t}', '${srd.cgs_t}', '${srd.sgs_t}', 
+              '${srd.qty}', '${srd.after_tax_value}', '${srd.total_value}', '${srd.hsn_code}', '${srd.unit}' ) `;
 
 	let data = promisifyQuery(query);
 	return data.insertId;
@@ -111,7 +111,7 @@ function updateCRSequenceGenerator(center_id) {
 	return promisifyQuery(query);
 }
 
-function updateCRAmntToCustomer(sale_id, credit_amt) {
+function updateCRAmountToCustomer(sale_id, credit_amt) {
 	let query = `
 		update customer c, sale s
 		set 
@@ -167,9 +167,9 @@ const getReturns = (center_id) => {
 
 const saleReturnPaymentMaster = (center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, payment_date) => {
 	let query = `
-		insert into payment ( center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, payment_date, pymt_mode_ref_id, pymt_ref)
+		insert into payment ( center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, payment_date, payment_mode_ref_id, payment_ref)
 		VALUES ( '${center_id}', '${customer_id}', '${payment_no}', '${payment_now_amt}',
-     '${advance_amt_used}', '${payment_date}', (select id from payment_mode where center_id = '${center_id}' and pymt_mode_name = 'Credit Note'), 'Credit Note' ) `;
+     '${advance_amt_used}', '${payment_date}', (select id from payment_mode where center_id = '${center_id}' and payment_mode_name = 'Credit Note'), 'Credit Note' ) `;
 
 	return promisifyQuery(query);
 };
@@ -196,7 +196,7 @@ const searchSaleReturn = async (requestBody) => {
 			to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
 		}
 
-		let cust_sql = `and s.customer_id = '${customer_id}' `;
+		let customer_sql = `and s.customer_id = '${customer_id}' `;
 
 		sql = `select c.name, sr.id as sale_return_id, sr.sale_id as sale_id,  s.invoice_no as invoice_no, s.invoice_date as invoice_date,
 		sr.return_date as return_date,
@@ -242,7 +242,7 @@ const searchSaleReturn = async (requestBody) => {
 						 `;
 
 		if (customer_id !== 'all') {
-			sql = sql + cust_sql;
+			sql = sql + customer_sql;
 		}
 
 		sql = sql + ' order by sr.return_date desc ';
@@ -343,16 +343,16 @@ Steps:
 
 const addSaleReturn = async (requestBody) => {
 	var today = new Date();
-	today = currentTimeInTimeZone('DD-MM-YYYY');
+	today = currentTimeInTimeZone('YYYY-MM-DD');
 
 	let reqObject = requestBody;
 
 	let smd = reqObject[1]; // sale master data
-	let srd = reqObject[0]; // salre return details
+	let srd = reqObject[0]; // sale return details
 
 	const sale_return_id = await insertSaleReturns(smd);
 
-	const job_completed = await insertSaleReturnDetail(srd, sale_return_id, smd, res);
+	const job_completed = await insertSaleReturnDetail(srd, sale_return_id, smd);
 
 	updateCRSequenceGenerator(smd.center_id);
 	let fetchCRNoteNo = await getSequenceCrNote(smd.center_id);
@@ -360,8 +360,8 @@ const addSaleReturn = async (requestBody) => {
 	let cr_note_id_created = await createCreditNote(fetchCRNoteNo, smd.to_return_amount, 'R');
 	updateCrNoteIdInSaleReturnTable(cr_note_id_created, sale_return_id);
 
-	// dinesh - delete this logic
-	//let cr_note_updated = await updateCRAmntToCustomer(smd.sale_id, smd.to_return_amount);
+	// Dinesh - delete this logic
+	//let cr_note_updated = await updateCRAmountToCustomer(smd.sale_id, smd.to_return_amount);
 
 	// add a payment entry
 	await updatePaymentSequenceGenerator(smd.center_id);
@@ -378,7 +378,7 @@ const addSaleReturn = async (requestBody) => {
 	// 	payment_now_amt, advance_amt_used, payment_date ) => {
 	let newPK = await saleReturnPaymentMaster(smd.center_id, smd.customer_id, paymentNo, smd.to_return_amount, '0', today, res);
 
-	// (3) - updates pymt details
+	// (3) - updates payment details
 	let process = await processItems(newPK.insertId, smd.sale_id, sale_return_id, smd.to_return_amount);
 
 	Promise.all([sale_return_id, job_completed, fetchCRNoteNo, cr_note_id_created, process]).then((result) => {
@@ -387,7 +387,7 @@ const addSaleReturn = async (requestBody) => {
 };
 
 function processItems(newPK, sale_ref_id, sale_return_ref_id, received_amount) {
-	let sql = `INSERT INTO payment_detail(pymt_ref_id, sale_ref_id, sale_return_ref_id, applied_amount) VALUES
+	let sql = `INSERT INTO payment_detail(payment_ref_id, sale_ref_id, sale_return_ref_id, applied_amount) VALUES
 		( '${newPK}', '${sale_ref_id}', '${sale_return_ref_id}', '${received_amount}'  )`;
 
 	return promisifyQuery(query);
@@ -400,7 +400,7 @@ module.exports = {
 	updateSaleDetail,
 
 	createCreditNote,
-	updateCRAmntToCustomer,
+	updateCRAmountToCustomer,
 	updateCRSequenceGenerator,
 	getSequenceCrNote,
 	updateCrNoteIdInSaleReturnTable,

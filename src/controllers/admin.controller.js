@@ -139,7 +139,7 @@ const addBrand = catchAsync(async (req, res) => {
 });
 
 const getCustomerDetails = catchAsync(async (req, res) => {
-	const data = await customersService.getCustomerDetails(req.user.center_id, req.params.customerid);
+	const data = await customersService.getCustomerDetails(req.user.center_id, req.params.customer_id);
 
 	return responseForward(data, 'getCustomerDetails', res);
 });
@@ -178,7 +178,7 @@ const addCustomerShippingAddress = catchAsync(async (req, res) => {
 });
 
 const getCustomerShippingAddress = catchAsync(async (req, res) => {
-	const data = await customersService.getCustomerShippingAddress(req.params.customerid);
+	const data = await customersService.getCustomerShippingAddress(req.params.customer_id);
 
 	return responseForward(data, 'getCustomerShippingAddress', res);
 });
@@ -195,24 +195,24 @@ const inactivateCSA = catchAsync(async (req, res) => {
 });
 
 const getCustomerDiscount = catchAsync(async (req, res) => {
-	const data = await customersService.getCustomerDiscount(req.user.center_id, req.params.customerid);
+	const data = await customersService.getCustomerDiscount(req.user.center_id, req.params.customer_id);
 
 	return responseForward(data, 'getCustomerDiscount', res);
 });
 
 const getAllCustomerDefaultDiscounts = catchAsync(async (req, res) => {
-	const data = await customersService.getAllCustomerDefaultDiscounts(req.user.center_id, req.params.customerid);
+	const data = await customersService.getAllCustomerDefaultDiscounts(req.user.center_id, req.params.customer_id);
 
 	return responseForward(data, 'getAllCustomerDefaultDiscounts', res);
 });
 
 const getDiscountsByCustomer = catchAsync(async (req, res) => {
-	const data = await customersService.getDiscountsByCustomer(req.user.center_id, req.params.customerid);
+	const data = await customersService.getDiscountsByCustomer(req.user.center_id, req.params.customer_id);
 	return responseForward(data.ApiError, 'getDiscountsByCustomer', res);
 });
 
 const getDiscountsByCustomerByBrand = catchAsync(async (req, res) => {
-	const data = await customersService.getDiscountsByCustomerByBrand(req.user.center_id, req.params.customerid);
+	const data = await customersService.getDiscountsByCustomerByBrand(req.user.center_id, req.params.customer_id);
 	return responseForward(data, 'Error: getDiscountsByCustomerByBrand', res);
 });
 

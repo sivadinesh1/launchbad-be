@@ -104,7 +104,7 @@ VALUES
 const addReverseSaleLedgerRecord = (insertValues, invoice_ref_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	// balance amount is taken from querying ledger table, with Limit 1, check the subquery.
+	// balance amount is taken from querying ledger table, with Limit 1, check the sub query.
 	let query = `
 INSERT INTO ledger ( center_id, customer_id, invoice_ref_id, ledger_detail, debit_amt, balance_amt, ledger_date)
 VALUES
@@ -216,7 +216,7 @@ const addPaymentMaster = (cloneReq, paymentNo, insertValues, res) => {
 		insertValues.received_amount,
 		cloneReq.customer.credit_amt,
 
-		insertValues.pymt_mode,
+		insertValues.payment_mode,
 		insertValues.bank_ref,
 		insertValues.payment_ref,
 		cloneReq.bank_id,
@@ -225,7 +225,7 @@ const addPaymentMaster = (cloneReq, paymentNo, insertValues, res) => {
 	];
 
 	let query = `
-		insert into payment ( center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, payment_date, pymt_mode_ref_id, bank_ref, payment_ref, last_updated,
+		insert into payment ( center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, payment_date, payment_mode_ref_id, bank_ref, payment_ref, last_updated,
 			bank_id, bank_name, created_by)
 		VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, '${today}', ?, ?, ? ) `;
 
@@ -234,7 +234,7 @@ const addPaymentMaster = (cloneReq, paymentNo, insertValues, res) => {
 			if (err) {
 				return handleError(new ErrorHandler('500', `/addPaymentMaster in accounts.js`, err), res);
 			} else {
-				let islastpaiddateupdated = await updateCustomerLastPaidDate(cloneReq.customer.id, insertValues.received_date);
+				await updateCustomerLastPaidDate(cloneReq.customer.id, insertValues.received_date);
 
 				return resolve(data.insertId);
 			}
@@ -246,7 +246,7 @@ const updatePaymentSequenceGenerator = (center_id) => {
 	let qryUpdateSequence = '';
 
 	qryUpdateSequence = `
-		update financial_year set pymt_seq = pymt_seq + 1 where 
+		update financial_year set payment_seq = payment_seq + 1 where 
 		center_id = '${center_id}' and  
 		CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 
@@ -265,7 +265,7 @@ const getPaymentSequenceNo = (cloneReq) => {
 
 	paymentNoQry = ` select 
 	concat("RP-",'${toTimeZoneFormat(cloneReq.account_arr[0].received_date, 'YY')}', "/", 
-	'${toTimeZoneFormat(cloneReq.account_arr[0].received_date, 'MM')}', "/", lpad(pymt_seq, 5, "0")) as paymentNo from financial_year 
+	'${toTimeZoneFormat(cloneReq.account_arr[0].received_date, 'MM')}', "/", lpad(payment_seq, 5, "0")) as paymentNo from financial_year 
 				where 
 				center_id = '${cloneReq.center_id}' and  
 				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
@@ -289,13 +289,13 @@ const getPaymentsByCustomers = (requestBody) => {
 	let invoice_no = requestBody.invoice_no;
 
 	let query = ` select p.*, pd.applied_amount as applied_amount, s.invoice_no as invoice_no, 
-	s.invoice_date as invoice_date, s.net_total as invoice_amount,  pm.pymt_mode_name as pymt_mode from 
+	s.invoice_date as invoice_date, s.net_total as invoice_amount,  pm.payment_mode_name as payment_mode from 
         payment p,
         payment_detail pd,
 				sale s,
 				payment_mode pm
 				where 
-				pm.id = p.pymt_mode_ref_id and
+				pm.id = p.payment_mode_ref_id and
         p.id = pd.payment_ref_id and
         pd.sale_ref_id = s.id and
         p.center_id =   '${center_id}' `;
@@ -328,12 +328,12 @@ const getPaymentsOverviewByCustomers = (requestBody) => {
 	let customer_id = requestBody.customer_id;
 	let search_type = requestBody.search_type;
 	let query = ` select p.*, 
-	pm.pymt_mode_name as pymt_mode 
+	pm.payment_mode_name as payment_mode 
  from 
 	payment p,
 	payment_mode pm
  where 
-	pm.id = p.pymt_mode_ref_id and
+	pm.id = p.payment_mode_ref_id and
 	p.center_id = '${center_id}' `;
 
 	if (customer_id !== undefined && search_type === 'all') {
@@ -361,20 +361,20 @@ const getPaymentTransactionByCustomers = (center_id, customer_id) => {
 		p.payment_now_amt as payment_now_amt,
 		p.advance_amt_used as advance_amt_used,
 		str_to_date(p.payment_date, '%d-%m-%YYYY') as payment_date,
-		p.pymt_mode_ref_id as pymt_mode_ref_id,
+		p.payment_mode_ref_id as payment_mode_ref_id,
 		p.bank_ref as bank_ref,
-		p.pymt_ref as pymt_ref,
+		p.payment_ref as payment_ref,
 		p.is_cancelled as is_cancelled,
 		p.cancelled_date as cancelled_date,
 		p.created_by as created_by,
 		p.last_updated as last_updated,
 	
-	pm.pymt_mode_name as pymt_mode
+	pm.payment_mode_name as payment_mode
  	from
   	payment p,
 		payment_mode pm
 	where 
-		pm.id = p.pymt_mode_ref_id and
+		pm.id = p.payment_mode_ref_id and
 		p.center_id = '${center_id}' and p.customer_id = '${customer_id}'
 	order by last_updated desc `;
 
@@ -393,14 +393,14 @@ const getPaymentsByCenter = (requestBody) => {
 	select 
 	c.name as customer_name,
 	c.id as customer_id,
-	pymt_mode_name as pymt_mode_name,
+	payment_mode_name as payment_mode_name,
 	p.bank_ref as bank_ref,
-	p.pymt_ref as pymt_ref,
+	p.payment_ref as payment_ref,
 	p.payment_no as payment_no,
  DATE_FORMAT(STR_TO_DATE(p.payment_date,'%d-%m-%Y'), '%d-%b-%Y') as payment_date,
 	p.advance_amt_used as advance_amt_used,
-	pymt_mode_ref_id as pymt_mode_ref_id,
-	pymt_ref as pymt_ref,
+	payment_mode_ref_id as payment_mode_ref_id,
+	payment_ref as payment_ref,
 	last_updated as last_updated,
 	s.invoice_no as invoice_no,
 	s.net_total as invoice_amount,
@@ -414,7 +414,7 @@ const getPaymentsByCenter = (requestBody) => {
 				 customer c,
 				 payment_mode pm
 				 where 
-				 pm.id = p.pymt_mode_ref_id and
+				 pm.id = p.payment_mode_ref_id and
 				 c.id = p.customer_id and
 				 p.id = pd.payment_ref_id and
 				 pd.sale_ref_id = s.id and
@@ -451,15 +451,15 @@ const getPaymentsOverviewByCenter = (requestBody) => {
 	select 
 	c.name as customer_name,
 	c.id as customer_id,
-	pymt_mode_name as pymt_mode_name,
+	payment_mode_name as payment_mode_name,
 	p.bank_ref as bank_ref,
-	p.pymt_ref as pymt_ref,
+	p.payment_ref as payment_ref,
 	p.payment_no as payment_no,
  DATE_FORMAT(STR_TO_DATE(p.payment_date,'%d-%m-%Y'), '%d-%b-%Y') as payment_date,
  p.payment_now_amt,
 	p.advance_amt_used as advance_amt_used,
-	pymt_mode_ref_id as pymt_mode_ref_id,
-	pymt_ref as pymt_ref,
+	payment_mode_ref_id as payment_mode_ref_id,
+	payment_ref as payment_ref,
 	last_updated as last_updated,
 	p.bank_name
 
@@ -470,7 +470,7 @@ const getPaymentsOverviewByCenter = (requestBody) => {
 				 customer c,
 				 payment_mode pm
 				 where 
-				 pm.id = p.pymt_mode_ref_id and
+				 pm.id = p.payment_mode_ref_id and
 				 c.id = p.customer_id and
 				 p.center_id = '${center_id}' `;
 
@@ -496,13 +496,13 @@ const getPaymentTransactionsByCenter = (center_id) => {
 	select 
 	c.name as customer_name,
 	c.id as customer_id,
-	pymt_mode_name as pymt_mode_name,
+	payment_mode_name as payment_mode_name,
 	p.payment_no as payment_no,
 	 DATE_FORMAT(STR_TO_DATE(p.payment_date,'%d-%m-%Y'), '%d-%b-%Y') as payment_date,
 	 p.payment_now_amt as paid_amount,
 	p.advance_amt_used as advance_amt_used,
-	pymt_mode_ref_id as pymt_mode_ref_id,
-	pymt_ref as pymt_ref,
+	payment_mode_ref_id as payment_mode_ref_id,
+	payment_ref as payment_ref,
 	bank_ref as bank_ref,
 	last_updated as last_updated
 from 
@@ -510,7 +510,7 @@ from
 	customer c,
 	payment_mode pm
 where 
-	pm.id = p.pymt_mode_ref_id and
+	pm.id = p.payment_mode_ref_id and
 	c.id = p.customer_id and
 	p.center_id = '${center_id}' order by payment_date desc 
 	
@@ -746,12 +746,12 @@ const paymentBankRef = (center_id, ref, id, mode) => {
 
 const lastPaymentRecord = (center_id, customer_id) => {
 	let sql = `select payment_no, payment_now_amt, payment_date, bank_ref,
-	pymt_ref
+	payment_ref
 	from 
 	payment p,
 	payment_mode pm
 	where 
-	pm.id = p.pymt_mode_ref_id
+	pm.id = p.payment_mode_ref_id
 	and p.center_id = '${center_id}'
 	and p.customer_id = '${customer_id}'
 	order by p.id desc limit 1 `;
@@ -768,12 +768,12 @@ const lastPaymentRecord = (center_id, customer_id) => {
 
 const lastVendorPaymentRecord = (center_id, vendor_id) => {
 	let sql = `select vendor_payment_no as payment_no, payment_now_amt, payment_date, bank_ref,
-	pymt_ref
+	payment_ref
 	from 
 	vendor_payment p,
 	payment_mode pm
 	where 
-	pm.id = p.pymt_mode_ref_id
+	pm.id = p.payment_mode_ref_id
 	and p.center_id = '${center_id}'
 	and p.vendor_id = '${vendor_id}'
 	order by p.id desc limit 1 `;
@@ -803,11 +803,11 @@ const addBulkPaymentReceived = async (requestBody) => {
 		// add payment master
 		let newPK = await addPaymentMaster(cloneReq, paymentNo, k, res);
 
-		// (3) - updates pymt details
-		let process = processBulkItems(cloneReq, newPK, invoicesplit);
+		// (3) - updates payment details
+		let process = processBulkItems(cloneReq, newPK, invoice_split);
 
 		if (index == account_arr.length - 1) {
-			if (req.body.creditsused === 'YES') {
+			if (req.body.credits_used === 'YES') {
 				updateCustomerCreditMinus(requestBody.credit_used_amount, cloneReq.center_id, cloneReq.customer.id, (err, data1) => {
 					if (err) {
 						let errTxt = err.message;
@@ -839,7 +839,7 @@ function processBulkItems(cloneReq, newPK, invoice_split) {
 		let sql = `INSERT INTO payment_detail(payment_ref_id, sale_ref_id, applied_amount) VALUES
 		( '${newPK}', '${e.id}', '${e.applied_amount}' )`;
 
-		let paymentdetailsTblPromise = new Promise(function (resolve, reject) {
+		new Promise(function (resolve, reject) {
 			pool.query(sql, function (err, data) {
 				if (err) {
 					reject(err);

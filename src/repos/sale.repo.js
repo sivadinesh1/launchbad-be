@@ -5,6 +5,7 @@ const { toTimeZoneFormat, currentTimeInTimeZone, bigIntToString, escapeText, pro
 const addSaleMaster = async (sale, prisma) => {
 	try {
 		let formattedDate = toTimeZoneFormat(sale.invoice_date, 'YYYY-MM-DD');
+		console.log('formatted date ' + formattedDate);
 
 		const result = await prisma.sale.create({
 			data: {
@@ -24,9 +25,9 @@ const addSaleMaster = async (sale, prisma) => {
 				sgs_t: sale.sgs_t,
 				igs_t: sale.igs_t,
 				total_value: sale.total_value,
-				transport_charges: sale.transport_charges,
-				unloading_charges: sale.unloading_charges,
-				misc_charges: sale.misc_charges,
+				transport_charges: sale.transport_charges === null ? undefined : sale.transport_charges,
+				unloading_charges: sale.unloading_charges === null ? undefined : sale.unloading_charges,
+				misc_charges: sale.misc_charges === null ? undefined : sale.misc_charges,
 				net_total: sale.net_total,
 				no_of_boxes: sale.no_of_boxes,
 				status: sale.status,

@@ -78,10 +78,10 @@ const getCustomerData = catchAsync(async (req, res) => {
 
 const getEnquiredProductData = catchAsync(async (req, res) => {
 	let center_id = req.user.center_id;
-	let customerid = req.params.customerid;
+	let customer_id = req.params.customer_id;
 	let enqid = req.params.enqid;
 	let orderdate = req.params.invdt;
-	const data = await enquiryService.getEnquiredProductData(center_id, customerid, enqid, orderdate);
+	const data = await enquiryService.getEnquiredProductData(center_id, customer_id, enqid, orderdate);
 
 	return responseForward(data, 'getEnquiredProductData', res);
 });

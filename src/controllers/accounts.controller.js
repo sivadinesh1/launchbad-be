@@ -11,7 +11,7 @@ const addPaymentReceived = catchAsync(async (req, res) => {
 });
 
 const getLedgerByCustomers = catchAsync(async (req, res) => {
-	const data = await accountsService.getLedgerByCustomers(req.user.center_id, req.params.customerid);
+	const data = await accountsService.getLedgerByCustomers(req.user.center_id, req.params.customer_id);
 
 	return responseForward(data, 'getLedgerByCustomers', res);
 });
@@ -41,7 +41,7 @@ const getPaymentsOverviewByCustomers = catchAsync(async (req, res) => {
 });
 
 const getPymtTransactionByCustomers = catchAsync(async (req, res) => {
-	const data = await accountsService.getPymtTransactionByCustomers(req.user.center_id, req.params.customerid);
+	const data = await accountsService.getPymtTransactionByCustomers(req.user.center_id, req.params.customer_id);
 
 	return responseForward(data, 'getPymtTransactionByCustomers', res);
 });

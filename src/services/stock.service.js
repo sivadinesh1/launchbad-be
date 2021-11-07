@@ -76,7 +76,7 @@ const insertToStock = async (product_id, mrp, available_stock, open_stock) => {
 	let todayYYMMDD = toTimeZoneFormat(upDate, 'YYYY-MM-DD');
 
 	let query = `
-	insert into stock (product_id, mrp, available_stock, open_stock, updateddate)
+	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
 	values ('${product_id}', '${mrp}', '${available_stock}', '${open_stock}' , '${todayYYMMDD}')`;
 
 	return promisifyQuery(query);

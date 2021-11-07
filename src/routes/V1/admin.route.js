@@ -26,7 +26,7 @@ router.route('/add-vendor').post(auth('getUsers'), adminController.addVendor);
 
 router.route('/add-brand').post(auth('getUsers'), adminController.addBrand);
 
-router.route('/get-customer-details/:customerid').get(auth('getUsers'), adminController.getCustomerDetails);
+router.route('/get-customer-details/:customer_id').get(auth('getUsers'), adminController.getCustomerDetails);
 
 router.route('/add-customer').post(auth('getUsers'), adminController.addCustomer);
 
@@ -40,19 +40,19 @@ router.route('/prod-exists/:pcode').get(auth('getUsers'), adminController.isProd
 
 router.route('/insert-customer-shipping-address').post(auth('getUsers'), adminController.addCustomerShippingAddress);
 
-router.route('/get-shipping-address/:customerid').get(auth('getUsers'), adminController.getCustomerShippingAddress);
+router.route('/get-shipping-address/:customer_id').get(auth('getUsers'), adminController.getCustomerShippingAddress);
 
 router.route('/update-customer-shipping-address/:id').put(auth('getUsers'), adminController.updateCustomerShippingAddress);
 
 router.route('/inactivate-csa').post(auth('getUsers'), adminController.inactivateCSA);
 
-router.route('/customer-discount/:customerid').get(auth('getUsers'), adminController.getCustomerDiscount);
+router.route('/customer-discount/:customer_id').get(auth('getUsers'), adminController.getCustomerDiscount);
 
-router.route('/all-customer-default-discounts/:customerid').get(auth('getUsers'), adminController.getAllCustomerDefaultDiscounts);
+router.route('/all-customer-default-discounts/:customer_id').get(auth('getUsers'), adminController.getAllCustomerDefaultDiscounts);
 
-router.route('/discounts-customer/:customerid').get(auth('getUsers'), adminController.getDiscountsByCustomer);
+router.route('/discounts-customer/:customer_id').get(auth('getUsers'), adminController.getDiscountsByCustomer);
 
-router.route('/discounts-customer-brands/:customerid').get(auth('getUsers'), adminController.getDiscountsByCustomerByBrand);
+router.route('/discounts-customer-brands/:customer_id').get(auth('getUsers'), adminController.getDiscountsByCustomerByBrand);
 
 router.route('/update-default-customer-discount').put(auth('getUsers'), adminController.updateDefaultCustomerDiscount);
 

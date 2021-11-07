@@ -16,7 +16,7 @@ const invoicePDF = async (requestBody, res) => {
 	let print_type = requestBody.print_type;
 	let print_ship_to = requestBody.print_ship_to;
 
-	// using saleid get SALE MASTER & SALE DETAILS
+	// using sale id get SALE MASTER & SALE DETAILS
 	let saleMaster = await getSalesMaster(sale_id);
 	let saleDetails = await getSalesDetails(sale_id);
 

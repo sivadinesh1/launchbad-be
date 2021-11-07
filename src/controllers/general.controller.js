@@ -29,7 +29,7 @@ const searchVendors = catchAsync(async (req, res) => {
 });
 
 const searchBrand = catchAsync(async (req, res) => {
-	const data = await brandsService.getSearchBrands(req.user.center_id, req.body.searchstr);
+	const data = await brandsService.getSearchBrands(req.user.center_id, req.body.search_text);
 
 	return responseForward(data, 'searchBrand', res);
 });
@@ -88,7 +88,7 @@ const deleteVendor = catchAsync(async (req, res) => {
 });
 
 const getBrandsMissingDiscountsByCustomer = catchAsync(async (req, res) => {
-	const data = await brandsService.getBrandsMissingDiscountsByCustomer(req.user.center_id, req.params.status, req.params.customerid);
+	const data = await brandsService.getBrandsMissingDiscountsByCustomer(req.user.center_id, req.params.status, req.params.customer_id);
 	return responseForward(data, 'getBrandsMissingDiscountsByCustomer', res);
 });
 
@@ -103,12 +103,12 @@ const addPartsDetailsEnquiry = catchAsync(async (req, res) => {
 });
 
 const getEnquiryById = catchAsync(async (req, res) => {
-	const data = await enquiryService.getEnquiryById(req.params.enquiryid);
+	const data = await enquiryService.getEnquiryById(req.params.enquiry_id);
 	return responseForward(data, 'getEnquiryById', res);
 });
 
 const getCustomerDetailsById = catchAsync(async (req, res) => {
-	const data = await enquiryService.getCustomerDetailsById(req.params.enquiryid);
+	const data = await enquiryService.getCustomerDetailsById(req.params.enquiry_id);
 	return responseForward(data, 'getCustomerDetailsById', res);
 });
 

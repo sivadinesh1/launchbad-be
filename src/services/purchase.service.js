@@ -350,13 +350,13 @@ const preparePurchaseDetail = async (center_id, product_item, newPK, prisma) => 
 function insertStock(k) {
 	todayYYMMDD = currentTimeInTimeZone('YYYY-MM-DD');
 	let query2 = `
-	insert into stock (product_id, mrp, available_stock, open_stock, updateddate)
+	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
 	values ('${k.product_id}', '${k.mrp}', '${k.quantity}', 0, '${todayYYMMDD}')`;
 
 	return new Promise(function (resolve, reject) {
 		pool.query(query2, function (err, data) {
 			if (err) {
-				return reject(new ErrorHandler('500', `Error insertStock in Purchasejs. ${query2}`, err), res);
+				return reject(new ErrorHandler('500', `Error insertStock in Purchase js. ${query2}`, err), res);
 			} else {
 				resolve(data.insertId);
 			}

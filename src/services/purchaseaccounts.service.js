@@ -153,12 +153,12 @@ const getPurchaseInvoiceByCenter = (center_id, from_date, to_date, vendor_id, se
 			vendor_payment p2
 		where 
 			pd.purchase_ref_id = p.id and 
-			pd.vend_pymt_ref_id = p2.id and 
+			pd.vendor_payment_ref_id = p2.id and 
 			p2.is_cancelled = 'NO') as payment_status,
 	IFNULL((select sum(pd.applied_amount) from vendor_payment_detail pd, vendor_payment p2
-		where pd.purchase_ref_id = p.id and pd.vend_pymt_ref_id = p2.id and p2.is_cancelled = 'NO'), 0) as paid_amount,
+		where pd.purchase_ref_id = p.id and pd.vendor_payment_ref_id = p2.id and p2.is_cancelled = 'NO'), 0) as paid_amount,
 	(p.net_total - IFNULL((select sum(pd.applied_amount) from vendor_payment_detail pd, vendor_payment p2
-		where pd.purchase_ref_id = p.id and pd.vend_pymt_ref_id = p2.id and p2.is_cancelled = 'NO'), 0)) as 
+		where pd.purchase_ref_id = p.id and pd.vendor_payment_ref_id = p2.id and p2.is_cancelled = 'NO'), 0)) as 
 		bal_amount
 	from purchase p, vendor v
 	where
@@ -246,16 +246,16 @@ const addVendorPaymentMaster = (cloneReq, pymtNo, insertValues, res) => {
 		insertValues.received_amount,
 		cloneReq.vendor.credit_amt,
 		toTimeZoneFormat(insertValues.received_date, 'YYYY-MM-DD'),
-		insertValues.pymt_mode,
+		insertValues.payment_mode,
 		insertValues.bank_ref,
-		insertValues.pymt_ref,
+		insertValues.payment_ref,
 		cloneReq.bank_id,
 		cloneReq.bank_name,
 		cloneReq.created_by,
 	];
 
 	let query = `
-		INSERT INTO vendor_payment ( center_id, vendor_id, vendor_payment_no, payment_now_amt, advance_amt_used, payment_date, pymt_mode_ref_id, bank_ref, pymt_ref, last_updated, bank_id, bank_name, created_by)
+		INSERT INTO vendor_payment ( center_id, vendor_id, vendor_payment_no, payment_now_amt, advance_amt_used, payment_date, payment_mode_ref_id, bank_ref, payment_ref, last_updated, bank_id, bank_name, created_by)
 		VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, '${today}', ?, ?, ? ) `;
 
 	return new Promise(function (resolve, reject) {
@@ -369,14 +369,14 @@ const getVendorPaymentsByCenter = (requestBody) => {
 	select 
 	c.name as vendor_name,
 	c.id as vendor_id,
-	pymt_mode_name as pymt_mode_name,
+	payment_mode_name as payment_mode_name,
 	p.bank_ref as bank_ref,
-	p.pymt_ref as pymt_ref,
+	p.payment_ref as payment_ref,
 	p.vendor_payment_no as payment_no,
  DATE_FORMAT(STR_TO_DATE(p.payment_date,'%d-%m-%Y'), '%d-%b-%Y') as payment_date,
 	p.advance_amt_used as advance_amt_used,
-	pymt_mode_ref_id as pymt_mode_ref_id,
-	pymt_ref as pymt_ref,
+	payment_mode_ref_id as payment_mode_ref_id,
+	payment_ref as payment_ref,
 	last_updated as last_updated,
 	s.invoice_no as invoice_no, 
 	DATE_FORMAT(STR_TO_DATE(s.invoice_date,'%d-%m-%Y'), '%d-%b-%Y') as invoice_date,
@@ -388,9 +388,9 @@ const getVendorPaymentsByCenter = (requestBody) => {
 				 vendor c,
 				 payment_mode pm
 				 where 
-				 pm.id = p.pymt_mode_ref_id and
+				 pm.id = p.payment_mode_ref_id and
 				 c.id = p.vendor_id and
-				 p.id = pd.vend_pymt_ref_id and
+				 p.id = pd.vendor_payment_ref_id and
 				 pd.purchase_ref_id = s.id and
 				 p.center_id = '${center_id}' `;
 
@@ -440,11 +440,11 @@ const getPurchaseInvoiceByVendors = (requestBody) => {
 			END)  as payment_status
 	
 	from vendor_payment_detail pd, vendor_payment p2
-	where pd.purchase_ref_id = s.id and pd.vend_pymt_ref_id = p2.id and p2.is_cancelled = 'NO') as payment_status,
+	where pd.purchase_ref_id = s.id and pd.vendor_payment_ref_id = p2.id and p2.is_cancelled = 'NO') as payment_status,
 	IFNULL((select sum(pd.applied_amount) from vendor_payment_detail pd, vendor_payment p2
-	where pd.purchase_ref_id = s.id and pd.vend_pymt_ref_id = p2.id and p2.is_cancelled = 'NO'), 0) as paid_amount,
+	where pd.purchase_ref_id = s.id and pd.vendor_payment_ref_id = p2.id and p2.is_cancelled = 'NO'), 0) as paid_amount,
 	(s.net_total - IFNULL((select sum(pd.applied_amount) from vendor_payment_detail pd, vendor_payment p2
-	where pd.purchase_ref_id = s.id and pd.vend_pymt_ref_id = p2.id and p2.is_cancelled = 'NO'), 0)) as 
+	where pd.purchase_ref_id = s.id and pd.vendor_payment_ref_id = p2.id and p2.is_cancelled = 'NO'), 0)) as 
 	bal_amount
 	from purchase s, vendor c
 	where
@@ -483,14 +483,14 @@ const getPaymentsByVendors = (requestBody) => {
 	let invoice_no = requestBody.invoice_no;
 
 	let query = ` select p.*, pd.applied_amount as applied_amount, s.invoice_no as invoice_no, 
-	s.invoice_date as invoice_date, s.net_total as invoice_amount,  pm.pymt_mode_name as pymt_mode from 
+	s.invoice_date as invoice_date, s.net_total as invoice_amount,  pm.payment_mode_name as payment_mode from 
         vendor_payment p,
         vendor_payment_detail pd,
 				purchase s,
 				payment_mode pm
 				where 
-				pm.id = p.pymt_mode_ref_id and
-        p.id = pd.vend_pymt_ref_id and
+				pm.id = p.payment_mode_ref_id and
+        p.id = pd.vendor_payment_ref_id and
         pd.purchase_ref_id = s.id and
         p.center_id =   '${center_id}' `;
 
@@ -523,20 +523,20 @@ const getPymtTransactionByVendors = (center_id, vendor_id, callback) => {
 		p.payment_now_amt as payment_now_amt,
 		p.advance_amt_used as advance_amt_used,
 		str_to_date(p.payment_date, '%d-%m-%YYYY') as payment_date,
-		p.pymt_mode_ref_id as pymt_mode_ref_id,
+		p.payment_mode_ref_id as payment_mode_ref_id,
 		p.bank_ref as bank_ref,
-		p.pymt_ref as pymt_ref,
+		p.payment_ref as payment_ref,
 		p.is_cancelled as is_cancelled,
 		p.cancelled_date as cancelled_date,
 		p.created_by as created_by,
 		p.last_updated as last_updated,
 	
-	pm.pymt_mode_name as pymt_mode
+	pm.payment_mode_name as payment_mode
  	from
   	vendor_payment p,
 		vendor_payment_mode pm
 	where 
-		pm.id = p.pymt_mode_ref_id and
+		pm.id = p.payment_mode_ref_id and
 		p.center_id = '${center_id}' and p.vendor_id = '${vendor_id}'
 	order by last_updated desc `;
 
@@ -588,7 +588,7 @@ const addVendorPaymentReceived = async (requestBody) => {
 };
 
 function processItems(cloneReq, newPK, purchase_ref_id, received_amount) {
-	let sql = `INSERT INTO vendor_payment_detail(vend_pymt_ref_id, purchase_ref_id, applied_amount) VALUES
+	let sql = `INSERT INTO vendor_payment_detail(vendor_payment_ref_id, purchase_ref_id, applied_amount) VALUES
 		( '${newPK}', '${purchase_ref_id}', '${received_amount}' )`;
 
 	let payment_details_tbl_promise = new Promise(function (resolve, reject) {
@@ -661,7 +661,7 @@ const addBulkVendorPaymentReceived = async (requestBody) => {
 
 function processBulkItems(cloneReq, newPK, invoice_split) {
 	invoice_split.forEach((e) => {
-		let sql = `INSERT INTO vendor_payment_detail(vend_pymt_ref_id, purchase_ref_id, applied_amount) VALUES
+		let sql = `INSERT INTO vendor_payment_detail(vendor_payment_ref_id, purchase_ref_id, applied_amount) VALUES
 		( '${newPK}', '${e.id}', '${e.applied_amount}' )`;
 
 		let payment_details_tbl_promise = new Promise(function (resolve, reject) {

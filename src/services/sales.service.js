@@ -570,13 +570,13 @@ async function updateSequenceGenerator(cloneReq) {
 		query = `
 		update financial_year set inv_seq = inv_seq + 1 where 
 		center_id = '${cloneReq.center_id}' and  
-		CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
+		CURDATE() between start_date and end_date `;
 	} else if (cloneReq.invoice_type === 'stockIssue') {
 		query = `		
 	update financial_year set 
 	stock_issue_seq = @stock_issue_seq:= stock_issue_seq + 1 where 
  center_id = '${cloneReq.center_id}' and  
- CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') LIMIT 1  `;
+ CURDATE() between start_date and end_date LIMIT 1  `;
 	}
 
 	return await promisifyQuery(query);
@@ -593,41 +593,53 @@ const convertSale = async (requestBody) => {
 	let customer_id = requestBody.customer_id;
 	let net_total = requestBody.net_total;
 
-	let today = currentTimeInTimeZone('DD-MM-YYYY');
+	let today = currentTimeInTimeZone('YYYY-MM-DD');
 
-	// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
-	await updateSequenceGenerator({
-		invoice_type: 'gstInvoice',
-		center_id: center_id,
-		invoice_date: today,
-	});
-	let invNo = await getSequenceNo({
-		invoice_type: 'gstInvoice',
-		center_id: center_id,
-		invoice_date: today,
-	});
+	try {
+		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
+		const status = await prisma.$transaction(async (prisma) => {
+			let result = await financialYearRepoUpdateInvoiceSequence(center_id, prisma);
+			invNo = formatSequenceNumber(result.inv_seq);
 
-	let query = ` update sale set invoice_no = '${invNo}', invoice_type = "gstInvoice", status = "C", stock_issue_ref = '${old_invoice_no}', revision = '1',
+			// await updateSequenceGenerator({
+			// 	invoice_type: 'gstInvoice',
+			// 	center_id: center_id,
+			// 	invoice_date: today,
+			// });
+			// let invNo = await getSequenceNo({
+			// 	invoice_type: 'gstInvoice',
+			// 	center_id: center_id,
+			// 	invoice_date: today,
+			// });
+
+			let query = ` update sale set invoice_no = '${invNo}', invoice_type = "gstInvoice", status = "C", stock_issue_ref = '${old_invoice_no}', revision = '1',
 	invoice_date = '${today}', 
 	stock_issue_date_ref =
 	'${toTimeZoneFormat(old_stock_issued_date, 'YYYY-MM-DD')}'
 	
 	where id = ${sales_id} `;
 
-	let data = promisifyQuery(query);
-	await addSaleLedgerRecord(
-		{
-			center_id: center_id,
-			customer_ctrl: { id: customer_id },
-			net_total: net_total,
-		},
-		sales_id,
-	);
+			console.log('query: ' + query);
 
-	return {
-		result: 'success',
-		invoice_no: invNo,
-	};
+			let data = promisifyQuery(query);
+			await addSaleLedgerRecord(
+				{
+					center_id: center_id,
+					customer_ctrl: { id: customer_id },
+					net_total: net_total,
+				},
+				sales_id,
+			);
+
+			return {
+				result: 'success',
+				invoice_no: invNo,
+			};
+		});
+		return status;
+	} catch (error) {
+		console.log('Error while inserting Sale ' + error);
+	}
 };
 
 const deleteSale = async (sale_id) => {
