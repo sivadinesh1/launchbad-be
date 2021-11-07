@@ -41,7 +41,7 @@ const editPurchaseDetail = async (purchase, prisma) => {
 	try {
 		const result = await prisma.purchase_detail.update({
 			where: {
-				id: Number(purchase.id),
+				id: Number(purchase.pur_det_id),
 			},
 			data: {
 				center_id: Number(purchase.center_id),

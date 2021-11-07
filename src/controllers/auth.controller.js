@@ -14,12 +14,9 @@ const updateCenterForSuperAdmin = catchAsync(async (req, res) => {
 const login = catchAsync(async (req, res) => {
 	const data = await authService.login(req.body);
 
-	console.log('object1' + JSON.stringify(data));
 	let { role, center_id, id, timezone } = data;
 
 	const token = await authService.generateToken(id, center_id, role, timezone);
-
-	console.log('object.....' + token);
 
 	await setTokenCookie(res, token);
 
@@ -64,7 +61,6 @@ const fetchAccessLogs = catchAsync(async (req, res) => {
 });
 
 const fetchUser = catchAsync(async (req, res) => {
-	console.log('dinesh!!');
 	const data = await userService.findOne(req.user.id);
 
 	return responseForward(data, 'fetchUser', res);

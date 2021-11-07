@@ -27,7 +27,6 @@ const insertSale = catchAsync(async (req, res) => {
 
 	const data = await salesService.insertSale(saleMaster, saleDetails);
 
-	console.log('in ctrl >> ' + data);
 	return responseForward(data, 'insertSale>>', res);
 });
 

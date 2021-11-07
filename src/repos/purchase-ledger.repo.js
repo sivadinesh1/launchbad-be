@@ -3,7 +3,6 @@ const { prisma } = require('../config/prisma');
 const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
 const addPurchaseLedgerEntry = async (purchase_ledger, prisma) => {
-	console.log('dinesh purchase_ledger ' + JSON.stringify(purchase_ledger));
 	try {
 		const result = await prisma.purchase_ledger.create({
 			data: {
@@ -48,7 +47,14 @@ const getVendorBalance = async (vendor_id, center_id, prisma) => {
 	return result.length === 0 ? 0 : result[0].balance_amt;
 };
 
-const getCreditAmtForInvoiceReversal = async (vendor_id, center_id, invoice_ref_id, prisma) => {
+// IFNULL((select credit_amt from (select (credit_amt) as credit_amt
+// FROM purchase_ledger
+// where center_id = '${insertValues.centerid}'  and vendor_id = '${insertValues.vendorctrl.id}'
+// and ledger_detail = 'Invoice' and purchase_ref_id = '${purchase_ref_id}'
+// ORDER BY  id DESC
+// LIMIT 1) a), 0),
+
+const getCreditAmtForPurchaseReversal = async (vendor_id, center_id, purchase_ref_id, prisma) => {
 	try {
 		const result = await prisma.purchase_ledger.findMany({
 			select: {
@@ -57,30 +63,30 @@ const getCreditAmtForInvoiceReversal = async (vendor_id, center_id, invoice_ref_
 			where: {
 				vendor_id: Number(vendor_id),
 				center_id: Number(center_id),
-				invoice_ref_id: Number(invoice_ref_id),
-				ledger_detail: 'Invoice',
+				purchase_ref_id: Number(purchase_ref_id),
+				ledger_detail: 'purchase',
 			},
 
 			orderBy: {
 				id: 'desc',
 			},
+			take: 1,
 		});
 
-		console.log('dinesh cc ' + bigIntToString(result));
 		return bigIntToString(result[0].credit_amt);
 	} catch (error) {
-		console.log('error :: purchase-ledger.repo.js getCreditAmtForInvoiceReversal: ' + error);
+		console.log('error :: purchase-ledger.repo.js getCreditAmtForPurchaseReversal: ' + error);
 		throw error;
 	}
 };
 
-const updatePurchaseLedgerVendorChange = async (center_id, invoice_ref_id, old_vendor_id, prisma) => {
+const updatePurchaseLedgerVendorChange = async (center_id, purchase_ref_id, old_vendor_id, prisma) => {
 	try {
 		const result = await prisma.purchase_ledger.delete({
 			where: {
 				center_id: center_id,
 				vendor_id: old_vendor_id,
-				invoice_ref_id: invoice_ref_id,
+				purchase_ref_id,
 			},
 		});
 
@@ -94,6 +100,6 @@ const updatePurchaseLedgerVendorChange = async (center_id, invoice_ref_id, old_v
 module.exports = {
 	addPurchaseLedgerEntry,
 	getVendorBalance,
-	getCreditAmtForInvoiceReversal,
+	getCreditAmtForPurchaseReversal,
 	updatePurchaseLedgerVendorChange,
 };

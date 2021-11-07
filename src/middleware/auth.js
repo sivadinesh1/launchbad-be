@@ -11,7 +11,7 @@ const auth =
 		try {
 			let user = JWT.verify(cCookie['authToken'], process.env.ACCESS_TOKEN_SECRET);
 			req.user = user;
-			console.log('user:: ' + JSON.stringify(user));
+			//console.log('user:: ' + JSON.stringify(user));
 			setTimezone(user.timezone);
 
 			next();

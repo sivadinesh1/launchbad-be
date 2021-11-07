@@ -61,10 +61,6 @@ const login = async (requestBody) => {
 	const [username, password] = Object.values(requestBody);
 	let { center_id: center_id, userpass, id, ...user } = await checkUsernameExists(username, '');
 
-	console.log('user >> ', JSON.stringify(user));
-
-	console.log('user >> ', user.center.name);
-
 	if (user !== null && user.length === 0) {
 		return { result: 'USER_NOT_FOUND' };
 	}

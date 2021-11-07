@@ -68,7 +68,6 @@ const getSalesDetails = async (sales_id) => {
 };
 
 const insertSale = async (saleMaster, saleDetails) => {
-	console.log('check timezone' + getTimezone());
 	try {
 		const status = await prisma.$transaction(async (prisma) => {
 			// 1. Update Sequence Generator and form a formatted sale invoice
@@ -78,6 +77,7 @@ const insertSale = async (saleMaster, saleDetails) => {
 			if (saleMaster.status === 'C' && saleMaster.revision === 0 && saleMaster.inv_gen_mode === 'A') {
 				let result = await financialYearRepoUpdateInvoiceSequence(saleMaster.center_id, prisma);
 				invNo = formatSequenceNumber(result.inv_seq);
+				saleMaster.invoice_no = invNo;
 			} else if (
 				// draft or stock issue
 				saleMaster.status === 'D' &&
@@ -86,7 +86,9 @@ const insertSale = async (saleMaster, saleDetails) => {
 				saleMaster.invoice_no.startsWith('SI') === false
 			) {
 				let result = await financialYearRepoUpdateDraftInvoiceSequenceGenerator(saleMaster.center_id, prisma);
-				invNo = formatSequenceNumber(result.draft_inv_seq);
+				invNo = formatSequenceNumber(result.draft_inv_seq, 'D/');
+				saleMaster.invoice_no = invNo;
+				console.log('draft invoice ' + invNo);
 			}
 
 			// sale master insert/update
@@ -99,7 +101,10 @@ const insertSale = async (saleMaster, saleDetails) => {
 
 			let detailsInserted = await insertSaleDetails(saleMaster, saleDetails, sale_master, prisma);
 
-			if (saleMaster.status === 'C' && saleMaster.id === null) {
+			if (
+				(saleMaster.status === 'C' && saleMaster.id === null) ||
+				(saleMaster.status === 'C' && saleMaster.id !== null && saleMaster.revision === 0)
+			) {
 				let result = await prepareAndAddSaleLedgerEntry(sale_master, prisma);
 				let result991 = await updateCustomerBalanceAmt(sale_master, prisma);
 			} else if (saleMaster.status === 'C' && saleMaster.id !== null) {
@@ -121,8 +126,8 @@ const insertSale = async (saleMaster, saleDetails) => {
 				}
 				let result991 = await updateCustomerBalanceAmt(sale_master, prisma);
 			}
-			console.log('when is it called::');
-			return { status: 'success', id: sale_master.id, invoice_no: invNo };
+
+			return { status: 'success', id: sale_master.id, invoice_no: saleMaster.invoice_no };
 		});
 		return status;
 	} catch (error) {
@@ -131,18 +136,13 @@ const insertSale = async (saleMaster, saleDetails) => {
 };
 
 async function insertSaleDetails(saleMaster, saleDetails, sale_master, prisma) {
-	// for await (let i of randomDelays(10, 1000)) console.log(i);
-
 	for await (const item of saleDetails) {
-		// for (const item of saleDetails) {
-		let result3 = '';
-
 		let result;
-		console.log('item.id' + JSON.stringify(item));
+
 		if (item.id === null || item.id === 0) {
-			result = await addSaleDetail(item, sale_master.id, prisma);
+			result = await addSaleDetail(item, sale_master.id, sale_master.updated_by, prisma);
 		} else {
-			result = await editSaleDetail(item, sale_master.id, prisma);
+			result = await editSaleDetail(item, sale_master.id, sale_master.updated_by, prisma);
 		}
 
 		// after sale details is updated, then update stock (as this is sale, reduce available stock) tbl & product tbl
@@ -181,9 +181,6 @@ function prepareAndAddSaleLedgerEntry(sale_master, prisma) {
 		try {
 			let previousBalance = await SaleLedgerRepo.getCustomerBalance(sale_master.customer_id, sale_master.center_id, prisma);
 
-			console.log('object prev bal: ' + previousBalance);
-			console.log('object sale_master.net_total bal: ' + sale_master.net_total);
-
 			saleLedger.center_id = sale_master.center_id;
 			saleLedger.customer_id = sale_master.customer_id;
 			saleLedger.invoice_ref_id = sale_master.id;
@@ -204,7 +201,6 @@ function prepareAndAddSaleLedgerEntry(sale_master, prisma) {
 }
 
 function prepareSaleLedgerEntryAfterReversal(sale_master, prisma) {
-	console.log('add:: ' + JSON.stringify(sale_master));
 	return new Promise(async (resolve, reject) => {
 		let saleLedger = Ledger;
 		try {
@@ -233,14 +229,13 @@ async function prepareAndAddSaleLedgerReversalEntry(sale_master, prisma) {
 		let saleLedger = Ledger;
 		try {
 			let previousBalance = await SaleLedgerRepo.getCustomerBalance(sale_master.customer_id, sale_master.center_id, prisma);
-			console.log('dinesh 11y ' + previousBalance);
+
 			let credit_amt = await SaleLedgerRepo.getCreditAmtForInvoiceReversal(
 				sale_master.customer_id,
 				sale_master.center_id,
 				sale_master.id,
 				prisma,
 			);
-			console.log('dinesh 11x ' + credit_amt);
 
 			saleLedger.center_id = sale_master.center_id;
 			saleLedger.customer_id = sale_master.customer_id;
@@ -287,8 +282,6 @@ async function prepareAndAddCustomerChangeAudit(saleMaster, sale_master, prisma)
 
 async function prepareItemHistory(item, sale_id, sale_detail_id, saleMaster) {
 	const product_count = await stockCount(item.product_id, prisma);
-
-	console.log('product_count', product_count);
 
 	// to avoid duplicate entry of history items when editing completed records
 	// with same qty. (status = 'c'). If status=C & k.qty - k.old_val !== 0 then updateHistoryTable
@@ -497,9 +490,9 @@ const duplicateinvoice_noCheck = (invoice_no, center_id) => {
 
 const deleteSalesDetails = async (requestBody) => {
 	let center_id = requestBody.center_id;
-	let id = requestBody.id;
-	let sales_id = requestBody.sales_id;
-	let qty = requestBody.qty;
+	let sale_det_id = requestBody.id;
+	let sale_id = requestBody.sale_id;
+	let quantity = requestBody.quantity;
 	let product_id = requestBody.product_id;
 	let stock_id = requestBody.stock_id;
 	let mrp = requestBody.mrp;
@@ -511,13 +504,13 @@ const deleteSalesDetails = async (requestBody) => {
 		let query = `
 		INSERT INTO audit (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
 		VALUES
-			('Sales', '${sales_id}', '${id}', 'delete', 
+			('Sales', '${sale_id}', '${sale_det_id}', 'delete', 
 			(SELECT CONCAT('[{', result, '}]') as final
 			FROM (
 				SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', sale_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"qty": "', quantity, '"')) SEPARATOR '},{') as result
 				FROM (
 					SELECT sale_id, product_id, quantity
-					FROM sale_detail where id = '${id}'
+					FROM sale_detail where id = '${sale_det_id}'
 				) t1
 			) t2)
 			, '', '${today}', '${center_id}'
@@ -528,10 +521,10 @@ const deleteSalesDetails = async (requestBody) => {
 	}
 
 	// step 2
-	let deletePromise = deleteSaleDetail(id);
+	let deletePromise = deleteSaleDetail(sale_det_id);
 
 	// step 3 - Update Stock
-	let stockUpdatePromise = await updateStockViaId(qty, product_id, stock_id, 'add');
+	let stockUpdatePromise = await updateStockViaId(quantity, product_id, stock_id, 'add');
 
 	// step 4 - update item history table. as items are deleted, items has to be reversed
 	if (stockUpdatePromise.affectedRows === 1) {
@@ -541,11 +534,11 @@ const deleteSalesDetails = async (requestBody) => {
 			product_id,
 			'0',
 			'0',
-			sales_id,
+			sale_id,
 			id,
 			'SAL',
 			`Deleted MRP - ${mrp}`,
-			qty,
+			quantity,
 			'0', // sale_return_id
 			'0', // sale_return_det_id
 			'0', // purchase_return_id
@@ -618,8 +611,6 @@ const convertSale = async (requestBody) => {
 	'${toTimeZoneFormat(old_stock_issued_date, 'YYYY-MM-DD')}'
 	
 	where id = ${sales_id} `;
-
-			console.log('query: ' + query);
 
 			let data = promisifyQuery(query);
 			await addSaleLedgerRecord(

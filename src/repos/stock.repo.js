@@ -47,8 +47,6 @@ const stockCorrection = async (stock) => {
 			},
 		});
 
-		console.log('dinesh *2* ' + JSON.stringify(result));
-
 		return result;
 	} catch (error) {
 		console.log('error :: stock.repo.js ' + error);

@@ -6,8 +6,6 @@ const { toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery, bigIntToString 
 // insert row in customer tbl
 const insertCustomer = async (insertValues) => {
 	const data = await insertCustomerBlock(insertValues);
-	//	console.log('dddd' + JSON.stringify(data));
-	console.log('dddd' + data.id);
 
 	let taxSlabArr = [
 		{

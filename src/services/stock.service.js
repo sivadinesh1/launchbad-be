@@ -226,8 +226,6 @@ const searchPurchase = async (requestBody) => {
 
 	sql = sql + `order by str_to_date(received_date,  '%d-%m-%Y %T') ${order}`;
 
-	console.log('dinesh :: ' + sql);
-
 	return promisifyQuery(sql);
 };
 
@@ -382,9 +380,9 @@ pd.purchase_id = '${purchase_id}'
 
 const deletePurchaseDetails = async (requestBody) => {
 	let center_id = requestBody.center_id;
-	let id = requestBody.id;
+	let id = requestBody.pur_det_id;
 	let purchase_id = requestBody.purchase_id;
-	let qty = requestBody.qty;
+	let quantity = requestBody.quantity;
 	let product_id = requestBody.product_id;
 	let stock_id = requestBody.stock_id;
 	let mrp = requestBody.mrp;
@@ -397,9 +395,9 @@ const deletePurchaseDetails = async (requestBody) => {
 		('Purchase', '${purchase_id}', '${id}', 'delete', 
 		(SELECT CONCAT('[{', result, '}]') as final
 		FROM (
-			SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"purchaseId": ', purchase_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"qty": "', qty, '"')) SEPARATOR '},{') as result
+			SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"purchaseId": ', purchase_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"quantity": "', quantity, '"')) SEPARATOR '},{') as result
 			FROM (
-				SELECT purchase_id, product_id, qty
+				SELECT purchase_id, product_id, quantity
 				FROM purchase_detail where id = '${id}'
 			) t1
 		) t2)
@@ -419,7 +417,7 @@ const deletePurchaseDetails = async (requestBody) => {
 	//
 
 	// step 3
-	let stockUpdatePromise = await updateStockViaId(qty, product_id, stock_id, 'minus');
+	let stockUpdatePromise = await updateStockViaId(quantity, product_id, stock_id, 'minus');
 
 	// step 4 , reverse item history table entries.
 
@@ -433,7 +431,7 @@ const deletePurchaseDetails = async (requestBody) => {
 		'0', //sale_det_id
 		'PUR',
 		`Deleted MRP - ${mrp}`,
-		qty, //txn_qty
+		quantity, //txn_qty
 		'0', // sale_return_id
 		'0', // sale_return_det_id
 		'0', // purchase_return_id
@@ -488,9 +486,6 @@ pd.purchase_id = '${purchase_id}'
 }
 
 const deletePurchaseDetailsRecs = async (purchaseDetails, purchase_id) => {
-	// check sale_id
-	let sale_id;
-
 	let idx = 0;
 
 	purchaseDetails.forEach(async (element, index) => {
@@ -500,16 +495,16 @@ const deletePurchaseDetailsRecs = async (purchaseDetails, purchase_id) => {
 		let auditQuery = `
 		INSERT INTO audit (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
 		VALUES
-			('Purchase', '${purchase_id}', '${element.id}', 'delete', 
+			('Purchase', '${purchase_id}', '${element.pur_det_id}', 'delete', 
 			(SELECT CONCAT('[{', result, '}]') as final
 			FROM (
 				SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"purchaseId": ', purchase_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"qty": "', qty, '"')) SEPARATOR '},{') as result
 				FROM (
 					SELECT purchase_id, product_id, qty
-					FROM purchase_detail where id = '${element.id}'
+					FROM purchase_detail where id = '${element.pur_det_id}'
 				) t1
 			) t2)
-			, '', '${today}', (select center_id from sale where id = '${sale_id}')
+			, '', '${today}', (select center_id from purchase where id = '${purchase_id}')
 			) `;
 
 		// step 1

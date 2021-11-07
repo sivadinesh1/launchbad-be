@@ -78,7 +78,7 @@ const vendorRepoSearchVendors = async (center_id, search_text) => {
 				state: true,
 			},
 		});
-		// console.log('object' + bigIntToString(filteredBrands));
+
 		return bigIntToString(filteredVendors);
 	} catch (error) {
 		console.log('error :: vendor.repo.js ' + error);

@@ -109,8 +109,16 @@ add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,
 add column updated_by bigint;
-update discount set startdate = (select date_format(str_to_date(startdate,'%d-%m-%Y'),'%Y-%m-%d'))
-where startdate != '';
+
+
+update customer_shipping_address csa  set
+center_id = (select c.center_id from 
+customer c
+where c.id = csa.customer_id 
+);
+
+
+update discount set startdate = (select date_format(str_to_date(startdate,'%d-%m-%Y'),'%Y-%m-%d')) where startdate != '';
 
 update discount set startdate = '9999-01-20' where startdate = '';
 
@@ -146,10 +154,18 @@ change giveqty give_quantity int(11),
 change createddate createdAt datetime,
 change updateddate updatedAt datetime,
 change updatedby updated_by bigint,
-change createdby created_by bigint ;
+change createdby created_by bigint;
 
 alter table enquiry_detail
-add column center_id bigint after id ;RENAME TABLE financialyear TO financial_year;
+add column center_id bigint after id;
+
+
+update enquiry_detail ed  set
+center_id = (select e.center_id from 
+enquiry e
+where e.id = ed.enquiry_id 
+);
+RENAME TABLE financialyear TO financial_year;
 
 
 ALTER TABLE financial_year 
@@ -209,7 +225,17 @@ add column updated_by bigint;alter table ledger
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,
-add column updated_by bigint;
+add column updated_by bigint;drop table load_stock;
+drop table load_stock1;
+drop table load_stock2;
+drop table salejan08;
+
+drop table stock1;
+
+drop table stock2;
+
+drop table stockjan08;
+drop table sale_detailjan08;
 update payment set pymt_date = (select date_format(str_to_date(pymt_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where pymt_date != '';
 
@@ -248,6 +274,22 @@ add column updated_by bigint;
 
 ALTER TABLE payment_detail 
 change pymt_ref_id payment_ref_id bigint;
+
+alter table payment_detail
+add column center_id bigint;
+
+
+update payment_detail pd  set
+center_id = (select p.center_id from 
+payment p
+where p.id = pd.payment_ref_id 
+);
+
+
+
+
+
+
 #payment_mode
 
 ALTER TABLE payment_mode 
@@ -352,6 +394,8 @@ update purchase set lr_date = '9999-01-20' where lr_date = '';
 ALTER TABLE purchase 
 modify lr_date date;
 
+update purchase set lr_date = null where lr_date = '9999-01-20';
+
 update purchase set received_date = (select date_format(str_to_date(received_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where received_date != '';
 
@@ -359,6 +403,8 @@ update purchase set received_date = '9999-01-20' where received_date = '';
 
 ALTER TABLE purchase 
 modify received_date date;
+
+update purchase set received_date = null where received_date = '9999-01-20';
 
 update purchase set order_date = (select date_format(str_to_date(order_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where order_date != '';
@@ -382,7 +428,7 @@ change igst igs_t decimal(10,2),
 change roundoff round_off decimal(10,2)
 ;
 
-ALTER TABLE product CHANGE unom uom varchar(50);
+
 
 update purchase set stock_inwards_datetime =
 (select date_format(str_to_date(stock_inwards_datetime,'%d-%m-%Y %k:%i:%s'),'%Y-%m-%d %k:%i:%s'));

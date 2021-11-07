@@ -73,7 +73,6 @@ function processItems(cloneReq, newPK, sale_ref_id, received_amount) {
 // ***** OLD **** //
 
 const addSaleLedgerRecord = async (insertValues, invoice_ref_id) => {
-	console.log('ssssssssss');
 	try {
 		let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 

@@ -2,7 +2,7 @@ const { prisma } = require('../config/prisma');
 
 const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
 
-const addSaleDetail = async (saleDetail, sale_id, prisma) => {
+const addSaleDetail = async (saleDetail, sale_id, updated_by, prisma) => {
 	try {
 		const result = await prisma.sale_detail.create({
 			data: {
@@ -28,8 +28,8 @@ const addSaleDetail = async (saleDetail, sale_id, prisma) => {
 				after_tax_value: saleDetail.after_tax_value,
 				total_value: saleDetail.total_value,
 				unit_price: saleDetail.unit_price,
-				created_by: saleDetail.updated_by,
-				updated_by: saleDetail.updated_by,
+				created_by: updated_by,
+				updated_by: updated_by,
 			},
 		});
 
@@ -40,7 +40,7 @@ const addSaleDetail = async (saleDetail, sale_id, prisma) => {
 	}
 };
 
-const editSaleDetail = async (saleDetail, sale_id, prisma) => {
+const editSaleDetail = async (saleDetail, sale_id, updated_by, prisma) => {
 	try {
 		const result = await prisma.sale_detail.update({
 			where: {
@@ -68,8 +68,8 @@ const editSaleDetail = async (saleDetail, sale_id, prisma) => {
 				after_tax_value: saleDetail.after_tax_value,
 				total_value: saleDetail.total_value,
 				unit_price: saleDetail.unit_price,
-				created_by: saleDetail.updated_by,
-				updated_by: saleDetail.updated_by,
+				created_by: updated_by,
+				updated_by: updated_by,
 			},
 		});
 

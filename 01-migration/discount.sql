@@ -1,6 +1,5 @@
 
-update discount set startdate = (select date_format(str_to_date(startdate,'%d-%m-%Y'),'%Y-%m-%d'))
-where startdate != '';
+update discount set startdate = (select date_format(str_to_date(startdate,'%d-%m-%Y'),'%Y-%m-%d')) where startdate != '';
 
 update discount set startdate = '9999-01-20' where startdate = '';
 

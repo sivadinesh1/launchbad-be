@@ -57,7 +57,7 @@ const getCreditAmtForInvoiceReversal = async (customer_id, center_id, invoice_re
 				customer_id: Number(customer_id),
 				center_id: Number(center_id),
 				invoice_ref_id: Number(invoice_ref_id),
-				ledger_detail: 'Invoice',
+				ledger_detail: 'invoice',
 			},
 
 			orderBy: {
@@ -65,8 +65,8 @@ const getCreditAmtForInvoiceReversal = async (customer_id, center_id, invoice_re
 			},
 		});
 
-		console.log('dinesh cc ' + bigIntToString(result));
-		return bigIntToString(result[0].credit_amt);
+		//let result = bigIntToString(result);
+		return result === '' ? 0 : result[0].credit_amt;
 	} catch (error) {
 		console.log('error :: sale-ledger.repo.js getCreditAmtForInvoiceReversal: ' + error);
 		throw error;

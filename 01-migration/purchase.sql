@@ -18,6 +18,8 @@ update purchase set lr_date = '9999-01-20' where lr_date = '';
 ALTER TABLE purchase 
 modify lr_date date;
 
+update purchase set lr_date = null where lr_date = '9999-01-20';
+
 update purchase set received_date = (select date_format(str_to_date(received_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where received_date != '';
 
@@ -25,6 +27,8 @@ update purchase set received_date = '9999-01-20' where received_date = '';
 
 ALTER TABLE purchase 
 modify received_date date;
+
+update purchase set received_date = null where received_date = '9999-01-20';
 
 update purchase set order_date = (select date_format(str_to_date(order_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where order_date != '';
@@ -48,7 +52,7 @@ change igst igs_t decimal(10,2),
 change roundoff round_off decimal(10,2)
 ;
 
-ALTER TABLE product CHANGE unom uom varchar(50);
+
 
 update purchase set stock_inwards_datetime =
 (select date_format(str_to_date(stock_inwards_datetime,'%d-%m-%Y %k:%i:%s'),'%Y-%m-%d %k:%i:%s'));

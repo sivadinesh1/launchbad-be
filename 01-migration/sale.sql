@@ -52,8 +52,7 @@ ALTER TABLE sale CHANGE roundoff round_off decimal(10,2);
 
 ALTER TABLE sale  DROP COLUMN tax_applicable;
 
-alter table sale
-add column hsn_code varchar(50);
+
 
 alter table sale
 add column createdAt datetime,

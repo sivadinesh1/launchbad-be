@@ -133,6 +133,7 @@ function leftPad(value) {
 }
 
 function formatSequenceNumber(sequence, type = '') {
+	console.log('formatSequenceNumber :: ' + sequence, type);
 	return `${type}${getCurrentYear()}/${getCurrentMonth()}/${leftPad(sequence)}`;
 }
 
