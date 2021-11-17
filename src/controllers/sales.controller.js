@@ -1,4 +1,3 @@
-const { plainToClass } = require('class-transformer');
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { responseForward } = require('../utils/utils');
@@ -7,6 +6,8 @@ const { salesService } = require('../services');
 
 const { Sale } = require('../domain/Sale');
 const { SaleDetail } = require('../domain/SaleDetail');
+
+const { handleError, ErrorHandler } = require('../config/error');
 
 const getNextSaleInvoiceNoAsync = catchAsync(async (req, res) => {
 	const data = await salesService.getNextInvSequenceNo(req.user.center_id, req.params.invoice_type);
@@ -19,15 +20,19 @@ const deleteSalesDetails = catchAsync(async (req, res) => {
 });
 
 const insertSale = catchAsync(async (req, res) => {
-	let saleMaster = plainToClass(Sale, req.body.sale);
-	let saleDetails = plainToClass(SaleDetail, req.body.saleDetails);
+	try {
+		let saleMaster = req.body.sale;
+		let saleDetails = req.body.saleDetails;
 
-	saleMaster.updated_by = Number(req.user.id);
-	saleDetails.updated_by = Number(req.user.id);
+		saleMaster.updated_by = Number(req.user.id);
+		saleDetails.updated_by = Number(req.user.id);
 
-	const data = await salesService.insertSale(saleMaster, saleDetails);
+		const data = await salesService.insertSale(saleMaster, saleDetails);
 
-	return responseForward(data, 'insertSale>>', res);
+		return responseForward(data, 'insertSale>>', res);
+	} catch (err) {
+		handleError(new ErrorHandler('Error', '/insertSale', err), res);
+	}
 });
 
 const convertSale = catchAsync(async (req, res) => {

@@ -13,15 +13,15 @@ const vendorRepoAddVendor = async (vendor) => {
 				address2: vendor.address2,
 				address3: vendor.address3,
 				district: vendor.district,
-				state_id: vendor.state_id,
+				state_id: Number(vendor.state_id),
 				pin: vendor.pin,
 				gst: vendor.gst,
-				phone: vendor.phone,
-				mobile: vendor.mobile,
-				mobile2: vendor.mobile2,
-				whatsapp: vendor.whatsapp,
+				phone: vendor.phone.toString(),
+				mobile: vendor.mobile.toString(),
+				mobile2: vendor.mobile2.toString(),
+				whatsapp: vendor.whatsapp.toString(),
 				email: vendor.email,
-				is_active: vendor.is_active,
+				is_active: 'A',
 			},
 		});
 
@@ -45,14 +45,15 @@ const vendorRepoUpdateVendor = async (vendor) => {
 				address2: vendor.address2,
 				address3: vendor.address3,
 				district: vendor.district,
-				state_id: vendor.state_id,
+				state_id: Number(vendor.state_id),
 				pin: vendor.pin,
 				gst: vendor.gst,
-				phone: vendor.phone,
-				mobile: vendor.mobile,
-				mobile2: vendor.mobile2,
-				whatsapp: vendor.whatsapp,
+				phone: vendor.phone.toString(),
+				mobile: vendor.mobile.toString(),
+				mobile2: vendor.mobile2.toString(),
+				whatsapp: vendor.whatsapp.toString(),
 				email: vendor.email,
+				is_active: 'A',
 			},
 		});
 
@@ -125,7 +126,7 @@ const vendorRepoGetVendorDetails = async (center_id, vendor_id) => {
 	}
 };
 
-const vendorRepoIsVendorExists = async (center_id, vendor_name) => {
+const vendorRepoIsVendorExists = async (vendor_name, center_id) => {
 	let vendorCount = await prisma.vendor.count({
 		where: {
 			vendor_name: vendor_name,

@@ -15,7 +15,7 @@ stockRouter.route('/sale-details/:id').get(auth('getUsers'), stockController.get
 
 stockRouter.route('/delete-sale-details').post(auth('getUsers'), stockController.deleteSaleDetails);
 
-stockRouter.route('/delete-item-history/:saleid').get(auth('getUsers'), stockController.deleteItemHistory);
+stockRouter.route('/delete-item-history/:sale_id').get(auth('getUsers'), stockController.deleteItemHistory);
 
 stockRouter.route('/purchase-details/:id').get(auth('getUsers'), stockController.purchaseDetails);
 
@@ -25,9 +25,9 @@ stockRouter.route('/delete-purchase/:id').delete(auth('getUsers'), stockControll
 
 stockRouter.route('/delete-purchase-master/:id').delete(auth('getUsers'), stockController.deletePurchaseMasterById);
 
-stockRouter.route('/all-products-with-mrp/:productid').get(auth('getUsers'), stockController.getProductWithAllMRP);
+stockRouter.route('/all-products-with-mrp/:product_id').get(auth('getUsers'), stockController.getProductWithAllMRP);
 
-stockRouter.route('/delete-product-from-stock/:productid/:mrp').get(auth('getUsers'), stockController.deleteProductFromStock);
+stockRouter.route('/delete-product-from-stock/:product_id/:mrp').delete(auth('getUsers'), stockController.deleteProductFromStock);
 
 stockRouter.route('/stock-correction').post(auth('getUsers'), stockController.stockCorrection);
 

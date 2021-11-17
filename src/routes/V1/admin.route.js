@@ -36,7 +36,7 @@ router.route('/get-center-details').get(auth('getUsers'), adminController.getCen
 
 router.route('/update-center').post(auth('getUsers'), adminController.updateCenter);
 
-router.route('/prod-exists/:pcode').get(auth('getUsers'), adminController.isProductExists);
+router.route('/prod-exists/:product_code').get(auth('getUsers'), adminController.isProductExists);
 
 router.route('/insert-customer-shipping-address').post(auth('getUsers'), adminController.addCustomerShippingAddress);
 

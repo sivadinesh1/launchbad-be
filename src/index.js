@@ -4,9 +4,9 @@ const app = require('./app');
 const fs = require('fs');
 
 // var options = {
-// 	key: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/privkey.pem'),
-// 	cert: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/cert.pem'),
-// 	ca: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/chain.pem'),
+//   key: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/privkey.pem'),
+//   cert: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/cert.pem'),
+//   ca: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/chain.pem'),
 // };
 
 // var options = {

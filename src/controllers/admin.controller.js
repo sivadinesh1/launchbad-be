@@ -13,7 +13,6 @@ const {
 	centerService,
 	userService,
 } = require('../services');
-const { plainToClass } = require('class-transformer');
 
 const { Brand } = require('../domain/Brand');
 
@@ -24,28 +23,22 @@ const getProductsCount = catchAsync(async (req, res) => {
 });
 
 const getProductInfo = catchAsync(async (req, res) => {
-	const data = await adminService.getProductInfo(req.user.center_id, req.params.productid);
+	const data = await adminService.getProductInfo(req.user.center_id, req.params.product_id);
 
 	return responseForward(data, 'getProductInfo', res);
 });
 
 const addProduct = catchAsync(async (req, res) => {
-	let product = plainToClass(Product, req.body);
-
-	product.created_by = Number(req.user.id);
-	const data = await productsService.insertProduct(product);
-	// dnd
-	//let productDTO = ProductMap.toDTO(data);
+	req.body.created_by = Number(req.user.id);
+	const data = await productsService.insertProduct(req.body);
 
 	return responseForward('PRODUCT_ADDED', 'addProduct', res, 201);
 });
 
 const updateProduct = catchAsync(async (req, res) => {
-	let product = plainToClass(Product, req.body);
+	req.body.updated_by = Number(req.user.id);
 
-	product.updated_by = Number(req.user.id);
-
-	const data = await productsService.updateProduct(product);
+	const data = await productsService.updateProduct(req.body);
 
 	res.status(200).json({
 		result: 'success',
@@ -87,7 +80,7 @@ const updateProduct = catchAsync(async (req, res) => {
 });
 
 const getVendorDetails = catchAsync(async (req, res) => {
-	const data = await vendorsService.getVendorDetails(req.user.center_id, req.params.vendorid);
+	const data = await vendorsService.getVendorDetails(req.user.center_id, req.params.vendor_id);
 
 	return responseForward(data, 'getVendorDetails', res);
 });
@@ -105,36 +98,29 @@ const getTimezones = catchAsync(async (req, res) => {
 });
 
 const updateVendor = catchAsync(async (req, res) => {
-	let vendor = plainToClass(Vendor, req.body);
-
-	vendor.updated_by = Number(req.user.id);
-	const data = await vendorsService.updateVendor(vendor);
+	req.body.updated_by = Number(req.user.id);
+	const data = await vendorsService.updateVendor(req.body);
 	return responseForward(data, 'updateVendor', res);
 });
 
 const updateBrand = catchAsync(async (req, res) => {
-	let brand = plainToClass(Brand, req.body);
+	req.body.updated_by = Number(req.user.id);
 
-	brand.updated_by = Number(req.user.id);
-
-	const data = await brandsService.updateBrand(brand);
+	const data = await brandsService.updateBrand(req.body);
 	return responseForward(data, 'updateBrand', res);
 });
 
 const addVendor = catchAsync(async (req, res) => {
-	let vendor = plainToClass(Brand, req.body);
-
-	vendor.created_by = Number(req.user.id);
+	req.body.created_by = Number(req.user.id);
 
 	const data = await vendorsService.insertVendor(req.body);
 	return responseForward(data, 'addVendor', res, httpStatus.CREATED);
 });
 
 const addBrand = catchAsync(async (req, res) => {
-	let brand = plainToClass(Brand, req.body);
-	brand.created_by = Number(req.user.id);
+	req.body.created_by = Number(req.user.id);
 
-	const data = await brandsService.insertBrand(brand);
+	const data = await brandsService.insertBrand(req.body);
 	return responseForward(data, 'addBrand', res);
 });
 
@@ -167,7 +153,9 @@ const updateCenter = catchAsync(async (req, res) => {
 });
 
 const isProductExists = catchAsync(async (req, res) => {
-	const data = await productsService.isProductExists(req.params.pcode, req.user.center_id);
+	let data;
+
+	data = await productsService.isProductExists(req.params.product_code, req.user.center_id);
 
 	return responseForward(data, 'isProductExists', res);
 });

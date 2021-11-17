@@ -123,39 +123,41 @@ const fullStockReport = (requestBody) => {
 
 	if (mrp_split === true) {
 		query = `
-      select b2.name,  
-      product_code, 
-      description, 
-      mrp, 
-      (select sum(s2.available_stock) from stock s2 where s2.product_id = p.id ) available_stock, 
-      unit,
-      packetsize, 
-      purchase_price , 
-      hsncode, 
-      taxrate,  
-      rackno 
-      from product p , brand b2 
-      where p.center_id = '${center_id}'
-      and p.brand_id = b2.id 
-      and p.center_id = b2.center_id
+    select b2.brand_name,  
+    product_code, 
+    product_description, 
+    mrp, 
+    (select sum(s2.available_stock) from stock s2 where s2.product_id = p.id ) available_stock, 
+    uom,
+    packet_size, 
+    purchase_price , 
+    hsn_code, 
+    tax_rate,  
+    rack_info 
+    from product p , brand b2 
+    where p.center_id = '${center_id}'
+    and p.brand_id = b2.id 
+    and p.center_id = b2.center_id
+    
       `;
 	} else {
 		query = `
-      select b.brand_name, p.product_code, p.product_description,
-      s.product_id, s.mrp, s.available_stock,
-      p.unit, p.packet_size, p.hsn_code, 
-      p.mrp, p.purchase_price,
-      p.rack_info, p.tax_rate
-      from 
-      product p,
-      brand b,
-      stock s
-      where 
-      s.product_id = p.id and
-      p.brand_id = b.id and
-      p.center_id = '${center_id}'
-      group by
-      s.product_id, s.mrp, s.available_stock `;
+    select b.brand_name, p.product_code, p.product_description,
+    s.product_id, s.mrp, s.available_stock,
+    p.uom, p.packet_size, p.hsn_code, 
+    p.mrp, p.purchase_price,
+    p.rack_info, p.tax_rate
+    from 
+    product p,
+    brand b,
+    stock s
+    where 
+    s.product_id = p.id and
+    p.brand_id = b.id and
+    p.center_id = '${center_id}'
+        
+    group by
+    s.product_id, s.mrp, s.available_stock `;
 	}
 
 	return promisifyQuery(query);

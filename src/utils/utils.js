@@ -116,7 +116,6 @@ function getCurrentYear() {
 }
 
 function setTimezone(timezone) {
-	console.log('setting timezone :: ' + timezone);
 	center_timezone = timezone;
 }
 

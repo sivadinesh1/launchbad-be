@@ -13,7 +13,6 @@ add column updatedAt datetime,
 add column created_by bigint,
 add column updated_by bigint;
 
-#backorder
 
 ALTER TABLE backorder 
 change qty quantity bigint,
@@ -33,7 +32,6 @@ ALTER TABLE backorder MODIFY order_date datetime;
 
 update backorder set order_date = null where order_date = '9999-01-20';
 
-#brand
 
 ALTER TABLE brand 
 change name brand_name varchar(150),
@@ -47,7 +45,6 @@ add column updated_by bigint;
 ALTER TABLE brand 
 change createdon createdAt datetime;
 
-#center
 
 ALTER TABLE center 
 change bankname bank_name varchar(100),
@@ -236,6 +233,9 @@ drop table stock2;
 
 drop table stockjan08;
 drop table sale_detailjan08;
+
+drop table purchasejan08;
+drop table purchase_detailjan08;
 update payment set pymt_date = (select date_format(str_to_date(pymt_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where pymt_date != '';
 
@@ -290,7 +290,6 @@ where p.id = pd.payment_ref_id
 
 
 
-#payment_mode
 
 ALTER TABLE payment_mode 
 change commission_fee commission_fee decimal(10,2);
@@ -372,13 +371,9 @@ ALTER TABLE product
 change updatedon updatedAt datetime;
 
 
+	update product set product_type= 'P';
 
-
-
-#purchase
-
-update purchase set invoice_date = (select date_format(str_to_date(invoice_date,'%d-%m-%Y'),'%Y-%m-%d'))
-where invoice_date != '';
+update purchase set invoice_date = (select date_format(str_to_date(invoice_date,'%d-%m-%Y'),'%Y-%m-%d')) where invoice_date != '';
 
 update purchase set invoice_date = '9999-01-20' where invoice_date = '';
 
@@ -467,56 +462,18 @@ update purchase_detail set batchdate = '9999-01-20' where batchdate = '';
 ALTER TABLE purchase_detail 
 change batchdate batch_date date;
 
-update purchase_detail set batch_date = null where batch_date = '9999-01-20';alter table purchase_ledger
+update purchase_detail set batch_date = null where batch_date = '9999-01-20';ALTER TABLE purchase_ledger CHANGE ledger_date ledger_date datetime;
+
+alter table purchase_ledger
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,
-add column updated_by bigint;-- updates to sale details..
+add column updated_by bigint;update sale set lr_date = '9999-01-20';
 
-alter table sale_detail add column center_id bigint;
-
-ALTER TABLE sale_detail 
-CHANGE qty quantity int(11);
-
-ALTER TABLE sale_detail 
-CHANGE  taxable_value after_tax_value  decimal(10,2);
-
-ALTER TABLE sale_detail 
-CHANGE  cgst cgs_t  decimal(10,2);
-
-ALTER TABLE sale_detail 
-CHANGE  sgst sgs_t  decimal(10,2);
-
-ALTER TABLE sale_detail 
-CHANGE  igst igs_t  decimal(10,2);
-
-
-
-
-update sale_detail set batchdate = (select date_format(str_to_date(batchdate,'%d-%m-%Y'),'%Y-%m-%d')) where batchdate != '';
-
-update sale_detail set batchdate = '9999-01-20' where batchdate = '';
-
-ALTER TABLE sale_detail MODIFY batchdate datetime; 
-
-update sale_detail set batchdate = null where batchdate = '9999-01-20';
-
-alter table sale_detail
-add column hsn_code varchar(50);
-
-ALTER TABLE sale_detail CHANGE batchdate batch_date datetime;
-
-
-
-alter table sale_detail
-add column createdAt datetime,
-add column updatedAt datetime,
-add column created_by bigint,
-add column updated_by bigint;
 -- Processing Sale table : lr_date
-update sale set lr_date = (select date_format(str_to_date(lr_date,'%d-%m-%Y'),'%Y-%m-%d')) where lr_date != '';
+-- update sale set lr_date = (select date_format(str_to_date(lr_date,'%d-%m-%Y'),'%Y-%m-%d')) where lr_date != '';
 
-update sale set lr_date = '9999-01-20' where lr_date = '';
+-- update sale set lr_date = '9999-01-20' where lr_date = '';
 
 
 ALTER TABLE sale MODIFY lr_date date;  
@@ -567,8 +524,7 @@ ALTER TABLE sale CHANGE roundoff round_off decimal(10,2);
 
 ALTER TABLE sale  DROP COLUMN tax_applicable;
 
-alter table sale
-add column hsn_code varchar(50);
+
 
 alter table sale
 add column createdAt datetime,
@@ -585,6 +541,48 @@ add column updated_by bigint;
   
   
 
+-- updates to sale details..
+
+alter table sale_detail add column center_id bigint;
+
+ALTER TABLE sale_detail 
+CHANGE qty quantity int(11);
+
+ALTER TABLE sale_detail 
+CHANGE  taxable_value after_tax_value  decimal(10,2);
+
+ALTER TABLE sale_detail 
+CHANGE  cgst cgs_t  decimal(10,2);
+
+ALTER TABLE sale_detail 
+CHANGE  sgst sgs_t  decimal(10,2);
+
+ALTER TABLE sale_detail 
+CHANGE  igst igs_t  decimal(10,2);
+
+
+
+
+update sale_detail set batchdate = (select date_format(str_to_date(batchdate,'%d-%m-%Y'),'%Y-%m-%d')) where batchdate != '';
+
+update sale_detail set batchdate = '9999-01-20' where batchdate = '';
+
+ALTER TABLE sale_detail MODIFY batchdate datetime; 
+
+update sale_detail set batchdate = null where batchdate = '9999-01-20';
+
+alter table sale_detail
+add column hsn_code varchar(50);
+
+ALTER TABLE sale_detail CHANGE batchdate batch_date datetime;
+
+
+
+alter table sale_detail
+add column createdAt datetime,
+add column updatedAt datetime,
+add column created_by bigint,
+add column updated_by bigint;
 
 update sale_return set return_date = (select date_format(str_to_date(return_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where return_date != '';

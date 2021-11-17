@@ -1,7 +1,9 @@
--- Processing Sale table : lr_date
-update sale set lr_date = (select date_format(str_to_date(lr_date,'%d-%m-%Y'),'%Y-%m-%d')) where lr_date != '';
+update sale set lr_date = '9999-01-20';
 
-update sale set lr_date = '9999-01-20' where lr_date = '';
+-- Processing Sale table : lr_date
+-- update sale set lr_date = (select date_format(str_to_date(lr_date,'%d-%m-%Y'),'%Y-%m-%d')) where lr_date != '';
+
+-- update sale set lr_date = '9999-01-20' where lr_date = '';
 
 
 ALTER TABLE sale MODIFY lr_date date;  

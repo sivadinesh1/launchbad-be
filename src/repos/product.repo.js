@@ -88,14 +88,19 @@ const productRepoUpdateProduct = async (product) => {
 };
 
 const productRepoIsProductExists = async (product_code, center_id) => {
-	const result = await prisma.product.count({
-		where: {
-			center_id: Number(center_id),
-			product_code: escapeText(product_code),
-		},
-	});
+	try {
+		const result = await prisma.product.count({
+			where: {
+				center_id: Number(center_id),
+				product_code: escapeText(product_code),
+			},
+		});
 
-	return bigIntToString(result);
+		return result;
+	} catch (error) {
+		console.log('error :: productRepoIsProductExists: product.repo.js ' + error);
+		throw error;
+	}
 };
 
 //public async updateProduct(product: IProduct) {

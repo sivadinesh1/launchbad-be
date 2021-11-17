@@ -65,20 +65,20 @@ const deletePurchaseMasterById = catchAsync(async (req, res) => {
 });
 
 const getProductWithAllMRP = catchAsync(async (req, res) => {
-	const data = await stockService.getProductWithAllMRP(req.params.productid);
+	const data = await stockService.getProductWithAllMRP(req.params.product_id);
 	return responseForward(data, 'getProductWithAllMRP', res);
 });
 
 const deleteProductFromStock = catchAsync(async (req, res) => {
-	const data = await stockService.deleteProductFromStock(req.params.productid, req.params.mrp, req.user.center_id);
+	console.log('dinesh :::: ' + req.user.center_id);
+	const data = await stockService.deleteProductFromStock(req.params.product_id, req.params.mrp, req.user.center_id);
 	return responseForward(data, 'deleteProductFromStock', res);
 });
 
 const stockCorrection = catchAsync(async (req, res) => {
-	let stock = plainToClass(Stock, req.body);
-	stock.updated_by = Number(req.user.id);
+	req.body.updated_by = Number(req.user.id);
 
-	const data = await stockService.stockCorrection(stock);
+	const data = await stockService.stockCorrection(req.body);
 	return responseForward(data, 'stockCorrection', res);
 });
 

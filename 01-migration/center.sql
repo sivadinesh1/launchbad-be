@@ -1,5 +1,4 @@
 
-#center
 
 ALTER TABLE center 
 change bankname bank_name varchar(100),

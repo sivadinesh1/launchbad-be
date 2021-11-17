@@ -63,5 +63,5 @@ ALTER TABLE product
 change updatedon updatedAt datetime;
 
 
-
+	update product set product_type= 'P';
 

@@ -132,6 +132,7 @@ const insertSale = async (saleMaster, saleDetails) => {
 		return status;
 	} catch (error) {
 		console.log('Error while inserting Sale ' + error);
+		throw error;
 	}
 };
 

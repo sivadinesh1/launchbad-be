@@ -3,21 +3,22 @@ var pool = require('../config/db');
 const { handleError, ErrorHandler } = require('../config/error');
 
 const { insertItemHistoryTable, insertToStock } = require('./stock.service');
-const { plainToClass } = require('class-transformer');
+
 const { Product } = require('../domain/Product');
 
 const { productRepoAddProduct, productRepoUpdateProduct, productRepoIsProductExists, productRepoSearchProduct } = require('../repos/product.repo');
 
 async function insertProduct(product) {
-	return productRepoAddProduct(product);
+	console.log('dinesh ::: ' + JSON.stringify(product));
+	return await productRepoAddProduct(product);
 }
 
 async function updateProduct(product) {
-	return productRepoUpdateProduct(product);
+	return await productRepoUpdateProduct(product);
 }
 
 async function searchProduct(center_id, product_search_text) {
-	return productRepoSearchProduct(center_id, product_search_text);
+	return await productRepoSearchProduct(center_id, product_search_text);
 }
 
 // const updateProduct = (updateValues, res) => {
@@ -42,7 +43,13 @@ async function searchProduct(center_id, product_search_text) {
 // };
 
 const isProductExists = async (product_code, center_id) => {
-	return isProductExists(product_code, center_id);
+	let result = await productRepoIsProductExists(product_code, center_id);
+
+	if (result === 0) {
+		return { status: 'false' };
+	} else {
+		return { status: 'true' };
+	}
 };
 
 module.exports = {

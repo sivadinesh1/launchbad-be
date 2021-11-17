@@ -10,7 +10,7 @@ const brandRepoAddBrand = async (brand) => {
 			data: {
 				center_id: brand.center_id,
 				brand_name: brand.brand_name,
-				is_active: brand.is_active,
+				is_active: 'A',
 				createdAt: brand.createdAt,
 				created_by: brand.created_by,
 			},

@@ -23,8 +23,8 @@ async function getVendorDetails(center_id, vendor_id) {
 	return vendorRepoGetVendorDetails(center_id, vendor_id);
 }
 
-async function isVendorExists(center_id, name) {
-	return vendorRepoIsVendorExists(center_id, name);
+async function isVendorExists(vendor_name, center_id) {
+	return vendorRepoIsVendorExists(vendor_name, center_id);
 }
 
 async function deleteVendor(id) {

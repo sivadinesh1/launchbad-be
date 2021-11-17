@@ -22,7 +22,7 @@ const insertItemHistoryTable = async (
 	purchase_return_id,
 	purchase_return_det_id,
 ) => {
-	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
+	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
 insert into item_history (center_id, module, product_ref_id, purchase_id, purchase_det_id, sale_id, sale_det_id, action, action_type, txn_qty, stock_level, txn_date, sale_return_id, sale_return_det_id, purchase_return_id, purchase_return_det_id)
@@ -104,6 +104,7 @@ const getProductWithAllMRP = (product_id) => {
 	let todayYYMMDD = currentTimeInTimeZone('YYYY-MM-DD');
 	let query = ` select 
 	s.id as stock_id, 
+  s.is_active as is_active,
 	p.product_type as product_type,
   s.product_id as product_id,
 	p.product_description as product_description,
@@ -121,10 +122,11 @@ const getProductWithAllMRP = (product_id) => {
 	return promisifyQuery(query);
 };
 
-const deleteProductFromStock = async (product_id, mrp) => {
+const deleteProductFromStock = async (product_id, mrp, center_id) => {
 	// check center_id
-	let center_id;
-	let query = `delete from stock where product_id = ${product_id} and mrp = ${mrp}`;
+	//let center_id;
+	//let query = `delete from stock where product_id = ${product_id} and mrp = ${mrp}`;
+	let query = `update stock set is_active = 'N' where product_id = ${product_id} and mrp = ${mrp}`;
 
 	let data = promisifyQuery(query);
 

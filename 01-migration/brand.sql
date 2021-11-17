@@ -1,5 +1,4 @@
 
-#brand
 
 ALTER TABLE brand 
 change name brand_name varchar(150),

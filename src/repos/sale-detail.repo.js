@@ -28,8 +28,8 @@ const addSaleDetail = async (saleDetail, sale_id, updated_by, prisma) => {
 				after_tax_value: saleDetail.after_tax_value,
 				total_value: saleDetail.total_value,
 				unit_price: saleDetail.unit_price,
-				created_by: updated_by,
-				updated_by: updated_by,
+				created_by: Number(updated_by),
+				updated_by: Number(updated_by),
 			},
 		});
 
@@ -68,8 +68,8 @@ const editSaleDetail = async (saleDetail, sale_id, updated_by, prisma) => {
 				after_tax_value: saleDetail.after_tax_value,
 				total_value: saleDetail.total_value,
 				unit_price: saleDetail.unit_price,
-				created_by: updated_by,
-				updated_by: updated_by,
+				created_by: Number(updated_by),
+				updated_by: Number(updated_by),
 			},
 		});
 

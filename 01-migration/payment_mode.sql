@@ -1,5 +1,4 @@
 
-#payment_mode
 
 ALTER TABLE payment_mode 
 change commission_fee commission_fee decimal(10,2);

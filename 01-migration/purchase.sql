@@ -1,8 +1,4 @@
-
-#purchase
-
-update purchase set invoice_date = (select date_format(str_to_date(invoice_date,'%d-%m-%Y'),'%Y-%m-%d'))
-where invoice_date != '';
+update purchase set invoice_date = (select date_format(str_to_date(invoice_date,'%d-%m-%Y'),'%Y-%m-%d')) where invoice_date != '';
 
 update purchase set invoice_date = '9999-01-20' where invoice_date = '';
 
