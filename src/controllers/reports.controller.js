@@ -5,7 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const { inventoryReportsService, productSummaryReportsService, statementReportsService } = require('../services');
 
 const fullStockReport = catchAsync(async (req, res) => {
-	const data = await inventoryReportsService.fullStockReport(req.body);
+	const data = await inventoryReportsService.fullStockReport(req.user.center_id, req.body.mrp_split);
 	return responseForward(data, 'fullStockReport', res);
 });
 

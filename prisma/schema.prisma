@@ -1,23 +1,20 @@
 generator client {
-  provider = "prisma-client-js"
-   previewFeatures = ["interactiveTransactions"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
 }
 
 // // DEV_DATABASE_URL="postgres://postgres:tesla@127.0.0.1:5432/redapple"
 // let connstring = ""
 // url      = "mysql://root:uCbPr2hmHeAfZLkAr8lu@redot-prod-db.c6pujq35d5nd.ap-south-1.rds.amazonaws.com:3377/redot_prod_db"
 
-
 // url      = "mysql://root:tesla@127.0.0.1:3306/reddotdb"
-
+// url      = env("DATABASE_URL")
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:tesla@127.0.0.1:3306/testing"
+  url      = env("DATABASE_URL")
+
 }
-
-
-
 
 model role {
   id          BigInt      @id @default(autoincrement())
@@ -26,9 +23,8 @@ model role {
   user_role   user_role[]
 }
 
-
 model user_role {
-  
+
   role_id BigInt
   user_id BigInt
   role    role   @relation(fields: [role_id], references: [id])
@@ -39,7 +35,7 @@ model user_role {
 
 model users {
   id              BigInt      @id @default(autoincrement())
-  center_id       BigInt       
+  center_id       BigInt
   username        String?     @db.VarChar(45)
   userpass        String?     @db.VarChar(255)
   mobilenumber    String?     @db.VarChar(20)
@@ -51,96 +47,92 @@ model users {
   dob             String?     @db.VarChar(50)
   status          String?     @db.VarChar(20)
   address         String?     @db.VarChar(350)
-  createdby       BigInt?     
+  createdby       BigInt?
   createddatetime DateTime?   @db.Timestamp(6)
-  updatedby       BigInt?     
+  updatedby       BigInt?
   updateddatetime DateTime?   @db.Timestamp(6)
   user_role       user_role[]
   center          center      @relation(fields: [center_id], references: [id])
+
   @@unique([username], name: "username_UNIQUE")
 }
 
-
 model state {
-  id            BigInt      @id @default(autoincrement())
-  code          String?     @db.VarChar(20)
-  description   String?     @db.VarChar(50)
-  center        center[]
-  vendor        vendor[]
-  customer      customer[]  
+  id                        BigInt                      @id @default(autoincrement())
+  code                      String?                     @db.VarChar(20)
+  description               String?                     @db.VarChar(50)
+  center                    center[]
+  vendor                    vendor[]
+  customer                  customer[]
   customer_shipping_address customer_shipping_address[]
-  
-}
 
+}
 
 model timezones {
-  id            BigInt      @id @default(autoincrement())
-  timezone      String?     @db.VarChar(100)
-  description   String?     @db.VarChar(100)
-  offset        String?     @db.VarChar(100)
+  id          BigInt  @id @default(autoincrement())
+  timezone    String? @db.VarChar(100)
+  description String? @db.VarChar(100)
+  offset      String? @db.VarChar(100)
 }
-
 
 model center_banks {
-  id              BigInt      @id @default(autoincrement())
-  center_id       BigInt?
-  bank_name       String?     @db.VarChar(100)
-  account_name    String?     @db.VarChar(150)
-  account_no      String?     @db.VarChar(50)
-  ifsc_code       String?     @db.VarChar(50)
-  branch          String?     @db.VarChar(50)
-  is_default      String?     @db.VarChar(1)
+  id           BigInt  @id @default(autoincrement())
+  center_id    BigInt?
+  bank_name    String? @db.VarChar(100)
+  account_name String? @db.VarChar(150)
+  account_no   String? @db.VarChar(50)
+  ifsc_code    String? @db.VarChar(50)
+  branch       String? @db.VarChar(50)
+  is_default   String? @db.VarChar(1)
 
-  createdAt	      DateTime?   @default(now())
-  updatedAt	      DateTime?   @updatedAt
-  created_by	    BigInt?
-  updated_by      BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  vendor_payment  vendor_payment[]
-  payment         payment[]
+  vendor_payment vendor_payment[]
+  payment        payment[]
 
-  center          center?    @relation(fields: [center_id], references: [id])
+  center center? @relation(fields: [center_id], references: [id])
 
 }
 
-
-
 model center {
-  id              BigInt      @id @default(autoincrement())
+  id              BigInt            @id @default(autoincrement())
   company_id      BigInt
-  name            String?     @db.VarChar(150)
-  address1        String?     @db.VarChar(50)
-  address2        String?     @db.VarChar(50)
-  address3        String?     @db.VarChar(50)
+  name            String?           @db.VarChar(150)
+  address1        String?           @db.VarChar(50)
+  address2        String?           @db.VarChar(50)
+  address3        String?           @db.VarChar(50)
   state_id        BigInt
-  pin             String?     @db.VarChar(50)
-  district        String?     @db.VarChar(50)
-  country         String?     @db.VarChar(50)
-  timezone        String?     @db.VarChar(100)
-  gst             String?     @db.VarChar(50)
-  bank_name       String?     @db.VarChar(100)
-  account_name    String?     @db.VarChar(150)
-  account_no      String?     @db.VarChar(50)
-  ifsc_code       String?     @db.VarChar(50)
-  branch          String?     @db.VarChar(50)
-  phone           String?     @db.VarChar(50)
-  mobile          String?     @db.VarChar(50)
-  mobile2         String?     @db.VarChar(50)
-  whatsapp        String?     @db.VarChar(50)
-  email           String?     @db.VarChar(50)
-  tagline         String?     @db.VarChar(100)
-  logo_name       String?     @db.VarChar(100)
-  logo_url        String?     @db.VarChar(200)
-  side_logo_name  String?     @db.VarChar(100)
-  side_logo_url   String?     @db.VarChar(200)
+  pin             String?           @db.VarChar(50)
+  district        String?           @db.VarChar(50)
+  country         String?           @db.VarChar(50)
+  timezone        String?           @db.VarChar(100)
+  gst             String?           @db.VarChar(50)
+  bank_name       String?           @db.VarChar(100)
+  account_name    String?           @db.VarChar(150)
+  account_no      String?           @db.VarChar(50)
+  ifsc_code       String?           @db.VarChar(50)
+  branch          String?           @db.VarChar(50)
+  phone           String?           @db.VarChar(50)
+  mobile          String?           @db.VarChar(50)
+  mobile2         String?           @db.VarChar(50)
+  whatsapp        String?           @db.VarChar(50)
+  email           String?           @db.VarChar(50)
+  tagline         String?           @db.VarChar(100)
+  logo_name       String?           @db.VarChar(100)
+  logo_url        String?           @db.VarChar(200)
+  side_logo_name  String?           @db.VarChar(100)
+  side_logo_url   String?           @db.VarChar(200)
   users           users[]
   subscriptions   subscriptions[]
-  createdAt	      DateTime?   @default(now())
-  updatedAt	      DateTime?   @updatedAt
-  created_by	    BigInt?
+  createdAt       DateTime?         @default(now())
+  updatedAt       DateTime?         @updatedAt
+  created_by      BigInt?
   updated_by      BigInt?
-  state           state       @relation(fields: [state_id], references: [id])
-  company         company     @relation(fields: [company_id], references: [id])
+  state           state             @relation(fields: [state_id], references: [id])
+  company         company           @relation(fields: [company_id], references: [id])
   vendor_payment  vendor_payment[]
   purchase_ledger purchase_ledger[]
   purchase_detail purchase_detail[]
@@ -149,7 +141,7 @@ model center {
   payment_detail  payment_detail[]
   payment         payment[]
   ledger          ledger[]
-  item_history    item_history[]  
+  item_history    item_history[]
   enquiry         enquiry[]
   enquiry_detail  enquiry_detail[]
   discount        discount[]
@@ -160,398 +152,385 @@ model center {
 }
 
 model company {
-  id              BigInt      @id @default(autoincrement())
-  name            String?     @db.VarChar(150)
-  address1        String?     @db.VarChar(50)
-  address2        String?     @db.VarChar(50)
-  address3        String?     @db.VarChar(50)
-  district        String?     @db.VarChar(50)
-  state_id        BigInt?
-  country         String?     @db.VarChar(50)
-  location        String?     @db.VarChar(50)
-  gst             String?     @db.VarChar(50)
-  bankname        String?     @db.VarChar(100)
-  accountno       String?     @db.VarChar(50)
-  ifsccode        String?     @db.VarChar(50)
-  branch          String?     @db.VarChar(50)
-  addressbnk      String?     @db.VarChar(50)
-  addbankname     String?     @db.VarChar(50)
-  addaccountno    String?     @db.VarChar(50)
-  addifsccode     String?     @db.VarChar(50)
-  addaddressank   String?     @db.VarChar(50)
-  
-  center          center[]
+  id            BigInt  @id @default(autoincrement())
+  name          String? @db.VarChar(150)
+  address1      String? @db.VarChar(50)
+  address2      String? @db.VarChar(50)
+  address3      String? @db.VarChar(50)
+  district      String? @db.VarChar(50)
+  state_id      BigInt?
+  country       String? @db.VarChar(50)
+  location      String? @db.VarChar(50)
+  gst           String? @db.VarChar(50)
+  bankname      String? @db.VarChar(100)
+  accountno     String? @db.VarChar(50)
+  ifsccode      String? @db.VarChar(50)
+  branch        String? @db.VarChar(50)
+  addressbnk    String? @db.VarChar(50)
+  addbankname   String? @db.VarChar(50)
+  addaccountno  String? @db.VarChar(50)
+  addifsccode   String? @db.VarChar(50)
+  addaddressank String? @db.VarChar(50)
+
+  center center[]
 }
 
 model subscriptions {
-  id                                BigInt      @id @default(autoincrement())
-  center_id                         BigInt
-  plan_id                           BigInt
-  subscription_start_timestamp      DateTime?   @db.Timestamp(6)
-  subscription_end_timestamp        DateTime?   @db.Timestamp(6)
-  subscription_purchased_timestamp  DateTime?   @db.Timestamp(6)
-  is_active                         String?     @db.VarChar(20)
-  center                            center      @relation(fields: [center_id], references: [id])
-  plans                             plans       @relation(fields: [plan_id], references: [id])
+  id                               BigInt    @id @default(autoincrement())
+  center_id                        BigInt
+  plan_id                          BigInt
+  subscription_start_timestamp     DateTime? @db.Timestamp(6)
+  subscription_end_timestamp       DateTime? @db.Timestamp(6)
+  subscription_purchased_timestamp DateTime? @db.Timestamp(6)
+  is_active                        String?   @db.VarChar(20)
+  center                           center    @relation(fields: [center_id], references: [id])
+  plans                            plans     @relation(fields: [plan_id], references: [id])
 }
 
 model plans {
-id                                BigInt      @id @default(autoincrement())
-name                              String?     @db.VarChar(200)
-price_per_month                   Decimal?    @db.Decimal(12,2)
-is_active                         String?     @db.VarChar(20)
-subscriptions                     subscriptions[]
+  id              BigInt          @id @default(autoincrement())
+  name            String?         @db.VarChar(200)
+  price_per_month Decimal?        @db.Decimal(12, 2)
+  is_active       String?         @db.VarChar(20)
+  subscriptions   subscriptions[]
 }
-
-
 
 model product {
-  id                      BigInt      @id @default(autoincrement())
-  center_id	              BigInt?
-  brand_id	              BigInt     
-  product_type            String?     @db.VarChar(20) @default("P")
-  product_code	          String?	    @db.VarChar(50)
-  product_description	    String?	    @db.VarChar(250)
-  uom 	                  String?	    @db.VarChar(50)
-  packet_size	            Int?	   
-  hsn_code	              String?	    @db.VarChar(50)
-  current_stock	          Int?        @default(0)
-  unit_price	            Decimal?    @default(0.00)
-  mrp	                    Decimal?    @default(0.00)
-  purchase_price	        Decimal?    @default(0.00)
-  sales_price	            Decimal?    @default(0.00)
-  rack_info	              String?	    @db.VarChar(50) @default("")
-  location	              String?	    @db.VarChar(50) @default("")
-  max_discount	          Int?	      @default(0)
-  alternate_code	        String?	    @db.VarChar(50) @default("")
-  tax_rate	              Decimal?	  @db.Decimal(10,2)
-  minimum_quantity	      Int?        @default(0)
-  item_discount	          Int?	      @default(0)
-  reorder_quantity	      Int?        @default(0)
-  average_purchase_price	Decimal?	  @db.Decimal(10,2) @default(0.00)
-  average_sale_price	    Decimal?	  @db.Decimal(10,2) @default(0.00)
-  margin	                Decimal?	  @db.Decimal(10,2) @default(0.00)
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
-  brand                   brand       @relation(fields: [brand_id], references: [id])
-  stock                   stock[]
-  purchase_detail         purchase_detail[]
-  item_history            item_history[]
-  enquiry_detail          enquiry_detail[]
-  sale_detail             sale_detail[]
+  id                     BigInt            @id @default(autoincrement())
+  center_id              BigInt?
+  brand_id               BigInt
+  product_type           String?           @default("P") @db.VarChar(20)
+  product_code           String?           @db.VarChar(50)
+  product_description    String?           @db.VarChar(250)
+  uom                    String?           @db.VarChar(50)
+  packet_size            Int?
+  hsn_code               String?           @db.VarChar(50)
+  current_stock          Int?              @default(0)
+  unit_price             Decimal?          @default(0.00)
+  mrp                    Decimal?          @default(0.00)
+  purchase_price         Decimal?          @default(0.00)
+  sales_price            Decimal?          @default(0.00)
+  rack_info              String?           @default("") @db.VarChar(50)
+  location               String?           @default("") @db.VarChar(50)
+  max_discount           Int?              @default(0)
+  alternate_code         String?           @default("") @db.VarChar(50)
+  tax_rate               Decimal?          @db.Decimal(10, 2)
+  minimum_quantity       Int?              @default(0)
+  item_discount          Int?              @default(0)
+  reorder_quantity       Int?              @default(0)
+  average_purchase_price Decimal?          @default(0.00) @db.Decimal(10, 2)
+  average_sale_price     Decimal?          @default(0.00) @db.Decimal(10, 2)
+  margin                 Decimal?          @default(0.00) @db.Decimal(10, 2)
+  createdAt              DateTime?         @default(now())
+  updatedAt              DateTime?         @updatedAt
+  created_by             BigInt?
+  updated_by             BigInt?
+  brand                  brand             @relation(fields: [brand_id], references: [id])
+  stock                  stock[]
+  purchase_detail        purchase_detail[]
+  item_history           item_history[]
+  enquiry_detail         enquiry_detail[]
+  sale_detail            sale_detail[]
 }
-
 
 model brand {
-  id              BigInt      @id @default(autoincrement())
-  center_id	      BigInt?
-  brand_name      String?	    @db.VarChar(150)
-  is_active       String?	    @db.VarChar(1)
-  createdAt	      DateTime?   @default(now())
-  updatedAt	      DateTime?   @updatedAt
-  created_by	    BigInt?
-  updated_by      BigInt?
-  product         product[]   
+  id         BigInt    @id @default(autoincrement())
+  center_id  BigInt?
+  brand_name String?   @db.VarChar(150)
+  is_active  String?   @db.VarChar(1)
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
+  product    product[]
 }
-
-
 
 model customer {
-  id                BigInt      @id @default(autoincrement())
-  center_id	        BigInt?
-  state_id	        BigInt?
-  name	            String?	    @db.VarChar(150)
-  address1	        String?	    @db.VarChar(50)
-  address2	        String?	    @db.VarChar(50)
-  address3	        String?	    @db.VarChar(50)
-  district	        String?	    @db.VarChar(50)
-  pin	              String?	    @db.VarChar(50) 
-  gst	              String?	    @db.VarChar(50)
-  phone	            String?	    @db.VarChar(50)
-  whatsapp	        String?	    @db.VarChar(50)
-  mobile	          String?	    @db.VarChar(50)
-  mobile2	          String?	    @db.VarChar(50)
-  email	            String?	    @db.VarChar(50)
-  
-  is_active	        String?	    @db.VarChar(1)
-  contact	          String?	    @db.VarChar(50)
-  tin	              String?	    @db.VarChar(50)
-  pan_no	          String?	    @db.VarChar(50)
-  credit_amt	      Decimal?	  @db.Decimal(12,2)
-  balance_amt	      Decimal?	  @db.Decimal(12,2)
-  last_paid_date    DateTime?   
-  createdAt	        DateTime?   @default(now())
-  updatedAt	        DateTime?   @updatedAt
-  created_by	      BigInt?
-  updated_by        BigInt?
-  sale              sale[]
-  discount          discount[]
-  payment           payment[]
-  ledger            ledger[]
-  enquiry           enquiry[]
-  center            center?     @relation(fields: [center_id], references: [id])
-  state             state?      @relation(fields: [state_id], references: [id])
-  sale_return       sale_return[]
+  id        BigInt  @id @default(autoincrement())
+  center_id BigInt?
+  state_id  BigInt?
+  name      String? @db.VarChar(150)
+  address1  String? @db.VarChar(50)
+  address2  String? @db.VarChar(50)
+  address3  String? @db.VarChar(50)
+  district  String? @db.VarChar(50)
+  pin       String? @db.VarChar(50)
+  gst       String? @db.VarChar(50)
+  phone     String? @db.VarChar(50)
+  whatsapp  String? @db.VarChar(50)
+  mobile    String? @db.VarChar(50)
+  mobile2   String? @db.VarChar(50)
+  email     String? @db.VarChar(50)
+
+  is_active      String?       @db.VarChar(1)
+  contact        String?       @db.VarChar(50)
+  tin            String?       @db.VarChar(50)
+  pan_no         String?       @db.VarChar(50)
+  credit_amt     Decimal?      @db.Decimal(12, 2)
+  balance_amt    Decimal?      @db.Decimal(12, 2)
+  last_paid_date DateTime?
+  createdAt      DateTime?     @default(now())
+  updatedAt      DateTime?     @updatedAt
+  created_by     BigInt?
+  updated_by     BigInt?
+  sale           sale[]
+  discount       discount[]
+  payment        payment[]
+  ledger         ledger[]
+  enquiry        enquiry[]
+  center         center?       @relation(fields: [center_id], references: [id])
+  state          state?        @relation(fields: [state_id], references: [id])
+  sale_return    sale_return[]
 }
 
-
 model sale {
-  id                      BigInt      @id @default(autoincrement())
-  center_id	              BigInt?
-  customer_id	            BigInt
-  invoice_no	            String?	    @db.VarChar(50)
-  invoice_date	          DateTime?	    
-  lr_no	                  String?	    @db.VarChar(50)
-  lr_date	                DateTime?	    
-  invoice_type	          String?	    @db.VarChar(50)
-  order_no	              String?	    @db.VarChar(50)
-  order_date	            DateTime?	    
-  total_quantity          Int?
-  no_of_items	            Int?
-  after_tax_value           Decimal?	  @db.Decimal(10,2)
-  cgs_t                   Decimal?	  @db.Decimal(10,2) @default(0.00)
-  sgs_t                   Decimal?	  @db.Decimal(10,2) @default(0.00)
-  igs_t                   Decimal?	  @db.Decimal(10,2) @default(0.00)
-  total_value	            Decimal?	  @db.Decimal(15,2)
-  transport_charges	      Int?	
-  unloading_charges       Int?
-  misc_charges            Int?
-  net_total               Decimal?	  @db.Decimal(15,2)
-  no_of_boxes             Int?
-  status                  String?	    @db.VarChar(1)
-  sale_date_time          DateTime?	  @default(now())
-  revision                BigInt?
-  
-  stock_issue_ref         String?	    @db.VarChar(150)  @default("")
-  stock_issue_date_ref    DateTime?	    
-  round_off               Decimal?	  @db.Decimal(10,2)
-  retail_customer_name    String?	    @db.VarChar(150)
-  retail_customer_address String?	    @db.VarChar(150)
-  retail_customer_phone   String?	    @db.VarChar(50)
-  print_count             Int?
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
-  inv_gen_mode            String?	    @db.VarChar(1)
-  customer                customer    @relation(fields: [customer_id], references: [id])
+  id                BigInt    @id @default(autoincrement())
+  center_id         BigInt?
+  customer_id       BigInt
+  invoice_no        String?   @db.VarChar(50)
+  invoice_date      DateTime?
+  lr_no             String?   @db.VarChar(50)
+  lr_date           DateTime?
+  invoice_type      String?   @db.VarChar(50)
+  order_no          String?   @db.VarChar(50)
+  order_date        DateTime?
+  total_quantity    Int?
+  no_of_items       Int?
+  after_tax_value   Decimal?  @db.Decimal(10, 2)
+  cgs_t             Decimal?  @default(0.00) @db.Decimal(10, 2)
+  sgs_t             Decimal?  @default(0.00) @db.Decimal(10, 2)
+  igs_t             Decimal?  @default(0.00) @db.Decimal(10, 2)
+  total_value       Decimal?  @db.Decimal(15, 2)
+  transport_charges Int?
+  unloading_charges Int?
+  misc_charges      Int?
+  net_total         Decimal?  @db.Decimal(15, 2)
+  no_of_boxes       Int?
+  status            String?   @db.VarChar(1)
+  sale_date_time    DateTime? @default(now())
+  revision          BigInt?
 
-  payment_detail          payment_detail[]
-  ledger                  ledger[]
-  item_history            item_history[]
-  enquiry                 enquiry[]
-  sale_return             sale_return[]
-  sale_detail             sale_detail[]
+  stock_issue_ref         String?   @default("") @db.VarChar(150)
+  stock_issue_date_ref    DateTime?
+  round_off               Decimal?  @db.Decimal(10, 2)
+  retail_customer_name    String?   @db.VarChar(150)
+  retail_customer_address String?   @db.VarChar(150)
+  retail_customer_phone   String?   @db.VarChar(50)
+  print_count             Int?
+  createdAt               DateTime? @default(now())
+  updatedAt               DateTime? @updatedAt
+  created_by              BigInt?
+  updated_by              BigInt?
+  inv_gen_mode            String?   @db.VarChar(1)
+  customer                customer  @relation(fields: [customer_id], references: [id])
+
+  payment_detail payment_detail[]
+  ledger         ledger[]
+  item_history   item_history[]
+  enquiry        enquiry[]
+  sale_return    sale_return[]
+  sale_detail    sale_detail[]
 }
 
 model sale_detail {
-  id                      BigInt      @id @default(autoincrement())
-  center_id	              BigInt?
-  sale_id                 BigInt
-  product_id              BigInt
-  hsn_code                String?	    @db.VarChar(50)
-  stock_id                BigInt
-  quantity                Int
-  unit_price              Decimal?	  @db.Decimal(12,2) @default(0.00)
-  mrp                     Decimal?	  @db.Decimal(12,2) @default(0.00)
-  batch_date              DateTime?    @default(now())
-  tax                     Int
-  igs_t                   Decimal?	  @db.Decimal(12,2) @default(0.00)
-  cgs_t                   Decimal?	  @db.Decimal(12,2) @default(0.00)
-  sgs_t                   Decimal?	  @db.Decimal(12,2) @default(0.00)
-  after_tax_value         Decimal?	  @db.Decimal(12,2) @default(0.00)
-  total_value             Decimal?	  @db.Decimal(12,2) @default(0.00)
-  disc_value              Decimal?	  @db.Decimal(12,2) @default(0.00)
-  disc_percent            Decimal?	  @db.Decimal(12,2) @default(0.00)
-  disc_type               String?     @default("NET")
-  returned                Int?
+  id              BigInt    @id @default(autoincrement())
+  center_id       BigInt?
+  sale_id         BigInt
+  product_id      BigInt
+  hsn_code        String?   @db.VarChar(50)
+  stock_id        BigInt
+  quantity        Int
+  unit_price      Decimal?  @default(0.00) @db.Decimal(12, 2)
+  mrp             Decimal?  @default(0.00) @db.Decimal(12, 2)
+  batch_date      DateTime? @default(now())
+  tax             Int
+  igs_t           Decimal?  @default(0.00) @db.Decimal(12, 2)
+  cgs_t           Decimal?  @default(0.00) @db.Decimal(12, 2)
+  sgs_t           Decimal?  @default(0.00) @db.Decimal(12, 2)
+  after_tax_value Decimal?  @default(0.00) @db.Decimal(12, 2)
+  total_value     Decimal?  @default(0.00) @db.Decimal(12, 2)
+  disc_value      Decimal?  @default(0.00) @db.Decimal(12, 2)
+  disc_percent    Decimal?  @default(0.00) @db.Decimal(12, 2)
+  disc_type       String?   @default("NET")
+  returned        Int?
 
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  center                  center?     @relation(fields: [center_id], references: [id])
-  sale                    sale?       @relation(fields: [sale_id], references: [id])
-  product                 product?    @relation(fields: [product_id], references: [id])
-  stock                   stock?      @relation(fields: [stock_id], references: [id])
+  center  center?  @relation(fields: [center_id], references: [id])
+  sale    sale?    @relation(fields: [sale_id], references: [id])
+  product product? @relation(fields: [product_id], references: [id])
+  stock   stock?   @relation(fields: [stock_id], references: [id])
 
-  item_history            item_history[]
+  item_history item_history[]
 
 }
 
 model sale_return {
-  id                      BigInt        @id @default(autoincrement())
-  center_id	              BigInt?
-  sale_id                 BigInt?
-  cr_note_id              BigInt?
-  return_date             DateTime?
-  to_return_amount        Decimal?	    @db.Decimal(12,2)
-  amount_returned         Decimal?	    @db.Decimal(12,2)
-  to_receive_items        Int?
-  received_items          Int?
-  receive_status          String?       @db.VarChar(50)
-  refund_status           String?       @db.VarChar(50)
-  return_status           String?       @db.VarChar(50)
-  customer_id             BigInt
+  id               BigInt    @id @default(autoincrement())
+  center_id        BigInt?
+  sale_id          BigInt?
+  cr_note_id       BigInt?
+  return_date      DateTime?
+  to_return_amount Decimal?  @db.Decimal(12, 2)
+  amount_returned  Decimal?  @db.Decimal(12, 2)
+  to_receive_items Int?
+  received_items   Int?
+  receive_status   String?   @db.VarChar(50)
+  refund_status    String?   @db.VarChar(50)
+  return_status    String?   @db.VarChar(50)
+  customer_id      BigInt
 
-  createdAt	              DateTime?     @default(now())
-  updatedAt	              DateTime?     @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  payment_detail          payment_detail[]
-  center                  center?       @relation(fields: [center_id], references: [id])
-  sale                    sale?         @relation(fields: [sale_id], references: [id])
-  customer                customer?     @relation(fields: [customer_id], references: [id])
-  credit_note             credit_note?  @relation(fields: [cr_note_id], references: [id])
+  payment_detail payment_detail[]
+  center         center?          @relation(fields: [center_id], references: [id])
+  sale           sale?            @relation(fields: [sale_id], references: [id])
+  customer       customer?        @relation(fields: [customer_id], references: [id])
+  credit_note    credit_note?     @relation(fields: [cr_note_id], references: [id])
 }
 
 model sale_return_detail {
-  id                      BigInt      @id @default(autoincrement())
-  center_id	              BigInt?
+  id        BigInt  @id @default(autoincrement())
+  center_id BigInt?
 
-  sale_return_id          BigInt?
-  sale_id                 BigInt?
-  sale_detail_id          BigInt?
-  exchange_id             Int?
-  return_quantity         Int?
-  received_quantity       Int?
-  reason                  String
-  disc_percent            Int?
-  tax                     Int?
-  mrp                     Int?
-  igs_t                   Int?
-  cgs_t                   Int?
-  sgs_t                   Int?
-  orig_sold_qty           Int?
-  after_tax_value           Int?
-  total_value             Int?
-  hsn_code                Int?
-  unit                    Int?
+  sale_return_id    BigInt?
+  sale_id           BigInt?
+  sale_detail_id    BigInt?
+  exchange_id       Int?
+  return_quantity   Int?
+  received_quantity Int?
+  reason            String
+  disc_percent      Int?
+  tax               Int?
+  mrp               Int?
+  igs_t             Int?
+  cgs_t             Int?
+  sgs_t             Int?
+  orig_sold_qty     Int?
+  after_tax_value   Int?
+  total_value       Int?
+  hsn_code          Int?
+  unit              Int?
 
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
 }
 
-
-
-
 model discount {
-  id                      BigInt      @id @default(autoincrement())
-  center_id	              BigInt?
-  customer_id	            BigInt
-  type                    String?	    @db.VarChar(50)
-  value                   Decimal?	  @db.Decimal(5,2)
-  gst_slab                Int?	   
-  start_date               String?	    @db.VarChar(50)
-  end_date                 String?	    @db.VarChar(50)
-  brand_id                BigInt?
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
+  id          BigInt    @id @default(autoincrement())
+  center_id   BigInt?
+  customer_id BigInt
+  type        String?   @db.VarChar(50)
+  value       Decimal?  @db.Decimal(5, 2)
+  gst_slab    Int?
+  start_date  String?   @db.VarChar(50)
+  end_date    String?   @db.VarChar(50)
+  brand_id    BigInt?
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @updatedAt
+  created_by  BigInt?
+  updated_by  BigInt?
 
-  center                 center?    @relation(fields: [center_id], references: [id])
-  customer               customer    @relation(fields: [customer_id], references: [id])
-}	
+  center   center?  @relation(fields: [center_id], references: [id])
+  customer customer @relation(fields: [customer_id], references: [id])
+}
 
 model permissions {
-  id                      BigInt      @id @default(autoincrement())
-  center_id	              BigInt?
-  role_id                 BigInt
-  operation               String?	    @db.VarChar(50)
-  resource                String?	    @db.VarChar(120)
-  is_access               String?	    @db.VarChar(1)
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
+  id         BigInt    @id @default(autoincrement())
+  center_id  BigInt?
+  role_id    BigInt
+  operation  String?   @db.VarChar(50)
+  resource   String?   @db.VarChar(120)
+  is_access  String?   @db.VarChar(1)
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 }
 
 model vendor {
-  id                      BigInt      @id @default(autoincrement())
-  center_id               BigInt?
-  vendor_name                    String?	    @db.VarChar(150)
-  address1                String?	    @db.VarChar(150)
-  address2                String?	    @db.VarChar(150)
-  address3                String?	    @db.VarChar(150)
-  district                String?	    @db.VarChar(50)
-  state_id                BigInt?
-  pin                     String?	    @db.VarChar(50)
-  gst                     String?	    @db.VarChar(50)
-  phone                   String?	    @db.VarChar(50)
-  mobile                  String?	    @db.VarChar(50)
-  mobile2                 String?	    @db.VarChar(50)
-  whatsapp                String?	    @db.VarChar(50)
-  email                   String?	    @db.VarChar(50)
-  
-  is_active                String?	    @db.VarChar(1)
-  panno                   String?	    @db.VarChar(50)
-  credit_amt              Decimal?	  @db.Decimal(12,2)
-  balance_amt             Decimal?	  @db.Decimal(12,2)
-  last_paid_date          DateTime?   @db.Timestamp(6)
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
-  state                   state?      @relation(fields: [state_id], references: [id])
+  id          BigInt  @id @default(autoincrement())
+  center_id   BigInt?
+  vendor_name String? @db.VarChar(150)
+  address1    String? @db.VarChar(150)
+  address2    String? @db.VarChar(150)
+  address3    String? @db.VarChar(150)
+  district    String? @db.VarChar(50)
+  state_id    BigInt?
+  pin         String? @db.VarChar(50)
+  gst         String? @db.VarChar(50)
+  phone       String? @db.VarChar(50)
+  mobile      String? @db.VarChar(50)
+  mobile2     String? @db.VarChar(50)
+  whatsapp    String? @db.VarChar(50)
+  email       String? @db.VarChar(50)
 
-  vendor_paymnet          vendor_payment[]
-  purchase_ledger         purchase_ledger[]
-  purchase                purchase[]
+  is_active      String?   @db.VarChar(1)
+  panno          String?   @db.VarChar(50)
+  credit_amt     Decimal?  @db.Decimal(12, 2)
+  balance_amt    Decimal?  @db.Decimal(12, 2)
+  last_paid_date DateTime? @db.Timestamp(6)
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime? @updatedAt
+  created_by     BigInt?
+  updated_by     BigInt?
+  state          state?    @relation(fields: [state_id], references: [id])
+
+  vendor_paymnet  vendor_payment[]
+  purchase_ledger purchase_ledger[]
+  purchase        purchase[]
 }
-
 
 model customer_shipping_address {
-  id                      BigInt      @id @default(autoincrement())
-  customer_id             BigInt
-  state_id                BigInt
-  address1                String?	    @db.VarChar(150)
-  address2                String?	    @db.VarChar(150)
-  address3                String?	    @db.VarChar(150)
-  district                String?	    @db.VarChar(100)
-  pin                     String?	    @db.VarChar(50)
-  def_address             String?	    @db.VarChar(1) @default("N")
-  is_active               String?	    @db.VarChar(1)  @default("A")
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
-  state                   state?      @relation(fields: [state_id], references: [id])
+  id          BigInt    @id @default(autoincrement())
+  customer_id BigInt
+  state_id    BigInt
+  address1    String?   @db.VarChar(150)
+  address2    String?   @db.VarChar(150)
+  address3    String?   @db.VarChar(150)
+  district    String?   @db.VarChar(100)
+  pin         String?   @db.VarChar(50)
+  def_address String?   @default("N") @db.VarChar(1)
+  is_active   String?   @default("A") @db.VarChar(1)
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @updatedAt
+  created_by  BigInt?
+  updated_by  BigInt?
+  state       state?    @relation(fields: [state_id], references: [id])
 }
-
 
 model stock {
-  id                      BigInt      @id @default(autoincrement())
-  center_id	              BigInt?
-  product_id              BigInt
-  mrp	                    Decimal    @default(0.00)
-  available_stock         Int?
-  open_stock              Int?
-  is_active               String      @db.VarChar(1) @default("Y")
+  id              BigInt  @id @default(autoincrement())
+  center_id       BigInt?
+  product_id      BigInt
+  mrp             Decimal @default(0.00)
+  available_stock Int?
+  open_stock      Int?
+  is_active       String  @default("Y") @db.VarChar(1)
 
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
-  product                 product?   @relation(fields: [product_id], references: [id])
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
+  product    product?  @relation(fields: [product_id], references: [id])
 
-  purchase_detail         purchase_detail[]
-  enquiry_detail          enquiry_detail[]
-  sale_detail             sale_detail[]
+  purchase_detail purchase_detail[]
+  enquiry_detail  enquiry_detail[]
+  sale_detail     sale_detail[]
 
 }
 
-
-
 model audit {
-  id                BigInt      @id @default(autoincrement())
+  id                BigInt    @id @default(autoincrement())
   center_id         BigInt
   revision          BigInt?
   module            String?
@@ -560,401 +539,391 @@ model audit {
   action            String
   old_value         String
   new_value         String
-  audit_date        DateTime?   @default(now())
+  audit_date        DateTime? @default(now())
 
-  createdAt	        DateTime?   @default(now())
-  updatedAt	        DateTime?   @updatedAt
-  created_by	      BigInt?
-  updated_by        BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
 }
 
 model backorder {
-  id                  BigInt      @id @default(autoincrement())
-  center_id           BigInt
-  customer_id         BigInt
-  enquiry_detail_id   BigInt 
-  quantity            BigInt?
-  reason              String
-  status              String
-  order_date          DateTime? @default(now())
-  
-  createdAt	          DateTime?   @default(now())
-  updatedAt	          DateTime?   @updatedAt
-  created_by	        BigInt?
-  updated_by          BigInt?
+  id                BigInt    @id @default(autoincrement())
+  center_id         BigInt
+  customer_id       BigInt
+  enquiry_detail_id BigInt
+  quantity          BigInt?
+  reason            String
+  status            String
+  order_date        DateTime? @default(now())
+
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
 }
 
-
 model enquiry {
-  id                  BigInt    @id @default(autoincrement())
-  center_id           BigInt
+  id        BigInt @id @default(autoincrement())
+  center_id BigInt
 
-  customer_id         BigInt
-  enquiry_date        DateTime  @default(now())
-  e_status            String    @db.VarChar(100) @default("A")
-  remarks             String    @db.VarChar(200) @default("")
-  sale_id             BigInt
-  processed_date      DateTime
+  customer_id    BigInt
+  enquiry_date   DateTime @default(now())
+  e_status       String   @default("A") @db.VarChar(100)
+  remarks        String   @default("") @db.VarChar(200)
+  sale_id        BigInt
+  processed_date DateTime
 
-  createdAt	          DateTime? @default(now())
-  updatedAt	          DateTime? @updatedAt
-  created_by	        BigInt?
-  updated_by          BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  center              center      @relation(fields: [center_id], references: [id])
-  customer            customer    @relation(fields: [customer_id], references: [id])
-  sale                sale        @relation(fields: [sale_id], references: [id])
-  enquiry_detail      enquiry_detail[]
+  center         center           @relation(fields: [center_id], references: [id])
+  customer       customer         @relation(fields: [customer_id], references: [id])
+  sale           sale             @relation(fields: [sale_id], references: [id])
+  enquiry_detail enquiry_detail[]
 
 }
 
 model enquiry_detail {
-  id                  BigInt      @id @default(autoincrement())
-  center_id           BigInt
- 
-  enquiry_id          BigInt
-  product_id          BigInt
-  product_code        String      @db.VarChar(50) @default("")
-  stock_id            BigInt
-  ask_quantity        Int
-  give_quantity       Int
-  notes               String      @db.VarChar(50) @default("")
-  status              String      @db.VarChar(10) @default("")
-  processed           String      @db.VarChar(20) @default("NO")
-  
-  createdAt	          DateTime?   @default(now())
-  updatedAt	          DateTime?   @updatedAt
-  created_by	        BigInt?
-  updated_by          BigInt?
+  id        BigInt @id @default(autoincrement())
+  center_id BigInt
 
-  center              center      @relation(fields: [center_id], references: [id])
-  enquiry             enquiry     @relation(fields: [enquiry_id], references: [id])
-  product             product     @relation(fields: [product_id], references: [id])
-  stock               stock       @relation(fields: [stock_id], references: [id])
+  enquiry_id    BigInt
+  product_id    BigInt
+  product_code  String @default("") @db.VarChar(50)
+  stock_id      BigInt
+  ask_quantity  Int
+  give_quantity Int
+  notes         String @default("") @db.VarChar(50)
+  status        String @default("") @db.VarChar(10)
+  processed     String @default("NO") @db.VarChar(20)
+
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
+
+  center  center  @relation(fields: [center_id], references: [id])
+  enquiry enquiry @relation(fields: [enquiry_id], references: [id])
+  product product @relation(fields: [product_id], references: [id])
+  stock   stock   @relation(fields: [stock_id], references: [id])
 
 }
-
 
 model financial_year {
-  id                  BigInt      @id @default(autoincrement())
-  center_id           BigInt
- 
-  financial_year      String
-  start_date          DateTime
-  end_date            DateTime
-  draft_inv_seq       BigInt
-  inv_seq             BigInt
-  stock_issue_seq     BigInt
-  payment_seq         BigInt
-  vendor_payment_seq  BigInt
-  sale_return_seq     BigInt
-  cr_note_seq         BigInt
+  id        BigInt @id @default(autoincrement())
+  center_id BigInt
 
-  createdAt	          DateTime?   @default(now())
-  updatedAt	          DateTime?   @updatedAt
-  created_by	        BigInt?
-  updated_by          BigInt?
+  financial_year     String
+  start_date         DateTime
+  end_date           DateTime
+  draft_inv_seq      BigInt
+  inv_seq            BigInt
+  stock_issue_seq    BigInt
+  payment_seq        BigInt
+  vendor_payment_seq BigInt
+  sale_return_seq    BigInt
+  cr_note_seq        BigInt
+
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
 }
-
 
 model item_history {
-  id                      BigInt    @id @default(autoincrement())
-  center_id               BigInt
- 
-  module                  String    @db.VarChar(100) @default("")
-  product_ref_id          BigInt 
-  purchase_id             BigInt
-  purchase_det_id         BigInt
-  sale_id                 BigInt
-  sale_det_id             BigInt
-  action                  String
-  action_type             String
-  txn_qty                 Int
-  stock_level             Int
-  txn_date                DateTime
-  sale_return_id          BigInt
-  sale_return_det_id      BigInt
-  purchase_return_id      BigInt
-  purchase_return_det_id  BigInt
-  
-  createdAt	             DateTime?   @default(now())
-  updatedAt	             DateTime?   @updatedAt
-  created_by	           BigInt?
-  updated_by             BigInt?
+  id        BigInt @id @default(autoincrement())
+  center_id BigInt
+
+  module                 String   @default("") @db.VarChar(100)
+  product_ref_id         BigInt
+  purchase_id            BigInt
+  purchase_det_id        BigInt
+  sale_id                BigInt
+  sale_det_id            BigInt
+  action                 String
+  action_type            String
+  txn_qty                Int
+  stock_level            Int
+  txn_date               DateTime
+  sale_return_id         BigInt
+  sale_return_det_id     BigInt
+  purchase_return_id     BigInt
+  purchase_return_det_id BigInt
+
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
 
-  center                 center          @relation(fields: [center_id], references: [id])
-  prodduct               product         @relation(fields: [product_ref_id], references: [id])
-  purchase               purchase        @relation(fields: [purchase_id], references: [id])
-  purchase_detail        purchase_detail @relation(fields: [purchase_det_id], references: [id])
-  sale                   sale            @relation(fields: [sale_id], references: [id])
-  sale_detail            sale_detail     @relation(fields: [sale_det_id], references: [id])
+  center          center          @relation(fields: [center_id], references: [id])
+  prodduct        product         @relation(fields: [product_ref_id], references: [id])
+  purchase        purchase        @relation(fields: [purchase_id], references: [id])
+  purchase_detail purchase_detail @relation(fields: [purchase_det_id], references: [id])
+  sale            sale            @relation(fields: [sale_id], references: [id])
+  sale_detail     sale_detail     @relation(fields: [sale_det_id], references: [id])
 }
-
 
 model ledger {
-  id                  BigInt      @id @default(autoincrement())
-  center_id           BigInt
-  customer_id         BigInt
-  invoice_ref_id      BigInt
-  payment_ref_id      BigInt
-  ledger_detail       String      @db.VarChar(50) @default("")
-  credit_amt          Decimal	  @db.Decimal(12,2) @default(0.00) 
-  debit_amt           Decimal	  @db.Decimal(12,2) @default(0.00)
-  balance_amt         Decimal	  @db.Decimal(12,2) @default(0.00)
-  ledger_date         DateTime
- 
-  
-  createdAt	          DateTime?   @default(now())
-  updatedAt	          DateTime?   @updatedAt
-  created_by	        BigInt?
-  updated_by          BigInt?
+  id             BigInt   @id @default(autoincrement())
+  center_id      BigInt
+  customer_id    BigInt
+  invoice_ref_id BigInt
+  payment_ref_id BigInt
+  ledger_detail  String   @default("") @db.VarChar(50)
+  credit_amt     Decimal  @default(0.00) @db.Decimal(12, 2)
+  debit_amt      Decimal  @default(0.00) @db.Decimal(12, 2)
+  balance_amt    Decimal  @default(0.00) @db.Decimal(12, 2)
+  ledger_date    DateTime
 
-  center              center      @relation(fields: [center_id], references: [id])
-  customer            customer    @relation(fields: [customer_id], references: [id])
-  sale                sale        @relation(fields: [invoice_ref_id], references: [id])
-  payment             payment      @relation(fields: [payment_ref_id], references: [id])
+
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
+
+  center   center   @relation(fields: [center_id], references: [id])
+  customer customer @relation(fields: [customer_id], references: [id])
+  sale     sale     @relation(fields: [invoice_ref_id], references: [id])
+  payment  payment  @relation(fields: [payment_ref_id], references: [id])
 
 }
 
-
 model payment {
-  id                  BigInt      @id @default(autoincrement())
-  center_id           BigInt
+  id        BigInt @id @default(autoincrement())
+  center_id BigInt
 
-  payment_no          String      @db.VarChar(50) @default("")
-  customer_id         BigInt 
-  payment_now_amt     Decimal?	  @db.Decimal(12,2) @default(0.00)
-  advance_amt_used    Decimal?	  @db.Decimal(12,2) @default(0.00)
+  payment_no          String   @default("") @db.VarChar(50)
+  customer_id         BigInt
+  payment_now_amt     Decimal? @default(0.00) @db.Decimal(12, 2)
+  advance_amt_used    Decimal? @default(0.00) @db.Decimal(12, 2)
   payment_date        DateTime
   payment_mode_ref_id BigInt
-  bank_ref            String      @db.VarChar(200) @default("")
-  payment_ref         String      @db.VarChar(200) @default("")
-  is_cancelled        String      @db.VarChar(20) @default("")
+  bank_ref            String   @default("") @db.VarChar(200)
+  payment_ref         String   @default("") @db.VarChar(200)
+  is_cancelled        String   @default("") @db.VarChar(20)
   cancelled_date      DateTime
   last_updated        DateTime
   bank_id             BigInt
-  bank_name           String      @db.VarChar(200) @default("")
+  bank_name           String   @default("") @db.VarChar(200)
 
-  createdAt	          DateTime?   @default(now())
-  updatedAt	          DateTime?   @updatedAt
-  created_by	        BigInt?
-  updated_by          BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  purchase_ledger     purchase_ledger[]
-  payment_detail      payment_detail[]
+  purchase_ledger purchase_ledger[]
+  payment_detail  payment_detail[]
 
-  center              center        @relation(fields: [center_id], references: [id])
-  customer            customer      @relation(fields: [customer_id], references: [id])
-  payment_mode        payment_mode  @relation(fields: [payment_mode_ref_id], references: [id])
-  center_banks        center_banks  @relation(fields: [bank_id], references: [id])
-  ledger              ledger[]
+  center       center       @relation(fields: [center_id], references: [id])
+  customer     customer     @relation(fields: [customer_id], references: [id])
+  payment_mode payment_mode @relation(fields: [payment_mode_ref_id], references: [id])
+  center_banks center_banks @relation(fields: [bank_id], references: [id])
+  ledger       ledger[]
 
 }
-
 
 model payment_detail {
-  id                  BigInt      @id @default(autoincrement())
-  center_id           BigInt
-  payment_ref_id      BigInt
-  sale_ref_id         BigInt
-  applied_amount      Decimal?	  @db.Decimal(12,2)
-  sale_return_ref_id  BigInt
+  id                 BigInt   @id @default(autoincrement())
+  center_id          BigInt
+  payment_ref_id     BigInt
+  sale_ref_id        BigInt
+  applied_amount     Decimal? @db.Decimal(12, 2)
+  sale_return_ref_id BigInt
 
-  createdAt	          DateTime?   @default(now())
-  updatedAt	          DateTime?   @updatedAt
-  created_by	        BigInt?
-  updated_by          BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  center              center      @relation(fields: [center_id], references: [id])
-  payment             payment     @relation(fields: [payment_ref_id], references: [id])
-  sale                sale        @relation(fields: [sale_ref_id], references: [id])
-  sale_return         sale_return @relation(fields: [sale_return_ref_id], references: [id])
+  center      center      @relation(fields: [center_id], references: [id])
+  payment     payment     @relation(fields: [payment_ref_id], references: [id])
+  sale        sale        @relation(fields: [sale_ref_id], references: [id])
+  sale_return sale_return @relation(fields: [sale_return_ref_id], references: [id])
 }
 
-
 model payment_mode {
-  id                    BigInt      @id @default(autoincrement())
-  center_id             BigInt
-  payment_mode_name     String      @db.VarChar(50)
-  payment_type          String      @db.VarChar(3)
-  commission_fee        Decimal?	  @db.Decimal(10,2) @default(0.00)
-  is_active             String      @db.VarChar(3)
+  id                BigInt   @id @default(autoincrement())
+  center_id         BigInt
+  payment_mode_name String   @db.VarChar(50)
+  payment_type      String   @db.VarChar(3)
+  commission_fee    Decimal? @default(0.00) @db.Decimal(10, 2)
+  is_active         String   @db.VarChar(3)
 
-  createdAt	            DateTime?   @default(now())
-  updatedAt	            DateTime?   @updatedAt
-  created_by	          BigInt?
-  updated_by            BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  vendor_payment        vendor_payment[]
-  center                center      @relation(fields: [center_id], references: [id])
-  payment               payment[]
+  vendor_payment vendor_payment[]
+  center         center           @relation(fields: [center_id], references: [id])
+  payment        payment[]
 }
 
 model purchase {
-  id                    BigInt      @id @default(autoincrement())
-  center_id             BigInt
+  id        BigInt @id @default(autoincrement())
+  center_id BigInt
 
-  vendor_id             BigInt
-  invoice_no            String      @db.VarChar(50) @default("")
-  invoice_date          DateTime
-  lr_no                 String?      @db.VarChar(50) @default("")
-  lr_date               DateTime?
-  received_date         DateTime?
-  purchase_type         String      @db.VarChar(50) @default("")
-  order_no              String?      @db.VarChar(50) @default("")
-  order_date            DateTime?
-  total_quantity        Int 
-  no_of_items           Int
-  after_tax_value         Decimal?    @db.Decimal(12,2)  @default(0.00)
-  cgs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00) 
-  sgs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
-  igs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
-  total_value           Decimal?    @db.Decimal(12,2)  @default(0.00)
-  transport_charges     Decimal?    @db.Decimal(12,2)  @default(0.00)
-  unloading_charges     Decimal?    @db.Decimal(12,2)  @default(0.00)
-  misc_charges          Decimal?    @db.Decimal(12,2)  @default(0.00)
-  net_total             Int
-  no_of_boxes           Int
-  status                String      @db.VarChar(1) @default("D")
+  vendor_id               BigInt
+  invoice_no              String    @default("") @db.VarChar(50)
+  invoice_date            DateTime
+  lr_no                   String?   @default("") @db.VarChar(50)
+  lr_date                 DateTime?
+  received_date           DateTime?
+  purchase_type           String    @default("") @db.VarChar(50)
+  order_no                String?   @default("") @db.VarChar(50)
+  order_date              DateTime?
+  total_quantity          Int
+  no_of_items             Int
+  after_tax_value         Decimal?  @default(0.00) @db.Decimal(12, 2)
+  cgs_t                   Decimal?  @default(0.00) @db.Decimal(12, 2)
+  sgs_t                   Decimal?  @default(0.00) @db.Decimal(12, 2)
+  igs_t                   Decimal?  @default(0.00) @db.Decimal(12, 2)
+  total_value             Decimal?  @default(0.00) @db.Decimal(12, 2)
+  transport_charges       Decimal?  @default(0.00) @db.Decimal(12, 2)
+  unloading_charges       Decimal?  @default(0.00) @db.Decimal(12, 2)
+  misc_charges            Decimal?  @default(0.00) @db.Decimal(12, 2)
+  net_total               Int
+  no_of_boxes             Int
+  status                  String    @default("D") @db.VarChar(1)
   stock_inwards_date_time DateTime?
-  round_off             Decimal?    @db.Decimal(12,2)  @default(0.00)
-  revision              Int         @default(0)
+  round_off               Decimal?  @default(0.00) @db.Decimal(12, 2)
+  revision                Int       @default(0)
 
-  createdAt	          DateTime?     @default(now())
-  updatedAt	          DateTime?     @updatedAt
-  created_by	        BigInt?
-  updated_by          BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  center                center      @relation(fields: [center_id], references: [id])
-  vendor                vendor      @relation(fields: [vendor_id], references: [id])
+  center center @relation(fields: [center_id], references: [id])
+  vendor vendor @relation(fields: [vendor_id], references: [id])
 
-  vendor_payment_detail  vendor_payment_detail[]
+  vendor_payment_detail vendor_payment_detail[]
   purchase_ledger       purchase_ledger[]
   purchase_detail       purchase_detail[]
   item_history          item_history[]
 
 }
 
-
 model purchase_detail {
-  id                    BigInt      @id @default(autoincrement())
-  center_id             BigInt
-  purchase_id           BigInt
-  product_id            BigInt
-  stock_id              BigInt
-  quantity              Int    
-  purchase_price        Decimal?    @db.Decimal(12,2)  @default(0.00) 
-  mrp                   Decimal?    @db.Decimal(12,2)  @default(0.00)
-  batch_date            DateTime
-  tax                   Decimal?    @db.Decimal(12,2)  @default(0.00)
-  igs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
-  cgs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
-  sgs_t                 Decimal?    @db.Decimal(12,2)  @default(0.00)
-  after_tax_value         Decimal?    @db.Decimal(12,2)  @default(0.00)
-  total_value           Decimal?    @db.Decimal(12,2)  @default(0.00)
+  id              BigInt   @id @default(autoincrement())
+  center_id       BigInt
+  purchase_id     BigInt
+  product_id      BigInt
+  stock_id        BigInt
+  quantity        Int
+  purchase_price  Decimal? @default(0.00) @db.Decimal(12, 2)
+  mrp             Decimal? @default(0.00) @db.Decimal(12, 2)
+  batch_date      DateTime
+  tax             Decimal? @default(0.00) @db.Decimal(12, 2)
+  igs_t           Decimal? @default(0.00) @db.Decimal(12, 2)
+  cgs_t           Decimal? @default(0.00) @db.Decimal(12, 2)
+  sgs_t           Decimal? @default(0.00) @db.Decimal(12, 2)
+  after_tax_value Decimal? @default(0.00) @db.Decimal(12, 2)
+  total_value     Decimal? @default(0.00) @db.Decimal(12, 2)
 
-  createdAt	            DateTime?   @default(now())
-  updatedAt	            DateTime?   @updatedAt
-  created_by	          BigInt?
-  updated_by            BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  center                center      @relation(fields: [center_id], references: [id])
-  purchase              purchase?   @relation(fields: [purchase_id], references: [id])
-  product               product     @relation(fields: [product_id], references: [id])
-  stock                 stock       @relation(fields: [stock_id], references: [id])
-  item_history          item_history[]
+  center       center         @relation(fields: [center_id], references: [id])
+  purchase     purchase?      @relation(fields: [purchase_id], references: [id])
+  product      product        @relation(fields: [product_id], references: [id])
+  stock        stock          @relation(fields: [stock_id], references: [id])
+  item_history item_history[]
 
 }
 
 model purchase_ledger {
-  id                    BigInt      @id @default(autoincrement())
-  center_id             BigInt
-  vendor_id             BigInt
-  purchase_ref_id       BigInt
-  payment_ref_id        BigInt
-  ledger_detail         String      @db.VarChar(50)    @default("")
-  credit_amt            Decimal?    @db.Decimal(12,2)  @default(0.00)
-  debit_amt             Decimal?    @db.Decimal(12,2)  @default(0.00)
-  balance_amt           Decimal?    @db.Decimal(12,2)  @default(0.00)
-  ledger_date           DateTime
+  id              BigInt   @id @default(autoincrement())
+  center_id       BigInt
+  vendor_id       BigInt
+  purchase_ref_id BigInt
+  payment_ref_id  BigInt
+  ledger_detail   String   @default("") @db.VarChar(50)
+  credit_amt      Decimal? @default(0.00) @db.Decimal(12, 2)
+  debit_amt       Decimal? @default(0.00) @db.Decimal(12, 2)
+  balance_amt     Decimal? @default(0.00) @db.Decimal(12, 2)
+  ledger_date     DateTime
 
-  createdAt	            DateTime?   @default(now())
-  updatedAt	            DateTime?   @updatedAt
-  created_by	          BigInt?
-  updated_by            BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  center                center      @relation(fields: [center_id], references: [id])
-  vendor                vendor      @relation(fields: [vendor_id], references: [id])
-  purchase              purchase?   @relation(fields: [purchase_ref_id], references: [id])
-  payment               payment?    @relation(fields: [payment_ref_id], references: [id])
+  center   center    @relation(fields: [center_id], references: [id])
+  vendor   vendor    @relation(fields: [vendor_id], references: [id])
+  purchase purchase? @relation(fields: [purchase_ref_id], references: [id])
+  payment  payment?  @relation(fields: [payment_ref_id], references: [id])
 
 }
-
 
 model vendor_payment {
-  id                      BigInt      @id @default(autoincrement())
-  center_id               BigInt 
-  vendor_payment_no       BigInt 
-  vendor_id               BigInt
-  payment_now_amt         Decimal?    @db.Decimal(12,2) @default(0.00)
-  advance_amt_used        Decimal?    @db.Decimal(12,2) @default(0.00)
-	payment_date            DateTime
-  payment_mode_ref_id     BigInt
-  bank_ref                String?     @db.VarChar(200) @default("")
-  payment_ref             String      @db.VarChar(200) @default("")
-  is_cancelled            String      @db.VarChar(20) @default("")
-  cancelled_date          DateTime
-  bank_id                 BigInt?
-  bank_name               String      @db.VarChar(200) @default("")
+  id                  BigInt   @id @default(autoincrement())
+  center_id           BigInt
+  vendor_payment_no   BigInt
+  vendor_id           BigInt
+  payment_now_amt     Decimal? @default(0.00) @db.Decimal(12, 2)
+  advance_amt_used    Decimal? @default(0.00) @db.Decimal(12, 2)
+  payment_date        DateTime
+  payment_mode_ref_id BigInt
+  bank_ref            String?  @default("") @db.VarChar(200)
+  payment_ref         String   @default("") @db.VarChar(200)
+  is_cancelled        String   @default("") @db.VarChar(20)
+  cancelled_date      DateTime
+  bank_id             BigInt?
+  bank_name           String   @default("") @db.VarChar(200)
 
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  center                  center      @relation(fields: [center_id], references: [id])
-  vendor                  vendor      @relation(fields: [vendor_id], references: [id])
-  payment_mode            payment_mode?  @relation(fields: [payment_mode_ref_id], references: [id])
-  center_banks            center_banks?  @relation(fields: [bank_id], references: [id])
+  center       center        @relation(fields: [center_id], references: [id])
+  vendor       vendor        @relation(fields: [vendor_id], references: [id])
+  payment_mode payment_mode? @relation(fields: [payment_mode_ref_id], references: [id])
+  center_banks center_banks? @relation(fields: [bank_id], references: [id])
 
-  vendor_payment_detail   vendor_payment_detail[]
+  vendor_payment_detail vendor_payment_detail[]
 
 }
 
-
 model vendor_payment_detail {
-  id                      BigInt      @id @default(autoincrement())
-  center_id               BigInt
-  vendor_payment_ref_id   BigInt
-  purchase_ref_id         BigInt
-  applied_amount          Decimal?    @db.Decimal(12,2) @default(0.00)
+  id                    BigInt   @id @default(autoincrement())
+  center_id             BigInt
+  vendor_payment_ref_id BigInt
+  purchase_ref_id       BigInt
+  applied_amount        Decimal? @default(0.00) @db.Decimal(12, 2)
 
-  createdAt	              DateTime?   @default(now())
-  updatedAt	              DateTime?   @updatedAt
-  created_by	            BigInt?
-  updated_by              BigInt?
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+  created_by BigInt?
+  updated_by BigInt?
 
-  vendor_payment          vendor_payment?  @relation(fields: [vendor_payment_ref_id], references: [id])
-  purchase                purchase?   @relation(fields: [purchase_ref_id], references: [id])
+  vendor_payment vendor_payment? @relation(fields: [vendor_payment_ref_id], references: [id])
+  purchase       purchase?       @relation(fields: [purchase_ref_id], references: [id])
 
 
 }
 
 model credit_note {
-  id                        BigInt      @id @default(autoincrement())
-  center_id                 BigInt
-  credit_note_no            String      @db.VarChar(50) @default("")
-  credit_note_total_amount  Decimal?    @db.Decimal(12,2) @default(0.00)
-  refund_status             String      @db.VarChar(20) @default("")
-  createdAt	                DateTime?   @default(now())
-  updatedAt	                DateTime?   @updatedAt
-  created_by	              BigInt?
-  updated_by                BigInt?
+  id                       BigInt    @id @default(autoincrement())
+  center_id                BigInt
+  credit_note_no           String    @default("") @db.VarChar(50)
+  credit_note_total_amount Decimal?  @default(0.00) @db.Decimal(12, 2)
+  refund_status            String    @default("") @db.VarChar(20)
+  createdAt                DateTime? @default(now())
+  updatedAt                DateTime? @updatedAt
+  created_by               BigInt?
+  updated_by               BigInt?
 
-  sale_return               sale_return[]
+  sale_return sale_return[]
 
 }

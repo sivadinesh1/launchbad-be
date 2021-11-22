@@ -46,8 +46,10 @@ const getTimezones = async () => {
 };
 
 const addUser = async (jsonObj) => {
-	const user = await checkUserExist(jsonObj);
-	if (user !== null) {
+	const user = await checkUserExist(jsonObj.username);
+	console.log('dinesh > ' + JSON.stringify(user));
+
+	if (user !== 'false') {
 		return { message: 'DUP_USERNAME' };
 	} else {
 		let id = await insertUser(jsonObj);

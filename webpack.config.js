@@ -3,7 +3,7 @@ const nodeExternals = require('webpack-node-externals');
 const CopyPlugin = require('copy-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 
-const { NODE_ENV = 'production' } = process.env;
+const { NODE_ENV = 'development' } = process.env;
 module.exports = {
 	entry: './src/index.js',
 	mode: NODE_ENV,

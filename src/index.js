@@ -2,6 +2,7 @@ const https = require('https');
 const http = require('http');
 const app = require('./app');
 const fs = require('fs');
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 // var options = {
 //   key: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/privkey.pem'),
@@ -22,17 +23,17 @@ const fs = require('fs');
 // prod
 // https.createServer(options, app).listen(8441);
 
-// if (process.env.NODE_ENV === 'development') {
-http.createServer(app).listen(5050);
-// } else {
-// 	var options = {
-// 		key: fs.readFileSync(process.env.SSL_KEY),
-// 		cert: fs.readFileSync(process.env.SSL_CERT),
-// 		ca: fs.readFileSync(process.env.SSL_CHAIN),
-// 	};
+if (process.env.NODE_ENV === 'development') {
+	http.createServer(app).listen(5050);
+} else {
+	var options = {
+		key: fs.readFileSync(process.env.SSL_KEY || ''),
+		cert: fs.readFileSync(process.env.SSL_CERT || ''),
+		ca: fs.readFileSync(process.env.SSL_CHAIN || ''),
+	};
 
-// 	https.createServer(options, app).listen(process.env.PORT);
-// }
+	https.createServer(options, app).listen(process.env.PORT);
+}
 
 // pm2 log --lines 500
 // rm all_files.sql && cat *.sql  > all_files.sql

@@ -18,15 +18,15 @@ const insertUser = async (insertValues) => {
 
 	let center_id = insertValues.center_id;
 	let username = insertValues.username;
-	let firstname = insertValues.firstname;
-	let mobilenumber = insertValues.mobilenumber;
+	let first_name = insertValues.first_name;
+	let mobilenumber = insertValues.username;
 
 	const result = await prisma.users.create({
 		data: {
 			center_id: Number(center_id),
 			username: username,
 			userpass: hashed_password,
-			firstname: firstname,
+			firstname: first_name,
 			mobilenumber: mobilenumber,
 			createddatetime: new Date(today),
 			status: 'A',
@@ -52,10 +52,10 @@ const insertUserRole = async (insertValues) => {
 	return result;
 };
 
-const checkUserExist = async (insertValues) => {
+const checkUserExist = async (username) => {
 	const users = await prisma.users.findMany({
 		where: {
-			username: insertValues.username,
+			username: username,
 		},
 		include: {
 			user_role: {
@@ -66,13 +66,17 @@ const checkUserExist = async (insertValues) => {
 		},
 	});
 
-	const returnValue = bigIntToString(users);
-	returnValue[0]['role_name'] = returnValue[0].user_role[0].role.name;
-	returnValue[0]['role_desc'] = returnValue[0].user_role[0].role.description;
-	returnValue[0]['role'] = returnValue[0].user_role[0].role_id;
-	returnValue[0].user_role = '';
+	if (users.length > 0) {
+		const returnValue = bigIntToString(users);
+		returnValue[0]['role_name'] = returnValue[0].user_role[0].role.name;
+		returnValue[0]['role_desc'] = returnValue[0].user_role[0].role.description;
+		returnValue[0]['role'] = returnValue[0].user_role[0].role_id;
+		returnValue[0].user_role = '';
 
-	return returnValue[0];
+		return returnValue[0];
+	} else {
+		return 'false';
+	}
 };
 
 const updateUserStatus = async (updateValues) => {
@@ -136,6 +140,12 @@ const getUsers = async (center_id, status) => {
 // };
 
 module.exports = {
+	updateUserStatus,
+	getUsers,
+	checkUserExist,
+	findOne,
+	insertUser,
+	insertUserRole,
 	updateUserStatus,
 	getUsers,
 };

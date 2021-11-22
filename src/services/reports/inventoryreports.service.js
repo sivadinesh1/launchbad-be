@@ -116,12 +116,10 @@ const getProductInventoryReportShort = (requestBody) => {
 	return promisifyQuery(query);
 };
 
-const fullStockReport = (requestBody) => {
-	const [center_id, mrp_split] = Object.values(requestBody);
-
+const fullStockReport = (center_id, mrp_split) => {
 	let query = '';
 
-	if (mrp_split === true) {
+	if (mrp_split === false) {
 		query = `
     select b2.brand_name,  
     product_code, 
@@ -159,7 +157,7 @@ const fullStockReport = (requestBody) => {
     group by
     s.product_id, s.mrp, s.available_stock `;
 	}
-
+	console.log('printing query::' + query);
 	return promisifyQuery(query);
 };
 

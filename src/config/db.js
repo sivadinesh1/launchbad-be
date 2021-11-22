@@ -1,14 +1,26 @@
 const util = require('util');
 let mysql = require('mysql');
 
+
 let pool = mysql.createPool({
 	connectionLimit: 100, //important
-	host: '127.0.0.1',
-	user: 'root',
-	password: 'tesla',
-	database: 'testing',
+	host: process.env.DB_HOST,
+	user: process.env.DB_USER,
+	password: process.env.DB_PASS,
+	port: process.env.DB_PORT,
+	database: process.env.DATABASE,
 	debug: false,
 });
+
+
+// let pool = mysql.createPool({
+// 	connectionLimit: 100, //important
+// 	host: '127.0.0.1',
+// 	user: 'root',
+// 	password: 'tesla',
+// 	database: 'testing',
+// 	debug: false,
+// });
 
 // var pool = mysql.createPool({
 // 	connectionLimit: 100, //important

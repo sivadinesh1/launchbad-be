@@ -16,39 +16,53 @@ const getPermissions = async (center_id, role_id) => {
 };
 
 const checkUsernameExists = async (username, center_id) => {
-	const result = await prisma.users.findMany({
-		where: {
-			username: username,
-		},
-		select: {
-			id: true,
-			center_id: true,
-			username: true,
-			userpass: true,
-
-			user_role: {
-				include: {
-					role: true, // Include role categories
-				},
+	console.log('username : ' + username);
+	let result;
+	try {
+		result = await prisma.users.findMany({
+			where: {
+				username: username,
 			},
-			center: {
-				include: {
-					company: true,
-					state: true,
-					subscriptions: {
-						where: {
-							AND: [{ is_active: 'Y' }],
-						},
-						include: {
-							plans: true,
+			select: {
+				id: true,
+				center_id: true,
+				username: true,
+				userpass: true,
+				firstname: true,
+
+				user_role: {
+					include: {
+						role: true, // Include role categories
+					},
+				},
+				center: {
+					include: {
+						company: true,
+						state: true,
+						subscriptions: {
+							where: {
+								AND: [{ is_active: 'Y' }],
+							},
+							include: {
+								plans: true,
+							},
 						},
 					},
 				},
 			},
-		},
-	});
+		});
 
-	return bigIntToString(result[0]);
+		console.log('dinesh ' + result.length);
+		console.log('dinesh ' + result[0]);
+
+		if (result.length > 0) {
+			return bigIntToString(result[0]);
+		} else {
+			return 'false';
+		}
+	} catch (error) {
+		console.log(error);
+	}
 };
 
 const updateCenterForSuperAdmin = (center_id) => {
@@ -72,6 +86,7 @@ const login = async (requestBody) => {
 			role_id: user.user_role[0].role_id,
 			center_id,
 			username,
+			first_name: user.firstname,
 			id,
 			center_name: user?.center.name,
 			center_district: user?.center.district,
