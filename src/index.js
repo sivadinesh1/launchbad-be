@@ -2,7 +2,7 @@ const https = require('https');
 const http = require('http');
 const app = require('./app');
 const fs = require('fs');
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
+
 
 // var options = {
 //   key: fs.readFileSync('/etc/letsencrypt/live/launchpaderp.com/privkey.pem'),
