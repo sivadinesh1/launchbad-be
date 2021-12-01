@@ -286,7 +286,7 @@ where p.id = pd.payment_ref_id
 );
 
 
-
+	ALTER TABLE payment_detail ADD INDEX sale_ref_id_index (sale_ref_id);
 
 
 
