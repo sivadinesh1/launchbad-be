@@ -131,6 +131,8 @@ const getCustomerDetails = catchAsync(async (req, res) => {
 });
 
 const addCustomer = catchAsync(async (req, res) => {
+	req.body.created_by = Number(req.user.id);
+	req.body.updated_by = Number(req.user.id);
 	const data = await customersService.insertCustomer(req.body);
 	return responseForward(data, 'getCustomerDetails', res);
 });

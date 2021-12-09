@@ -2,7 +2,11 @@ const { prisma } = require('../config/prisma');
 
 const { currentTimeInTimeZone, bigIntToString } = require('../utils/utils');
 
-const { insertUser, insertUserRole, checkUserExist } = require('./user.service');
+const {
+	insertUser,
+	insertUserRole,
+	checkUserExist,
+} = require('./user.service');
 
 const getProductsCount = async (center_id) => {
 	const result = await prisma.product.count({
@@ -47,7 +51,6 @@ const getTimezones = async () => {
 
 const addUser = async (jsonObj) => {
 	const user = await checkUserExist(jsonObj.username);
-	console.log('dinesh > ' + JSON.stringify(user));
 
 	if (user !== 'false') {
 		return { message: 'DUP_USERNAME' };

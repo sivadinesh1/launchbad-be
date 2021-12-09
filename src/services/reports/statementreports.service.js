@@ -1,8 +1,13 @@
 var pool = require('../../config/db');
-const { currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../../utils/utils');
+const {
+	currentTimeInTimeZone,
+	toTimeZoneFormat,
+	promisifyQuery,
+} = require('../../utils/utils');
 
 const getStatement = (requestBody) => {
-	const [center_id, customer_id, start, end, invoice_type] = Object.values(requestBody);
+	const [center_id, customer_id, start, end, invoice_type] =
+		Object.values(requestBody);
 	let start_date = toTimeZoneFormat(start, 'DD-MM-YYYY') + ' 00:00:00';
 	let end_date = toTimeZoneFormat(end, 'DD-MM-YYYY') + ' 23:59:59';
 
@@ -96,8 +101,10 @@ const getItemWiseSale = (requestBody) => {
 	let brand_id = requestBody.brand_id;
 	let invoice_type = requestBody.invoice_type;
 
-	let start_date = toTimeZoneFormat(requestBody.start_date, 'YYYY-MM-DD') + ' 00:00:00';
-	let end_date = toTimeZoneFormat(requestBody.end_date, 'YYYY-MM-DD') + ' 23:59:59';
+	let start_date =
+		toTimeZoneFormat(requestBody.start_date, 'YYYY-MM-DD') + ' 00:00:00';
+	let end_date =
+		toTimeZoneFormat(requestBody.end_date, 'YYYY-MM-DD') + ' 23:59:59';
 
 	let query = ` 
 		select 
@@ -146,10 +153,11 @@ const getItemWiseSale = (requestBody) => {
 };
 
 const getReceivablesClosingBalance = (requestBody) => {
-	const [center_id, customer_id, start, end, invoice_type] = Object.values(requestBody);
+	const [center_id, customer_id, start, end, invoice_type] =
+		Object.values(requestBody);
 
-	let start_date = toTimeZoneFormat(start, 'DD-MM-YYYY') + ' 00:00:00';
-	let end_date = toTimeZoneFormat(end, 'DD-MM-YYYY') + ' 23:59:59';
+	let start_date = toTimeZoneFormat(start, 'YYYY-MM-DD') + ' 00:00:00';
+	let end_date = toTimeZoneFormat(end, 'YYYY-MM-DD') + ' 23:59:59';
 	let query = `
 						select id, name , district, sum(invcd +  pymnt_rcvd*-1) as balance
 						From 
@@ -171,7 +179,7 @@ const getReceivablesClosingBalance = (requestBody) => {
 
 	query =
 		query +
-		`	and STR_TO_DATE(s.invoice_date,'%d-%m-%y') <= STR_TO_DATE('${end_date}','%d-%m-%y')
+		`	and s.invoice_date <= STR_TO_DATE('${end_date}','%Y-%m-%d')
 						group by c2.id,c2.name , c2.district 
 						UNION 
 						select c2.id,c2.name , c2.district,'0' invcd, IFNULL(sum(p2.payment_now_amt ),0) pymnt_rcvd
@@ -188,7 +196,9 @@ const getReceivablesClosingBalance = (requestBody) => {
 					and c2.center_id = p2.center_id 
 					and c2.id = p2.customer_id `;
 
-	query = query + ` and  STR_TO_DATE(p2.payment_date,'%d-%m-%y') <= STR_TO_DATE('${end_date}','%d-%m-%y') 	`;
+	query =
+		query +
+		` and  p2.payment_date <= STR_TO_DATE('${end_date}','%Y-%m-%d') 	`;
 
 	query =
 		query +
@@ -203,9 +213,10 @@ const getReceivablesClosingBalance = (requestBody) => {
 };
 
 const getReceivablesOpeningBalance = (requestBody) => {
-	const [center_id, customer_id, start, end, invoice_type] = Object.values(requestBody);
-	let start_date = toTimeZoneFormat(start, 'DD-MM-YYYY') + ' 00:00:00';
-	let end_date = toTimeZoneFormat(end, 'DD-MM-YYYY') + ' 23:59:59';
+	const [center_id, customer_id, start, end, invoice_type] =
+		Object.values(requestBody);
+	let start_date = toTimeZoneFormat(start, 'YYYY-MM-DD') + ' 00:00:00';
+	let end_date = toTimeZoneFormat(end, 'YYYY-MM-DD') + ' 23:59:59';
 
 	let query = `
 						select id, name , district, sum(invcd +  pymnt_rcvd*-1) as balance
@@ -228,7 +239,7 @@ const getReceivablesOpeningBalance = (requestBody) => {
 
 	query =
 		query +
-		`	and STR_TO_DATE(s.invoice_date,'%d-%m-%y') < STR_TO_DATE('${start_date}','%d-%m-%y')
+		`	and s.invoice_date < STR_TO_DATE('${start_date}','%Y-%m-%d')
 						group by c2.id,c2.name , c2.district 
 						UNION 
 						select c2.id,c2.name , c2.district,'0' invcd, IFNULL(sum(p2.payment_now_amt ),0) pymnt_rcvd
@@ -245,7 +256,9 @@ const getReceivablesOpeningBalance = (requestBody) => {
 					and c2.center_id = p2.center_id 
 					and c2.id = p2.customer_id `;
 
-	query = query + ` and  STR_TO_DATE(p2.payment_date,'%d-%m-%y') < STR_TO_DATE('${start_date}','%d-%m-%y') 	`;
+	query =
+		query +
+		` and  p2.payment_date < STR_TO_DATE('${start_date}','%Y-%m-%d') 	`;
 
 	query =
 		query +

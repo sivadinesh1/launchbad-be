@@ -432,8 +432,8 @@ model discount {
   type        String?   @db.VarChar(50)
   value       Decimal?  @db.Decimal(5, 2)
   gst_slab    Int?
-  start_date  String?   @db.VarChar(50)
-  end_date    String?   @db.VarChar(50)
+  start_date  DateTime?
+  end_date    DateTime?
   brand_id    BigInt?
   createdAt   DateTime? @default(now())
   updatedAt   DateTime? @updatedAt

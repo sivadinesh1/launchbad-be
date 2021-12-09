@@ -70,8 +70,11 @@ const getProductWithAllMRP = catchAsync(async (req, res) => {
 });
 
 const deleteProductFromStock = catchAsync(async (req, res) => {
-	console.log('dinesh :::: ' + req.user.center_id);
-	const data = await stockService.deleteProductFromStock(req.params.product_id, req.params.mrp, req.user.center_id);
+	const data = await stockService.deleteProductFromStock(
+		req.params.product_id,
+		req.params.mrp,
+		req.user.center_id
+	);
 	return responseForward(data, 'deleteProductFromStock', res);
 });
 

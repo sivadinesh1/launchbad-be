@@ -57,6 +57,7 @@ ALTER TABLE sale  DROP COLUMN tax_applicable;
 
 
 alter table sale
+add payment_status varchar(1),
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,

@@ -7,7 +7,8 @@ const { promisifyQuery } = require('../utils/utils');
 const { getSearchCustomers } = require('./customers.service');
 
 const searchProductInformation = async (requestBody) => {
-	const [center_id, customer_id, order_date, search_text] = Object.values(requestBody);
+	const [center_id, customer_id, order_date, search_text] =
+		Object.values(requestBody);
 
 	// initially checks if product has custom discount for the selected customer. if yes, takes that discount
 	// if no custom discount available, it then gets the default discount. brand = 0 for defaults
@@ -147,7 +148,7 @@ const addPartsDetailsEnquiry = async (requestBody) => {
 
 		let query = `INSERT INTO enquiry_detail ( enquiry_id, item_code, qty) values ( '${objValue.enquiryid}','${objValue.partno}','${objValue.quantity}')`;
 
-		promisifyQuery(query);
+		return promisifyQuery(query);
 	});
 };
 
@@ -159,13 +160,13 @@ const updateTaxRate = async (requestBody) => {
 	set 
 	taxrate = '${taxrate}' 
 	where id = '${id}' `;
-	promisifyQuery(query);
+	return promisifyQuery(query);
 };
 
 const getAllPaymentModes = async (center_id, status) => {
 	let query = `select * from payment_mode where center_id = '${center_id}' and is_active = '${status}'`;
 
-	promisifyQuery(query);
+	return promisifyQuery(query);
 };
 
 module.exports = {

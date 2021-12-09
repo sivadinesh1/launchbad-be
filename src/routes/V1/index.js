@@ -12,6 +12,7 @@ const adminRoute = require('./admin.route');
 const stockRoute = require('./stock.route');
 const printRoute = require('./print.route');
 const accountsRoute = require('./accounts.route');
+const receivablesRoute = require('./receivables.route');
 
 const purchaseaccountsRoute = require('./purchaseaccounts.route');
 const reportsRoute = require('./reports.route');
@@ -62,6 +63,10 @@ const defaultRoutes = [
 	{
 		path: '/api/accounts',
 		route: accountsRoute,
+	},
+	{
+		path: '/api/receivables',
+		route: receivablesRoute,
 	},
 
 	{

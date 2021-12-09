@@ -18,9 +18,12 @@ module.exports.salesService = require('./sales.service');
 module.exports.stockService = require('./stock.service');
 module.exports.vendorsService = require('./vendors.service');
 
+module.exports.receivablesService = require('./receivables.service');
+
 module.exports.inventoryReportsService = require('./reports/inventoryreports.service');
 module.exports.productSummaryReportsService = require('./reports/productsummaryreports.service');
 module.exports.statementReportsService = require('./reports/statementreports.service');
+module.exports.customerReportsService = require('./reports/customerreports.service');
 
 module.exports.userService = require('./user.service');
 module.exports.userV2Servic = require('./userV2.service');

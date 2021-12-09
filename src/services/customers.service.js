@@ -14,9 +14,11 @@ const insertCustomer = async (insertValues) => {
 			type: insertValues.disc_type,
 			gst_slab: 0,
 			value: insertValues.gst_zero,
-			start_date: currentTimeInTimeZone('YYYY-MM-DD'),
-			end_date: '9999-04-01',
+			start_date: new Date(currentTimeInTimeZone('YYYY-MM-DD')),
+			end_date: new Date('9999-04-01'),
 			brand_id: 0,
+			created_by: Number(insertValues.created_by),
+			updated_by: Number(insertValues.updated_by)
 		},
 		{
 			center_id: Number(insertValues.center_id),
@@ -24,9 +26,11 @@ const insertCustomer = async (insertValues) => {
 			type: insertValues.disc_type,
 			gst_slab: 5,
 			value: insertValues.gst_five,
-			start_date: currentTimeInTimeZone('YYYY-MM-DD'),
-			end_date: '9999-04-01',
+			start_date: new Date(currentTimeInTimeZone('YYYY-MM-DD')),
+			end_date: new Date('9999-04-01'),
 			brand_id: 0,
+			created_by: Number(insertValues.created_by),
+			updated_by: Number(insertValues.updated_by)
 		},
 		{
 			center_id: Number(insertValues.center_id),
@@ -34,9 +38,11 @@ const insertCustomer = async (insertValues) => {
 			type: insertValues.disc_type,
 			gst_slab: 12,
 			value: insertValues.gst_twelve,
-			start_date: currentTimeInTimeZone('YYYY-MM-DD'),
-			end_date: '9999-04-01',
+			start_date: new Date(currentTimeInTimeZone('YYYY-MM-DD')),
+			end_date: new Date('9999-04-01'),
 			brand_id: 0,
+			created_by: Number(insertValues.created_by),
+			updated_by: Number(insertValues.updated_by)
 		},
 		{
 			center_id: Number(insertValues.center_id),
@@ -44,9 +50,11 @@ const insertCustomer = async (insertValues) => {
 			type: insertValues.disc_type,
 			gst_slab: 18,
 			value: insertValues.gst_eighteen,
-			start_date: currentTimeInTimeZone('YYYY-MM-DD'),
-			end_date: '9999-04-01',
+			start_date: new Date(currentTimeInTimeZone('YYYY-MM-DD')),
+			end_date: new Date('9999-04-01'),
 			brand_id: 0,
+			created_by: Number(insertValues.created_by),
+			updated_by: Number(insertValues.updated_by)
 		},
 		{
 			center_id: Number(insertValues.center_id),
@@ -54,9 +62,11 @@ const insertCustomer = async (insertValues) => {
 			type: insertValues.disc_type,
 			gst_slab: 28,
 			value: insertValues.gst_twenty_eight,
-			start_date: currentTimeInTimeZone('YYYY-MM-DD'),
-			end_date: '9999-04-01',
+			start_date: new Date(currentTimeInTimeZone('YYYY-MM-DD')),
+			end_date: new Date('9999-04-01'),
 			brand_id: 0,
+			created_by: Number(insertValues.created_by),
+			updated_by: Number(insertValues.updated_by)
 		},
 	];
 
@@ -250,7 +260,7 @@ FROM
 };
 
 // fetch rows for default (brand_id as NON zero) customer discounts from discount tbl
-const getDiscountsByAllCustomerByBrand = (center_id, callback) => {
+const getDiscountsByAllCustomerByBrand = (center_id) => {
 	let query = ` 
 	SELECT 
 	c.name,  b.brand_name as 'brand_name',  d.type, d.brand_id as brand_id, 
@@ -278,10 +288,9 @@ FROM
 
 	let values = [center_id];
 
-	pool.query(query, values, function (err, data) {
-		if (err) return callback(err);
-		return callback(null, data);
-	});
+	return promisifyQuery(query, values);
+
+
 };
 
 // insert row in discount tbl
@@ -383,7 +392,7 @@ s1.code as csa_code
 };
 
 // insert row in customer tbl
-const insertDiscountsByBrands = (insertValues, callback) => {
+const insertDiscountsByBrands = (insertValues) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let taxSlabArr = [
@@ -394,21 +403,22 @@ const insertDiscountsByBrands = (insertValues, callback) => {
 		{ gst_slab: 28, gst_value: insertValues.gst_twenty_eight },
 	];
 
-	taxSlabArr.forEach((e) => {
+	taxSlabArr.forEach(async (e) => {
 		let formObj = {
-			center_id: insertValues.center_id,
-			customer_id: insertValues.customer_id,
-			brand_id: insertValues.brand_id,
+			center_id: Number(insertValues.center_id),
+			customer_id: Number(insertValues.customer_id),
+			brand_id: Number(insertValues.brand_id),
 			type: insertValues.disc_type,
 			value: e.gst_value,
 			gst_slab: e.gst_slab,
-			start_date: toTimeZoneFormat(insertValues.effDiscStDate, 'YYYY-MM-DD'),
-			end_date: '01-04-9999',
+			
+			start_date: new Date(currentTimeInTimeZone('YYYY-MM-DD')),
+			end_date: new Date('9999-04-01'),
 		};
 
-		insertCustomerDiscount(formObj);
+		await insertCustomerDiscount(formObj);
 	});
-	return callback(null, '1');
+	return "success";
 };
 
 // SHIPPING ADDRESS

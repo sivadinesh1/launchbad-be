@@ -5,13 +5,20 @@ const catchAsync = require('../utils/catchAsync');
 const { accountsService } = require('../services');
 
 const addPaymentReceived = catchAsync(async (req, res) => {
-	const data = await accountsService.addPaymentReceived(req.body);
+	const data = await accountsService.addPaymentReceived(
+		req.body,
+		req.user.center_id,
+		req.user.id
+	);
 
 	return responseForward(data, 'addPaymentReceived', res);
 });
 
 const getLedgerByCustomers = catchAsync(async (req, res) => {
-	const data = await accountsService.getLedgerByCustomers(req.user.center_id, req.params.customer_id);
+	const data = await accountsService.getLedgerByCustomers(
+		req.user.center_id,
+		req.params.customer_id
+	);
 
 	return responseForward(data, 'getLedgerByCustomers', res);
 });
@@ -41,7 +48,10 @@ const getPaymentsOverviewByCustomers = catchAsync(async (req, res) => {
 });
 
 const getPymtTransactionByCustomers = catchAsync(async (req, res) => {
-	const data = await accountsService.getPymtTransactionByCustomers(req.user.center_id, req.params.customer_id);
+	const data = await accountsService.getPymtTransactionByCustomers(
+		req.user.center_id,
+		req.params.customer_id
+	);
 
 	return responseForward(data, 'getPymtTransactionByCustomers', res);
 });
@@ -59,13 +69,19 @@ const getPaymentsOverviewByCenter = catchAsync(async (req, res) => {
 });
 
 const getPymtTransactionsByCenter = catchAsync(async (req, res) => {
-	const data = await accountsService.getPymtTransactionsByCenter(req.user.center_id);
+	const data = await accountsService.getPymtTransactionsByCenter(
+		req.user.center_id
+	);
 
 	return responseForward(data, 'getPymtTransactionsByCenter', res);
 });
 
 const addBulkPaymentReceived = catchAsync(async (req, res) => {
-	const data = await accountsService.addBulkPaymentReceived(req.body);
+	const data = await accountsService.addBulkPaymentReceived(
+		req.body,
+		req.user.center_id,
+		req.user.id
+	);
 
 	return responseForward(data, 'addBulkPaymentReceived', res);
 });

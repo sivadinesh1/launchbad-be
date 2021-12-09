@@ -39,7 +39,7 @@ const brandRepoUpdateBrand = async (brand) => {
 const brandRepoGetAllBrands = async (center_id, status) => {
 	const result = await prisma.brand.findMany({
 		where: {
-			center_id: center_id,
+			center_id: Number(center_id),
 			is_active: status,
 		},
 		orderBy: {
@@ -77,7 +77,7 @@ const brandRepoGetBrandsMissingDiscountsByCustomer = async (center_id, status, c
 		},
 	});
 
-	const allBrands = await this.getAllBrands(center_id, status);
+	const allBrands = await brandRepoGetAllBrands(center_id, status);
 
 	const missingBrands = allBrands.filter((brand) => {
 		return distinctBrands.find((item) => item.brand_id !== brand.id);

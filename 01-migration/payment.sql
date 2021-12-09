@@ -15,6 +15,7 @@ change pymt_ref payment_ref varchar(200),
 change createdby created_by bigint;
 
 alter table payment
+add column excess_amount decimal(12,2) default 0;
 add column createdAt datetime,
 add column updatedAt datetime,
 add column updated_by bigint;

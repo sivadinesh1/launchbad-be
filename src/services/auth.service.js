@@ -52,9 +52,6 @@ const checkUsernameExists = async (username, center_id) => {
 			},
 		});
 
-		console.log('dinesh ' + result.length);
-		console.log('dinesh ' + result[0]);
-
 		if (result.length > 0) {
 			return bigIntToString(result[0]);
 		} else {
@@ -73,7 +70,12 @@ const updateCenterForSuperAdmin = (center_id) => {
 
 const login = async (requestBody) => {
 	const [username, password] = Object.values(requestBody);
-	let { center_id: center_id, userpass, id, ...user } = await checkUsernameExists(username, '');
+	let {
+		center_id: center_id,
+		userpass,
+		id,
+		...user
+	} = await checkUsernameExists(username, '');
 
 	if (user !== null && user.length === 0) {
 		return { result: 'USER_NOT_FOUND' };

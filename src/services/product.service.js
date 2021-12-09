@@ -6,10 +6,14 @@ const { insertItemHistoryTable, insertToStock } = require('./stock.service');
 
 const { Product } = require('../domain/Product');
 
-const { productRepoAddProduct, productRepoUpdateProduct, productRepoIsProductExists, productRepoSearchProduct } = require('../repos/product.repo');
+const {
+	productRepoAddProduct,
+	productRepoUpdateProduct,
+	productRepoIsProductExists,
+	productRepoSearchProduct,
+} = require('../repos/product.repo');
 
 async function insertProduct(product) {
-	console.log('dinesh ::: ' + JSON.stringify(product));
 	return await productRepoAddProduct(product);
 }
 

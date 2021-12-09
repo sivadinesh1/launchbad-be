@@ -6,23 +6,43 @@ const {
 	financialYearRepoUpdateDraftInvoiceSequenceGenerator,
 } = require('../repos/financial-year.repo');
 const { SaleRepo } = require('../repos/sale.repo');
-const { addSaleDetail, editSaleDetail, getSaleDetails } = require('../repos/sale-detail.repo');
+const {
+	addSaleDetail,
+	editSaleDetail,
+	getSaleDetails,
+} = require('../repos/sale-detail.repo');
 const { addItemHistory } = require('../repos/item-history.repo');
 const { updateEnquiryAfterSale } = require('../repos/enquiry.repo');
 const { updateCustomerBalance } = require('../repos/customer.repo');
 const { addAudit } = require('../repos/audit.repo');
 
 var pool = require('../config/db');
-const { addSaleLedgerRecord, addReverseSaleLedgerRecord, addSaleLedgerAfterReversalRecord } = require('./accounts.service');
+const {
+	addSaleLedgerRecord,
+	addReverseSaleLedgerRecord,
+	addSaleLedgerAfterReversalRecord,
+} = require('./accounts.service');
 
-const { addStock, stockCount, stockCorrection, stockMinus, stockAdd } = require('../repos/stock.repo');
+const {
+	addStock,
+	stockCount,
+	stockCorrection,
+	stockMinus,
+	stockAdd,
+} = require('../repos/stock.repo');
 
 const { ItemHistory } = require('../domain/ItemHistory');
 const SaleLedgerRepo = require('../repos/sale-ledger.repo');
 const { Ledger } = require('../domain/Ledger');
 const { Audit } = require('../domain/Audit');
 
-const { getTimezone, formatSequenceNumber, currentTimeInTimeZone, toTimeZoneFormat, promisifyQuery } = require('../utils/utils');
+const {
+	getTimezone,
+	formatSequenceNumber,
+	currentTimeInTimeZone,
+	toTimeZoneFormat,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const { insertItemHistoryTable, updateStockViaId } = require('./stock.service');
 
@@ -33,7 +53,9 @@ const getNextInvSequenceNo = async (center_id, invoice_type) => {
 	if (invoice_type === 'gstInvoice') {
 		nextInvSeqNo = await financialYearRepoGetNextInvSequenceNo(center_id);
 	} else if (invoice_type === 'stockIssue') {
-		nextInvSeqNo = await financialYearRepoGetNextStockIssueSequenceNo(center_id);
+		nextInvSeqNo = await financialYearRepoGetNextStockIssueSequenceNo(
+			center_id
+		);
 	}
 
 	return nextInvSeqNo;
@@ -71,11 +93,22 @@ const insertSale = async (saleMaster, saleDetails) => {
 	try {
 		const status = await prisma.$transaction(async (prisma) => {
 			// 1. Update Sequence Generator and form a formatted sale invoice
-			let invNo = saleMaster.invoice_no === undefined || saleMaster.invoice_no === null ? '' : saleMaster.invoice_no;
+			let invNo =
+				saleMaster.invoice_no === undefined ||
+				saleMaster.invoice_no === null
+					? ''
+					: saleMaster.invoice_no;
 
 			// confirmed sale
-			if (saleMaster.status === 'C' && saleMaster.revision === 0 && saleMaster.inv_gen_mode === 'A') {
-				let result = await financialYearRepoUpdateInvoiceSequence(saleMaster.center_id, prisma);
+			if (
+				saleMaster.status === 'C' &&
+				saleMaster.revision === 0 &&
+				saleMaster.inv_gen_mode === 'A'
+			) {
+				let result = await financialYearRepoUpdateInvoiceSequence(
+					saleMaster.center_id,
+					prisma
+				);
 				invNo = formatSequenceNumber(result.inv_seq);
 				saleMaster.invoice_no = invNo;
 			} else if (
@@ -85,7 +118,11 @@ const insertSale = async (saleMaster, saleDetails) => {
 				saleMaster.invoice_no.startsWith('D') === false &&
 				saleMaster.invoice_no.startsWith('SI') === false
 			) {
-				let result = await financialYearRepoUpdateDraftInvoiceSequenceGenerator(saleMaster.center_id, prisma);
+				let result =
+					await financialYearRepoUpdateDraftInvoiceSequenceGenerator(
+						saleMaster.center_id,
+						prisma
+					);
 				invNo = formatSequenceNumber(result.draft_inv_seq, 'D/');
 				saleMaster.invoice_no = invNo;
 				console.log('draft invoice ' + invNo);
@@ -99,35 +136,66 @@ const insertSale = async (saleMaster, saleDetails) => {
 				sale_master = await editSaleMaster(saleMaster, prisma);
 			}
 
-			let detailsInserted = await insertSaleDetails(saleMaster, saleDetails, sale_master, prisma);
+			let detailsInserted = await insertSaleDetails(
+				saleMaster,
+				saleDetails,
+				sale_master,
+				prisma
+			);
 
 			if (
 				(saleMaster.status === 'C' && saleMaster.id === null) ||
-				(saleMaster.status === 'C' && saleMaster.id !== null && saleMaster.revision === 0)
+				(saleMaster.status === 'C' &&
+					saleMaster.id !== null &&
+					saleMaster.revision === 0)
 			) {
-				let result = await prepareAndAddSaleLedgerEntry(sale_master, prisma);
-				let result991 = await updateCustomerBalanceAmt(sale_master, prisma);
+				let result = await prepareAndAddSaleLedgerEntry(
+					sale_master,
+					prisma
+				);
+				let result991 = await updateCustomerBalanceAmt(
+					sale_master,
+					prisma
+				);
 			} else if (saleMaster.status === 'C' && saleMaster.id !== null) {
-				let saleLedger = await prepareAndAddSaleLedgerReversalEntry(sale_master, prisma);
+				let saleLedger = await prepareAndAddSaleLedgerReversalEntry(
+					sale_master,
+					prisma
+				);
 
-				let saleLedger1 = await prepareSaleLedgerEntryAfterReversal(sale_master, prisma);
+				let saleLedger1 = await prepareSaleLedgerEntryAfterReversal(
+					sale_master,
+					prisma
+				);
 
 				// check if customer has changed
 				if (saleMaster.hasCustomerChange) {
-					let result = await SaleLedgerRepo.updateSaleLedgerCustomerChange(
-						saleMaster.center_id,
-						sale_master.id,
-						saleMaster.old_customer_id,
-						prisma,
-					);
+					let result =
+						await SaleLedgerRepo.updateSaleLedgerCustomerChange(
+							saleMaster.center_id,
+							sale_master.id,
+							saleMaster.old_customer_id,
+							prisma
+						);
 
 					// audit
-					let audit = await prepareAndAddCustomerChangeAudit(saleMaster, sale_master, prisma);
+					let audit = await prepareAndAddCustomerChangeAudit(
+						saleMaster,
+						sale_master,
+						prisma
+					);
 				}
-				let result991 = await updateCustomerBalanceAmt(sale_master, prisma);
+				let result991 = await updateCustomerBalanceAmt(
+					sale_master,
+					prisma
+				);
 			}
 
-			return { status: 'success', id: sale_master.id, invoice_no: saleMaster.invoice_no };
+			return {
+				status: 'success',
+				id: sale_master.id,
+				invoice_no: saleMaster.invoice_no,
+			};
 		});
 		return status;
 	} catch (error) {
@@ -141,24 +209,52 @@ async function insertSaleDetails(saleMaster, saleDetails, sale_master, prisma) {
 		let result;
 
 		if (item.id === null || item.id === 0) {
-			result = await addSaleDetail(item, sale_master.id, sale_master.updated_by, prisma);
+			result = await addSaleDetail(
+				item,
+				sale_master.id,
+				sale_master.updated_by,
+				prisma
+			);
 		} else {
-			result = await editSaleDetail(item, sale_master.id, sale_master.updated_by, prisma);
+			result = await editSaleDetail(
+				item,
+				sale_master.id,
+				sale_master.updated_by,
+				prisma
+			);
 		}
 
 		// after sale details is updated, then update stock (as this is sale, reduce available stock) tbl & product tbl
 		let qty_to_update = item.quantity - item.old_val;
 
-		let result2 = await stockMinus(qty_to_update, item.stock_id, saleMaster.updated_by, prisma);
+		let result2 = await stockMinus(
+			qty_to_update,
+			item.stock_id,
+			saleMaster.updated_by,
+			prisma
+		);
 
-		let itemHistory = await prepareItemHistory(item, sale_master.id, result.id, saleMaster);
+		let itemHistory = await prepareItemHistory(
+			item,
+			sale_master.id,
+			result.id,
+			saleMaster
+		);
 
-		if (saleMaster.status === 'C' || (saleMaster.status === 'D' && saleMaster.invoice_type === 'stockIssue')) {
+		if (
+			saleMaster.status === 'C' ||
+			(saleMaster.status === 'D' &&
+				saleMaster.invoice_type === 'stockIssue')
+		) {
 			result3 = await addItemHistory(itemHistory, prisma);
 		}
 
 		if (saleMaster.enquiry_ref !== 0 && saleMaster.enquiry_ref !== null) {
-			await updateEnquiryAfterSale(saleMaster.enquiry_ref, sale_master.id, prisma);
+			await updateEnquiryAfterSale(
+				saleMaster.enquiry_ref,
+				sale_master.id,
+				prisma
+			);
 		}
 	}
 }
@@ -166,9 +262,17 @@ async function insertSaleDetails(saleMaster, saleDetails, sale_master, prisma) {
 function updateCustomerBalanceAmt(sale_master, prisma) {
 	return new Promise(async (resolve, reject) => {
 		try {
-			let balanceAmt = await SaleLedgerRepo.getCustomerBalance(sale_master.customer_id, sale_master.center_id, prisma);
+			let balanceAmt = await SaleLedgerRepo.getCustomerBalance(
+				sale_master.customer_id,
+				sale_master.center_id,
+				prisma
+			);
 
-			let result91 = await updateCustomerBalance(sale_master.customer_id, balanceAmt, prisma);
+			let result91 = await updateCustomerBalance(
+				sale_master.customer_id,
+				balanceAmt,
+				prisma
+			);
 			resolve('success');
 		} catch (error) {
 			reject(error);
@@ -180,18 +284,26 @@ function prepareAndAddSaleLedgerEntry(sale_master, prisma) {
 	return new Promise(async (resolve, reject) => {
 		let saleLedger = Ledger;
 		try {
-			let previousBalance = await SaleLedgerRepo.getCustomerBalance(sale_master.customer_id, sale_master.center_id, prisma);
+			let previousBalance = await SaleLedgerRepo.getCustomerBalance(
+				sale_master.customer_id,
+				sale_master.center_id,
+				prisma
+			);
 
 			saleLedger.center_id = sale_master.center_id;
 			saleLedger.customer_id = sale_master.customer_id;
 			saleLedger.invoice_ref_id = sale_master.id;
 			saleLedger.ledger_detail = 'Invoice';
-			saleLedger.balance_amt = Number(previousBalance) + Number(sale_master.net_total);
+			saleLedger.balance_amt =
+				Number(previousBalance) + Number(sale_master.net_total);
 			saleLedger.credit_amt = sale_master.net_total;
 			saleLedger.created_by = sale_master.updated_by;
 			saleLedger.updated_by = sale_master.updated_by;
 
-			let result = await SaleLedgerRepo.addSaleLedgerEntry(saleLedger, prisma);
+			let result = await SaleLedgerRepo.addSaleLedgerEntry(
+				saleLedger,
+				prisma
+			);
 
 			resolve(result);
 		} catch (error) {
@@ -205,20 +317,30 @@ function prepareSaleLedgerEntryAfterReversal(sale_master, prisma) {
 	return new Promise(async (resolve, reject) => {
 		let saleLedger = Ledger;
 		try {
-			let previousBalance = await SaleLedgerRepo.getCustomerBalance(sale_master.customer_id, sale_master.center_id, prisma);
+			let previousBalance = await SaleLedgerRepo.getCustomerBalance(
+				sale_master.customer_id,
+				sale_master.center_id,
+				prisma
+			);
 
 			saleLedger.center_id = sale_master.center_id;
 			saleLedger.customer_id = sale_master.customer_id;
 			saleLedger.invoice_ref_id = sale_master.id;
 			saleLedger.ledger_detail = 'Invoice';
-			saleLedger.balance_amt = Number(previousBalance) + Number(sale_master.net_total);
+			saleLedger.balance_amt =
+				Number(previousBalance) + Number(sale_master.net_total);
 			saleLedger.credit_amt = sale_master.net_total;
 			saleLedger.created_by = sale_master.updated_by;
 			saleLedger.updated_by = sale_master.updated_by;
 
-			let result = await SaleLedgerRepo.addSaleLedgerEntry(saleLedger, prisma);
+			let result = await SaleLedgerRepo.addSaleLedgerEntry(
+				saleLedger,
+				prisma
+			);
 		} catch (error) {
-			console.log('error in prepareSaleLedgerEntryAfterReversal:: ' + error);
+			console.log(
+				'error in prepareSaleLedgerEntryAfterReversal:: ' + error
+			);
 			reject(error);
 		}
 		resolve(saleLedger);
@@ -229,26 +351,35 @@ async function prepareAndAddSaleLedgerReversalEntry(sale_master, prisma) {
 	return new Promise(async (resolve, reject) => {
 		let saleLedger = Ledger;
 		try {
-			let previousBalance = await SaleLedgerRepo.getCustomerBalance(sale_master.customer_id, sale_master.center_id, prisma);
-
-			let credit_amt = await SaleLedgerRepo.getCreditAmtForInvoiceReversal(
+			let previousBalance = await SaleLedgerRepo.getCustomerBalance(
 				sale_master.customer_id,
 				sale_master.center_id,
-				sale_master.id,
-				prisma,
+				prisma
 			);
+
+			let credit_amt =
+				await SaleLedgerRepo.getCreditAmtForInvoiceReversal(
+					sale_master.customer_id,
+					sale_master.center_id,
+					sale_master.id,
+					prisma
+				);
 
 			saleLedger.center_id = sale_master.center_id;
 			saleLedger.customer_id = sale_master.customer_id;
 			saleLedger.invoice_ref_id = sale_master.id;
 			saleLedger.ledger_detail = 'Invoice Reversal';
 			saleLedger.debit_amt = credit_amt;
-			saleLedger.balance_amt = Number(previousBalance) - Number(credit_amt);
+			saleLedger.balance_amt =
+				Number(previousBalance) - Number(credit_amt);
 			saleLedger.credit_amt = sale_master.net_total;
 			saleLedger.created_by = sale_master.updated_by;
 			saleLedger.updated_by = sale_master.updated_by;
 
-			let result = await SaleLedgerRepo.addSaleLedgerEntry(saleLedger, prisma);
+			let result = await SaleLedgerRepo.addSaleLedgerEntry(
+				saleLedger,
+				prisma
+			);
 		} catch (error) {
 			console.log('error in prepareSaleLedgerReversalEntry:: ' + error);
 			reject(error);
@@ -257,7 +388,11 @@ async function prepareAndAddSaleLedgerReversalEntry(sale_master, prisma) {
 	});
 }
 
-async function prepareAndAddCustomerChangeAudit(saleMaster, sale_master, prisma) {
+async function prepareAndAddCustomerChangeAudit(
+	saleMaster,
+	sale_master,
+	prisma
+) {
 	return new Promise(async (resolve, reject) => {
 		let audit = new Audit();
 		try {
@@ -274,7 +409,10 @@ async function prepareAndAddCustomerChangeAudit(saleMaster, sale_master, prisma)
 
 			let auditResult = await addAudit(audit, prisma);
 		} catch (error) {
-			console.log('error in Sales.Service.js :: prepareCustomerChangeAudit:: ' + error);
+			console.log(
+				'error in Sales.Service.js :: prepareCustomerChangeAudit:: ' +
+					error
+			);
 			reject(error);
 		}
 		resolve(audit);
@@ -290,12 +428,17 @@ async function prepareItemHistory(item, sale_id, sale_detail_id, saleMaster) {
 
 	// if sale details id is missing its new else update
 	let saleDetailId = item.id === undefined ? sale_detail_id : item.id;
-	let txn_qty = item.id === undefined ? item.quantity : item.quantity - item.old_val;
+	let txn_qty =
+		item.id === undefined ? item.quantity : item.quantity - item.old_val;
 	let action_type = 'Sold';
 	let saleId = sale_id === undefined ? item.sale_id : sale_id;
 
 	// revision '0' is Status 'C' new record. txn_qty === 0 means (item.qty - item.old_val)
-	if (saleMaster.revision === 0 && txn_qty === 0 && saleMaster.invoice_type !== 'stockIssue') {
+	if (
+		saleMaster.revision === 0 &&
+		txn_qty === 0 &&
+		saleMaster.invoice_type !== 'stockIssue'
+	) {
 		txn_qty = item.quantity;
 	}
 
@@ -311,11 +454,19 @@ async function prepareItemHistory(item, sale_id, sale_detail_id, saleMaster) {
 	}
 
 	// completed txn (if revision > 0) txn_qty 0 means no changes happened
-	if (saleMaster.revision > 0 && txn_qty === 0 && saleMaster.invoice_type !== 'stockIssue') {
+	if (
+		saleMaster.revision > 0 &&
+		txn_qty === 0 &&
+		saleMaster.invoice_type !== 'stockIssue'
+	) {
 		skipHistoryUpdate = true;
 	}
 
-	if (saleMaster.revision === 0 && txn_qty === 0 && saleMaster.invoice_type === 'stockIssue') {
+	if (
+		saleMaster.revision === 0 &&
+		txn_qty === 0 &&
+		saleMaster.invoice_type === 'stockIssue'
+	) {
 		skipHistoryUpdate = true;
 	}
 
@@ -373,27 +524,38 @@ async function getSequenceNo(cloneReq) {
 	if (cloneReq.invoice_type === 'gstInvoice' && cloneReq.status !== 'D') {
 		invNoQry = ` select 
 		concat('${currentTimeInTimeZone('YY')}', "/", 
-		'${currentTimeInTimeZone('MM')}', "/", lpad(inv_seq, 5, "0")) as invNo from financial_year 
+		'${currentTimeInTimeZone(
+			'MM'
+		)}', "/", lpad(inv_seq, 5, "0")) as invNo from financial_year 
 				where 
 				center_id = '${cloneReq.center_id}' and  
 				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
-	} else if (cloneReq.invoice_type === 'gstInvoice' && cloneReq.status === 'D') {
+	} else if (
+		cloneReq.invoice_type === 'gstInvoice' &&
+		cloneReq.status === 'D'
+	) {
 		invNoQry = ` select concat("D/", 
 		'${currentTimeInTimeZone('YY')}', "/", 
-		'${currentTimeInTimeZone('MM')}', "/", lpad(draft_inv_seq, 5, "0")) as invNo from financial_year 
+		'${currentTimeInTimeZone(
+			'MM'
+		)}', "/", lpad(draft_inv_seq, 5, "0")) as invNo from financial_year 
 							where 
 							center_id = '${cloneReq.center_id}' and  
 							CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 	} else if (cloneReq.invoice_type === 'stockIssue') {
-		invNoQry = ` select concat('SI',"-",'${currentTimeInTimeZone('YY')}', "/", 
-		'${currentTimeInTimeZone('MM')}', "/", lpad(stock_issue_seq, 5, "0")) as invNo from financial_year 
+		invNoQry = ` select concat('SI',"-",'${currentTimeInTimeZone(
+			'YY'
+		)}', "/", 
+		'${currentTimeInTimeZone(
+			'MM'
+		)}', "/", lpad(stock_issue_seq, 5, "0")) as invNo from financial_year 
 				where 
 				center_id = '${cloneReq.center_id}' and  
 				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
 	}
 
 	let data = await promisifyQuery(invNoQry);
-	console.log('dinesh ' + JSON.stringify(data));
+
 	return data[0].invNo;
 }
 
@@ -525,7 +687,12 @@ const deleteSalesDetails = async (requestBody) => {
 	let deletePromise = deleteSaleDetail(sale_det_id);
 
 	// step 3 - Update Stock
-	let stockUpdatePromise = await updateStockViaId(quantity, product_id, stock_id, 'add');
+	let stockUpdatePromise = await updateStockViaId(
+		quantity,
+		product_id,
+		stock_id,
+		'add'
+	);
 
 	// step 4 - update item history table. as items are deleted, items has to be reversed
 	if (stockUpdatePromise.affectedRows === 1) {
@@ -543,7 +710,7 @@ const deleteSalesDetails = async (requestBody) => {
 			'0', // sale_return_id
 			'0', // sale_return_det_id
 			'0', // purchase_return_id
-			'0', // purchase_return_det_id
+			'0' // purchase_return_det_id
 		);
 
 		return {
@@ -592,7 +759,10 @@ const convertSale = async (requestBody) => {
 	try {
 		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
 		const status = await prisma.$transaction(async (prisma) => {
-			let result = await financialYearRepoUpdateInvoiceSequence(center_id, prisma);
+			let result = await financialYearRepoUpdateInvoiceSequence(
+				center_id,
+				prisma
+			);
 			invNo = formatSequenceNumber(result.inv_seq);
 
 			// await updateSequenceGenerator({
@@ -620,7 +790,7 @@ const convertSale = async (requestBody) => {
 					customer_ctrl: { id: customer_id },
 					net_total: net_total,
 				},
-				sales_id,
+				sales_id
 			);
 
 			return {
@@ -654,14 +824,22 @@ function deleteSaleDetailsRecs(saleDetails, sale_id) {
 	saleDetails.forEach(async (element, index) => {
 		idx = index + 1;
 		// step 1
-		let p_audit = await insertAuditTblforDeleteSaleDetailsRecAsync(element, sale_id);
+		let p_audit = await insertAuditTblforDeleteSaleDetailsRecAsync(
+			element,
+			sale_id
+		);
 
 		// step 2
 		let p_delete = await deleteSaleDetailsRecAsync(element);
 
 		// step 3
 
-		let p_stock_update = await updateStockViaId(element.quantity, element.product_id, element.stock_id, 'add');
+		let p_stock_update = await updateStockViaId(
+			element.quantity,
+			element.product_id,
+			element.stock_id,
+			'add'
+		);
 	});
 
 	if (saleDetails.length === idx) {
