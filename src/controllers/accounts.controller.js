@@ -92,11 +92,11 @@ const bankList = catchAsync(async (req, res) => {
 	return responseForward(data, 'bankList', res);
 });
 
-const isPaymentBankRef = catchAsync(async (req, res) => {
-	const data = await accountsService.isPaymentBankRef(req.body);
+// const isPaymentBankRef = catchAsync(async (req, res) => {
+// 	const data = await accountsService.isPaymentBankRef(req.body);
 
-	return responseForward(data, 'isPaymentBankRef', res);
-});
+// 	return responseForward(data, 'isPaymentBankRef', res);
+// });
 
 const vendorPaymentBankRef = catchAsync(async (req, res) => {
 	const data = await accountsService.vendorPaymentBankRef(req.body);
@@ -117,6 +117,6 @@ module.exports = {
 	getPymtTransactionsByCenter,
 	addBulkPaymentReceived,
 	bankList,
-	isPaymentBankRef,
-	vendorPaymentBankRef,
+	// isPaymentBankRef,
+	// vendorPaymentBankRef,
 };

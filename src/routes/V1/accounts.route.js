@@ -50,12 +50,12 @@ router
 
 router.route('/banks-list').get(auth('getUsers'), accountsController.bankList);
 
-router
-	.route('/pymt-bank-ref-exist')
-	.post(auth('getUsers'), accountsController.isPaymentBankRef);
+// router
+// 	.route('/pymt-bank-ref-exist')
+// 	.post(auth('getUsers'), accountsController.isPaymentBankRef);
 
-router
-	.route('/vendor-pymt-bank-ref-exist')
-	.post(auth('getUsers'), accountsController.vendorPaymentBankRef);
+// router
+// 	.route('/vendor-pymt-bank-ref-exist')
+// 	.post(auth('getUsers'), accountsController.vendorPaymentBankRef);
 
 module.exports = router;

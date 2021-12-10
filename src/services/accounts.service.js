@@ -10,57 +10,6 @@ const moment = require('moment');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
-// ***** NEW ******* //
-
-const addPaymentReceived = async (requestBody) => {
-	var today = new Date();
-	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
-	const cloneReq = { ...requestBody };
-	const [customer, center_id, account_arr] = Object.values(requestBody);
-
-	let index = 0;
-
-	for (const k of account_arr) {
-		await updatePaymentSequenceGenerator(center_id);
-
-		let paymentNo = await getPaymentSequenceNo(cloneReq);
-
-		// add payment master
-		let newPK = await addPaymentMaster(cloneReq, paymentNo, k, res);
-
-		// (3) - updates payment details
-		let process = processItems(
-			cloneReq,
-			newPK,
-			k.sale_ref_id,
-			k.received_amount
-		);
-
-		if (index == account_arr.length - 1) {
-			return res.status(200).json('success');
-		}
-		index++;
-	}
-};
-
-async function processItems(cloneReq, newPK, sale_ref_id, received_amount) {
-	let query = `INSERT INTO payment_detail(payment_ref_id, sale_ref_id, applied_amount) VALUES
-		( '${newPK}', '${sale_ref_id}', '${received_amount}' )`;
-
-	let data1 = await promisifyQuery(query);
-
-	// check if there is any credit balance for the customer, if yes, first apply that
-	let data2 = await addPaymentLedgerRecord(
-		cloneReq,
-		newPK,
-		received_amount,
-		sale_ref_id
-	);
-
-	// mark the sale as paid
-	let data3 = await updateSaleStatus(sale_ref_id);
-}
-
 const updateSaleStatus = async (sale_ref_id) => {
 	let status;
 	let result = await checkInvoicePaidStatus(sale_ref_id);
@@ -78,7 +27,7 @@ const updateSaleStatus = async (sale_ref_id) => {
 		status = 'U';
 	}
 
-	// F - Fully paid, P - Partially paid, U - Unpaid
+	// F - Fully paid, P - Partially paid, N - Unpaid
 	let query = `update sale set payment_status = '${status}' where id = '${sale_ref_id}' `;
 	console.log('dines ... ' + query);
 	return await promisifyQuery(query);
@@ -249,7 +198,7 @@ VALUES
 };
 
 const addPaymentLedgerRecord = async (
-	insertValues,
+	customer_id,
 	payment_ref_id,
 	received_amount,
 	sale_ref_id,
@@ -262,26 +211,28 @@ const addPaymentLedgerRecord = async (
 	VALUES
 		( ? , ?, '${sale_ref_id}', ?, 'Payment', ?, IFNULL((select balance_amt from (select (balance_amt) as balance_amt
 			FROM ledger
-			where center_id = '${center_id}'  and customer_id = '${insertValues.customer.id}'
+			where center_id = '${center_id}'  and customer_id = '${customer_id}'
 			ORDER BY  id DESC
 			LIMIT 1) a), 0) - '${received_amount}', '${today}'
 		) `;
 
-	let values = [
-		center_id,
-		insertValues.customer.id,
-		payment_ref_id,
-		received_amount,
-	];
+	let values = [center_id, customer_id, payment_ref_id, received_amount];
 
 	let result = await promisifyQuery(query, values);
-	return await updateCustomerBalanceAmount(insertValues.customer.id);
+	return await updateCustomerBalanceAmount(customer_id);
 };
 
 const addPaymentMaster = async (
-	cloneReq,
+	bank_id,
+	bank_name,
+	customer_id,
+	excess_amount,
 	paymentNo,
-	insertValues,
+	received_amount,
+	payment_mode,
+	bank_ref,
+	payment_ref,
+	received_date,
 	center_id,
 	user_id
 ) => {
@@ -289,12 +240,12 @@ const addPaymentMaster = async (
 
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	if (cloneReq.bank_id === 0 || cloneReq.bank_id === '') {
-		cloneReq.bank_id = null;
+	if (bank_id === 0 || bank_id === '') {
+		bank_id = null;
 	}
 
-	if (cloneReq.bank_name === 0 || cloneReq.bank_name === '') {
-		cloneReq.bank_name = null;
+	if (bank_name === 0 || bank_name === '') {
+		bank_name = null;
 	}
 
 	let query = `
@@ -302,18 +253,15 @@ const addPaymentMaster = async (
 			 payment_mode_ref_id, bank_ref,
 			payment_ref, last_updated,
 			bank_id, bank_name, created_by, excess_amount)
-		VALUES ( '${center_id}', '${cloneReq.customer.id}', '${paymentNo}', '${insertValues.received_amount}', 
-		'0','${today}', '${insertValues.payment_mode}',
-		'${insertValues.bank_ref}', '${insertValues.payment_ref}', '${today}', '${cloneReq.bank_id}', 
-		 '${cloneReq.bank_name}', '${user_id}', '${cloneReq.excess_amount}' ) `;
+		VALUES ( '${center_id}', '${customer_id}', '${paymentNo}', '${received_amount}', 
+		'0','${today}', '${payment_mode}',
+		'${bank_ref}', '${payment_ref}', '${today}', '${bank_id}', 
+		 '${bank_name}', '${user_id}', '${excess_amount}' ) `;
 
 	console.log('dinesh ' + query);
 	let data = await promisifyQuery(query);
 
-	await updateCustomerLastPaidDate(
-		cloneReq.customer.id,
-		insertValues.received_date
-	);
+	await updateCustomerLastPaidDate(customer_id, received_date);
 
 	return data.insertId;
 };
@@ -329,20 +277,17 @@ const updatePaymentSequenceGenerator = (center_id) => {
 	return promisifyQuery(qryUpdateSequence);
 };
 
-const getPaymentSequenceNo = async (cloneReq) => {
+const getPaymentSequenceNo = async (received_date, center_id) => {
 	let paymentNoQry = '';
 
 	paymentNoQry = ` select 
-	concat("RP-",'${toTimeZoneFormat(
-		cloneReq.account_arr[0].received_date,
-		'YY'
-	)}', "/", 
+	concat("RP-",'${toTimeZoneFormat(received_date, 'YY')}', "/", 
 	'${toTimeZoneFormat(
-		cloneReq.account_arr[0].received_date,
+		received_date,
 		'MM'
 	)}', "/", lpad(payment_seq, 5, "0")) as paymentNo from financial_year 
 				where 
-				center_id = '${cloneReq.center_id}' and  
+				center_id = '${center_id}' and  
 				CURDATE() between start_date and end_date `;
 
 	let data = await promisifyQuery(paymentNoQry);
@@ -809,106 +754,114 @@ const bankList = (center_id) => {
 	return promisifyQuery(query);
 };
 
-const paymentBankRef = (center_id, ref, id, mode) => {
-	let query = '';
+// const paymentBankRef = (center_id, ref, id, mode) => {
+// 	let query = '';
 
-	if (mode === 'payment') {
-		query = `select count(*) as count from payment where center_id = '${center_id}' and bank_ref = '${ref}' and customer_id = '${id}' `;
-	} else if (mode === 'vendor_payment') {
-		query = `select count(*) as count from vendor_payment where center_id = '${center_id}' and bank_ref = '${ref}' and vendor_id = '${id}' `;
-	}
+// 	if (mode === 'payment') {
+// 		query = `select count(*) as count from payment where center_id = '${center_id}' and bank_ref = '${ref}' and customer_id = '${id}' `;
+// 	} else if (mode === 'vendor_payment') {
+// 		query = `select count(*) as count from vendor_payment where center_id = '${center_id}' and bank_ref = '${ref}' and vendor_id = '${id}' `;
+// 	}
 
-	return promisifyQuery(query);
-};
+// 	return promisifyQuery(query);
+// };
 
-const lastPaymentRecord = (center_id, customer_id) => {
-	let query = `select payment_no, payment_now_amt, payment_date, bank_ref,
-	payment_ref
-	from 
-	payment p,
-	payment_mode pm
-	where 
-	pm.id = p.payment_mode_ref_id
-	and p.center_id = '${center_id}'
-	and p.customer_id = '${customer_id}'
-	order by p.id desc limit 1 `;
+// const lastPaymentRecord = (center_id, customer_id) => {
+// 	let query = `select payment_no, payment_now_amt, payment_date, bank_ref,
+// 	payment_ref
+// 	from
+// 	payment p,
+// 	payment_mode pm
+// 	where
+// 	pm.id = p.payment_mode_ref_id
+// 	and p.center_id = '${center_id}'
+// 	and p.customer_id = '${customer_id}'
+// 	order by p.id desc limit 1 `;
 
-	return promisifyQuery(query);
-};
+// 	return promisifyQuery(query);
+// };
 
-const lastVendorPaymentRecord = (center_id, vendor_id) => {
-	let sql = `select vendor_payment_no as payment_no, payment_now_amt, payment_date, bank_ref,
-	payment_ref
-	from 
-	vendor_payment p,
-	payment_mode pm
-	where 
-	pm.id = p.payment_mode_ref_id
-	and p.center_id = '${center_id}'
-	and p.vendor_id = '${vendor_id}'
-	order by p.id desc limit 1 `;
+// const lastVendorPaymentRecord = (center_id, vendor_id) => {
+// 	let sql = `select vendor_payment_no as payment_no, payment_now_amt, payment_date, bank_ref,
+// 	payment_ref
+// 	from
+// 	vendor_payment p,
+// 	payment_mode pm
+// 	where
+// 	pm.id = p.payment_mode_ref_id
+// 	and p.center_id = '${center_id}'
+// 	and p.vendor_id = '${vendor_id}'
+// 	order by p.id desc limit 1 `;
 
-	return new Promise((resolve, reject) => {
-		pool.query(sql, function (err, data) {
-			if (err) {
-				reject({ status: 'error', response: err });
-			}
-			resolve({ status: 'success', response: data });
-		});
-	});
-};
+// 	return new Promise((resolve, reject) => {
+// 		pool.query(sql, function (err, data) {
+// 			if (err) {
+// 				reject({ status: 'error', response: err });
+// 			}
+// 			resolve({ status: 'success', response: data });
+// 		});
+// 	});
+// };
 
 const addBulkPaymentReceived = async (requestBody, center_id, user_id) => {
 	const cloneReq = { ...requestBody };
 
-	// const [account_arr, invoice_split, balance_due] =
-	// 	Object.values(requestBody);
-
-	const account_arr = requestBody.account_arr;
-	const invoice_split = requestBody.invoice_split;
 	const balance_due = requestBody.balance_due;
+	const bank_id = requestBody.bank_id;
+	const bank_name = requestBody.bank_name;
+	const bank_ref = requestBody.bank_ref;
+	const customer = requestBody.customer;
+	const excess_amount = requestBody.excess_amount;
+
+	const invoice_split = requestBody.invoice_split;
+
+	const payment_mode = requestBody.payment_mode;
+	const payment_ref = requestBody.payment_ref;
+
+	const received_amount = requestBody.received_amount;
+	const received_date = requestBody.received_date;
 
 	let index = 0;
 
-	for (const k of account_arr) {
-		await updatePaymentSequenceGenerator(center_id);
+	await updatePaymentSequenceGenerator(center_id);
 
-		let paymentNo = await getPaymentSequenceNo(cloneReq);
+	let paymentNo = await getPaymentSequenceNo(received_date, center_id);
 
-		// add payment master
-		let newPK = await addPaymentMaster(
-			cloneReq,
-			paymentNo,
-			k,
-			center_id,
-			user_id
+	// add payment master
+	let newPK = await addPaymentMaster(
+		bank_id,
+		bank_name,
+		customer.id,
+		excess_amount,
+		paymentNo,
+		received_amount,
+		payment_mode,
+		bank_ref,
+		payment_ref,
+		received_date,
+		center_id,
+		user_id
+	);
+
+	if (invoice_split.length > 0) {
+		// (3) - updates payment details
+		let process = await processBulkItems(
+			customer.id,
+			newPK,
+			invoice_split,
+			center_id
 		);
-
-		if (invoice_split.length > 0) {
-			// (3) - updates payment details
-			let process = processBulkItems(
-				cloneReq,
-				newPK,
-				invoice_split,
-				center_id
-			);
-		} else if (invoice_split.length === 0) {
-			// there is no invoice split, so we just add the payment details.
-			// create credit note & update customer balance (in customer table)
-
-			updateCustomerCredit(
-				cloneReq.excess_amount,
-				center_id,
-				cloneReq.customer.id
-			);
-
-			return { result: 'success' };
-		}
-		index++;
+		return { result: 'success' };
+	} else if (invoice_split.length === 0) {
+		// there is no invoice split, so we just add the payment details.
+		// create credit note & update customer balance (in customer table)
+		// dinesh recheck
+		return { result: 'success' };
 	}
+	index++;
 };
 
-async function processBulkItems(cloneReq, newPK, invoice_split, center_id) {
+async function processBulkItems(customer_id, newPK, invoice_split, center_id) {
 	invoice_split.forEach(async (e) => {
 		let query = `INSERT INTO payment_detail(payment_ref_id, sale_ref_id, applied_amount, center_id) VALUES
 		( '${newPK}', '${e.id}', '${e.applied_amount}', '${center_id}' )`;
@@ -918,7 +871,7 @@ async function processBulkItems(cloneReq, newPK, invoice_split, center_id) {
 		// check if there is any credit balance for the customer, if yes, first apply that
 
 		addPaymentLedgerRecord(
-			cloneReq,
+			customer_id,
 			newPK,
 			e.applied_amount,
 			e.id,
@@ -928,49 +881,9 @@ async function processBulkItems(cloneReq, newPK, invoice_split, center_id) {
 		// mark the sale as paid
 		let data3 = await updateSaleStatus(e.id);
 
-		return data3;
+		// return data3;
 	});
 }
-
-// TODO to redo
-const isPaymentBankRef = async (requestBody) => {
-	let center_id = requestBody.center_id;
-	let bank_ref = requestBody.bank_ref;
-	let customer_id = requestBody.customer_id;
-
-	let result = await paymentBankRef(
-		center_id,
-		bank_ref,
-		customer_id,
-		'payment'
-	);
-
-	let result1 = await lastPaymentRecord(center_id, customer_id);
-
-	return {
-		result: result,
-		result1: result1,
-	};
-};
-
-const vendorPaymentBankRef = async (requestBody) => {
-	let center_id = requestBody.center_id;
-	let bank_ref = requestBody.bank_ref;
-	let vendor_id = requestBody.vendor_id;
-
-	let result = await paymentBankRef(
-		center_id,
-		bank_ref,
-		vendor_id,
-		'vendor_payment'
-	);
-	let result1 = await lastVendorPaymentRecord(center_id, vendor_id);
-
-	return {
-		result: result.response,
-		result1: result1.response,
-	};
-};
 
 module.exports = {
 	addSaleLedgerRecord,
@@ -992,15 +905,13 @@ module.exports = {
 	updateCustomerLastPaidDate,
 
 	bankList,
-	paymentBankRef,
-	lastPaymentRecord,
-	lastVendorPaymentRecord,
+
 	getPaymentsOverviewByCustomers,
 	getPaymentsOverviewByCenter,
 
 	// new
-	addPaymentReceived,
+
 	addBulkPaymentReceived,
-	isPaymentBankRef,
-	vendorPaymentBankRef,
+	// isPaymentBankRef,
+	// vendorPaymentBankRef,
 };
