@@ -28,4 +28,8 @@ router
 	.route('/get-excess-paid-payments/:customer_id')
 	.get(auth('getUsers'), receivablesController.getExcessPaidPayments);
 
+router
+	.route('/delete-payment/:payment_id')
+	.get(auth('getUsers'), receivablesController.deletePayment);
+
 module.exports = router;

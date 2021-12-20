@@ -63,6 +63,15 @@ const getExcessPaidPayments = catchAsync(async (req, res) => {
 	return responseForward(data, 'getExcessPaidPayments', res);
 });
 
+const deletePayment = catchAsync(async (req, res) => {
+	const data = await receivablesService.deletePayment(
+		req.params.payment_id,
+		Number(req.user.id)
+	);
+
+	return responseForward(data, 'deletePayment', res);
+});
+
 module.exports = {
 	getPaymentsReceived,
 	getPaymentsReceivedDetails,
@@ -70,4 +79,5 @@ module.exports = {
 	getPendingInvoices,
 	getPendingReceivables,
 	getExcessPaidPayments,
+	deletePayment,
 };

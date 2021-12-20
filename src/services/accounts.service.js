@@ -1,3 +1,4 @@
+const { prisma } = require('../config/prisma');
 var pool = require('../config/db');
 
 const {
@@ -9,10 +10,12 @@ const {
 const moment = require('moment');
 
 const { handleError, ErrorHandler } = require('../config/error');
+const SaleRepo = require('../repos/sale.repo');
+const PaymentDetailRepo = require('../repos/payment-detail.repo');
 
-const updateSaleStatus = async (sale_ref_id) => {
+const updateSaleStatus = async (sale_ref_id, invoice_amount) => {
 	let status;
-	let result = await checkInvoicePaidStatus(sale_ref_id);
+	let result = await checkInvoicePaidStatus(sale_ref_id, invoice_amount);
 
 	console.log('invoice amount ' + JSON.stringify(result));
 
@@ -28,36 +31,69 @@ const updateSaleStatus = async (sale_ref_id) => {
 	}
 
 	// F - Fully paid, P - Partially paid, N - Unpaid
-	let query = `update sale set payment_status = '${status}' where id = '${sale_ref_id}' `;
-	console.log('dines ... ' + query);
-	return await promisifyQuery(query);
+
+	return await SaleRepo.updateSalePaymentStatus(sale_ref_id, status);
+
+	// let query = `update sale set payment_status = '${status}' where id = '${sale_ref_id}' `;
+	// console.log('dines ... ' + query);
+	// return await promisifyQuery(query);
 };
 
-const checkInvoicePaidStatus = async (sale_ref_id) => {
-	let query = `
-	SELECT *, T1.invoice_amt - T1.paid_amount 'bal_amount' FROM 
-	(	
-SELECT 
-	s.invoice_date as invoice_date, 
+// const email = 'emelie@prisma.io'
+// const result = await prisma.$queryRaw(
+//   Prisma.sql`SELECT * FROM User WHERE email = ${email}`
+// )
 
-	s.id as sale_id,
-	s.invoice_no as invoice_no, 
-	s.invoice_type as invoice_type, 
-	s.net_total as invoice_amt, 
-	IFNULL(
-	(SELECT SUM(pd.applied_amount) 
-		FROM payment_detail pd 
-		WHERE pd.sale_ref_id=s.id 
-		GROUP BY pd.sale_ref_id),0) 'paid_amount'
-	FROM 
-	sale s
-	WHERE s.id = '${sale_ref_id}'	
-) AS T1
-WHERE T1.invoice_amt - T1.paid_amount > 0 
-ORDER BY 2,1 desc 
-	`;
-	console.log('dines ...22: ' + query);
-	return await promisifyQuery(query);
+const checkInvoicePaidStatus = async (sale_ref_id) => {
+	let bal_amount = await PaymentDetailRepo.paymentTillDate(sale_ref_id);
+
+	// return await prisma.$queryRaw(prisma.sql`
+	// 	SELECT *, T1.invoice_amt - T1.paid_amount 'bal_amount' FROM
+	// 	(
+	// SELECT
+	// 	s.invoice_date as invoice_date,
+
+	// 	s.id as sale_id,
+	// 	s.invoice_no as invoice_no,
+	// 	s.invoice_type as invoice_type,
+	// 	s.net_total as invoice_amt,
+	// 	IFNULL(
+	// 	(SELECT SUM(pd.applied_amount)
+	// 		FROM payment_detail pd
+	// 		WHERE pd.sale_ref_id=s.id
+	// 		GROUP BY pd.sale_ref_id),0) 'paid_amount'
+	// 	FROM
+	// 	sale s
+	// 	WHERE s.id = '${sale_ref_id}'
+	// ) AS T1
+	// WHERE T1.invoice_amt - T1.paid_amount > 0
+	// ORDER BY 2,1 desc
+	// `);
+
+	// 	let query = `
+	// 	SELECT *, T1.invoice_amt - T1.paid_amount 'bal_amount' FROM
+	// 	(
+	// SELECT
+	// 	s.invoice_date as invoice_date,
+
+	// 	s.id as sale_id,
+	// 	s.invoice_no as invoice_no,
+	// 	s.invoice_type as invoice_type,
+	// 	s.net_total as invoice_amt,
+	// 	IFNULL(
+	// 	(SELECT SUM(pd.applied_amount)
+	// 		FROM payment_detail pd
+	// 		WHERE pd.sale_ref_id=s.id
+	// 		GROUP BY pd.sale_ref_id),0) 'paid_amount'
+	// 	FROM
+	// 	sale s
+	// 	WHERE s.id = '${sale_ref_id}'
+	// ) AS T1
+	// WHERE T1.invoice_amt - T1.paid_amount > 0
+	// ORDER BY 2,1 desc
+	// 	`;
+	// 	console.log('dines ...22: ' + query);
+	// 	return await promisifyQuery(query);
 };
 
 // 	getLedgerByCustomers(req.params.center_id, req.params.customer_id, (err, data) => {
@@ -252,11 +288,13 @@ const addPaymentMaster = async (
 		insert into payment ( center_id, customer_id, payment_no, payment_now_amt, advance_amt_used, payment_date,
 			 payment_mode_ref_id, bank_ref,
 			payment_ref, last_updated,
-			bank_id, bank_name, created_by, excess_amount)
+			bank_id, bank_name, excess_amount, 	createdAt, created_by, is_delete)
 		VALUES ( '${center_id}', '${customer_id}', '${paymentNo}', '${received_amount}', 
 		'0','${today}', '${payment_mode}',
 		'${bank_ref}', '${payment_ref}', '${today}', '${bank_id}', 
-		 '${bank_name}', '${user_id}', '${excess_amount}' ) `;
+		 '${bank_name}', '${excess_amount}', '${currentTimeInTimeZone(
+		'YYYY-MM-DD HH:mm:ss'
+	)}',  '${user_id}',  'N' ) `;
 
 	console.log('dinesh ' + query);
 	let data = await promisifyQuery(query);
@@ -849,7 +887,8 @@ const addBulkPaymentReceived = async (requestBody, center_id, user_id) => {
 			customer.id,
 			newPK,
 			invoice_split,
-			center_id
+			center_id,
+			user_id
 		);
 		return { result: 'success' };
 	} else if (invoice_split.length === 0) {
@@ -861,10 +900,21 @@ const addBulkPaymentReceived = async (requestBody, center_id, user_id) => {
 	index++;
 };
 
-async function processBulkItems(customer_id, newPK, invoice_split, center_id) {
+async function processBulkItems(
+	customer_id,
+	newPK,
+	invoice_split,
+	center_id,
+	user_id
+) {
 	invoice_split.forEach(async (e) => {
-		let query = `INSERT INTO payment_detail(payment_ref_id, sale_ref_id, applied_amount, center_id) VALUES
-		( '${newPK}', '${e.id}', '${e.applied_amount}', '${center_id}' )`;
+		let query = `INSERT INTO payment_detail(payment_ref_id, sale_ref_id, applied_amount, center_id,
+			createdAt, created_by, is_delete) VALUES
+		( '${newPK}', '${e.id}', '${
+			e.applied_amount
+		}', '${center_id}', '${currentTimeInTimeZone(
+			'YYYY-MM-DD HH:mm:ss'
+		)}', '${user_id}', 'N' )`;
 
 		let data = promisifyQuery(query);
 
@@ -879,7 +929,7 @@ async function processBulkItems(customer_id, newPK, invoice_split, center_id) {
 		);
 
 		// mark the sale as paid
-		let data3 = await updateSaleStatus(e.id);
+		let data3 = await updateSaleStatus(e.id, e.invoice_amount);
 
 		// return data3;
 	});

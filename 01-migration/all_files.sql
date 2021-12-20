@@ -220,9 +220,7 @@ add column updatedAt datetime,
 add column created_by bigint,
 add column updated_by bigint;alter table ledger
 add column createdAt datetime,
-add column updatedAt datetime,
-add column created_by bigint,
-add column updated_by bigint;drop table load_stock;
+add column created_by bigint;drop table load_stock;
 drop table load_stock1;
 drop table load_stock2;
 drop table salejan08;
@@ -252,9 +250,11 @@ change pymt_ref payment_ref varchar(200),
 change createdby created_by bigint;
 
 alter table payment
+add column excess_amount decimal(12,2) default 0,
 add column createdAt datetime,
 add column updatedAt datetime,
-add column updated_by bigint;
+add column updated_by bigint,
+add is_delete varchar(1) default 'N';
 
 update payment set cancelled_date = (select date_format(str_to_date(cancelled_date,'%d-%m-%Y'),'%Y-%m-%d'))
 where cancelled_date != '';
@@ -266,11 +266,14 @@ modify cancelled_date datetime;
 
 update payment set cancelled_date = null where cancelled_date = '9999-01-20';
 
+update payment set excess_amount = 0.00;
+
 alter table payment_detail
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,
-add column updated_by bigint;
+add column updated_by bigint,
+add is_delete varchar(1) default 'N';
 
 ALTER TABLE payment_detail 
 change pymt_ref_id payment_ref_id bigint;
@@ -286,7 +289,7 @@ where p.id = pd.payment_ref_id
 );
 
 
-	ALTER TABLE payment_detail ADD INDEX sale_ref_id_index (sale_ref_id);
+	-- ALTER TABLE payment_detail ADD INDEX sale_ref_id_index (sale_ref_id);
 
 
 
@@ -527,6 +530,7 @@ ALTER TABLE sale  DROP COLUMN tax_applicable;
 
 
 alter table sale
+add payment_status varchar(1),
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,

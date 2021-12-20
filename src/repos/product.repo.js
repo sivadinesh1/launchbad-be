@@ -1,6 +1,11 @@
 const { prisma } = require('../config/prisma');
 
-const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
+const {
+	currentTimeInTimeZone,
+	bigIntToString,
+	escapeText,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const productRepoAddProduct = async (product) => {
 	try {
@@ -98,7 +103,9 @@ const productRepoIsProductExists = async (product_code, center_id) => {
 
 		return result;
 	} catch (error) {
-		console.log('error :: productRepoIsProductExists: product.repo.js ' + error);
+		console.log(
+			'error :: productRepoIsProductExists: product.repo.js ' + error
+		);
 		throw error;
 	}
 };
@@ -136,11 +143,16 @@ const productRepoSearchProduct = async (center_id, search_text) => {
       ( a.product_code like '%${search_text}%' or
       a.product_description like '%${search_text}%' ) limit 50
     `;
-
+	console.log(query);
 	return promisifyQuery(query);
 };
 
-const productRepoUpdateLatestPurchasePrice = async (purchase_price, mrp, id, prisma) => {
+const productRepoUpdateLatestPurchasePrice = async (
+	purchase_price,
+	mrp,
+	id,
+	prisma
+) => {
 	try {
 		const result = await prisma.product.update({
 			where: {

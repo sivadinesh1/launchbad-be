@@ -1,10 +1,13 @@
 const { prisma } = require('../config/prisma');
 
-const {
-	financialYearRepoGetNextInvSequenceNo,
-	financialYearRepoUpdateInvoiceSequence,
-	financialYearRepoUpdateDraftInvoiceSequenceGenerator,
-} = require('../repos/financial-year.repo');
+// const {
+// 	financialYearRepoGetNextInvSequenceNo,
+// 	financialYearRepoUpdateInvoiceSequence,
+// 	financialYearRepoUpdateDraftInvoiceSequenceGenerator,
+// } = require('../repos/financial-year.repo');
+
+const financialYearRepo = require('../repos/financial-year.repo');
+
 const { SaleRepo } = require('../repos/sale.repo');
 const {
 	addSaleDetail,
@@ -51,7 +54,10 @@ const { addSaleMaster, editSaleMaster } = require('./../repos/sale.repo');
 const getNextInvSequenceNo = async (center_id, invoice_type) => {
 	let nextInvSeqNo;
 	if (invoice_type === 'gstInvoice') {
-		nextInvSeqNo = await financialYearRepoGetNextInvSequenceNo(center_id);
+		nextInvSeqNo =
+			await financialYearRepo.financialYearRepoGetNextInvSequenceNo(
+				center_id
+			);
 	} else if (invoice_type === 'stockIssue') {
 		nextInvSeqNo = await financialYearRepoGetNextStockIssueSequenceNo(
 			center_id
@@ -105,10 +111,11 @@ const insertSale = async (saleMaster, saleDetails) => {
 				saleMaster.revision === 0 &&
 				saleMaster.inv_gen_mode === 'A'
 			) {
-				let result = await financialYearRepoUpdateInvoiceSequence(
-					saleMaster.center_id,
-					prisma
-				);
+				let result =
+					await financialYearRepo.financialYearRepoUpdateInvoiceSequence(
+						saleMaster.center_id,
+						prisma
+					);
 				invNo = formatSequenceNumber(result.inv_seq);
 				saleMaster.invoice_no = invNo;
 			} else if (
@@ -119,7 +126,7 @@ const insertSale = async (saleMaster, saleDetails) => {
 				saleMaster.invoice_no.startsWith('SI') === false
 			) {
 				let result =
-					await financialYearRepoUpdateDraftInvoiceSequenceGenerator(
+					await financialYearRepo.financialYearRepoUpdateDraftInvoiceSequenceGenerator(
 						saleMaster.center_id,
 						prisma
 					);
@@ -759,10 +766,11 @@ const convertSale = async (requestBody) => {
 	try {
 		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
 		const status = await prisma.$transaction(async (prisma) => {
-			let result = await financialYearRepoUpdateInvoiceSequence(
-				center_id,
-				prisma
-			);
+			let result =
+				await financialYearRepo.financialYearRepoUpdateInvoiceSequence(
+					center_id,
+					prisma
+				);
 			invNo = formatSequenceNumber(result.inv_seq);
 
 			// await updateSequenceGenerator({

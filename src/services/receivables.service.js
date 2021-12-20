@@ -1,4 +1,13 @@
+const { prisma } = require('../config/prisma');
+
 var pool = require('../config/db');
+
+const PaymentDetailsRepo = require('../repos/payment-detail.repo');
+const PaymentMasterRepo = require('../repos/payment-master.repo');
+const SaleLedgerRepo = require('../repos/sale-ledger.repo');
+
+const { Ledger } = require('../domain/Ledger');
+const { Audit } = require('../domain/Audit');
 
 const {
 	currentTimeInTimeZone,
@@ -67,7 +76,9 @@ const getPaymentsReceived = (
 		c.id = p.customer_id and
 		p.id = pd.payment_ref_id and
 		pd.sale_ref_id = s.id 
-		and p.center_id = ${center_id} and
+		and p.center_id = '${center_id}' 
+		and p.is_delete != 'Y' 
+		and pd.is_delete != 'Y' and
 		p.payment_date between '${from_date}' and '${to_date}' `;
 
 	if (invoice_no !== '') {
@@ -97,12 +108,14 @@ const getPaymentsReceivedDetails = (payment_id) => {
 		s.invoice_no as sale_invoice_no,
 		s.invoice_date as sale_invoice_date,
 		s.net_total as invoice_amount,
-		pd.applied_amount as paid_amount
+		pd.applied_amount as paid_amount,
+		pd.is_delete as is_delete,
 		from 
 		payment p,
 		payment_detail pd,
 		sale s
 		where
+		
 		s.id = pd.sale_ref_id and
 		p.id = pd.payment_ref_id and
 		p.id = '${payment_id}'
@@ -142,6 +155,7 @@ const getEditPaymentsData = (payment_id) => {
 		pm.id = p.payment_mode_ref_id and
 		c.id = p.customer_id and
 		p.id = pd.payment_ref_id and
+		p.is_delete != 'Y' and
 		pd.sale_ref_id = s.id 
 		and p.id = '${payment_id}' `;
 
@@ -180,7 +194,9 @@ c.id = s.customer_id and
 s.payment_status in ('N', 'P')
  and
  pd.sale_ref_id = s.id and
-s.center_id = ${center_id} and
+s.center_id = '${center_id}' 
+
+		and pd.is_delete != 'Y' and
 s.invoice_date between '${from_date}' and '${to_date}' `;
 
 	if (invoice_no !== '') {
@@ -217,13 +233,15 @@ const getPendingInvoices = (center_id, customer_id) => {
 				IFNULL(
 				(SELECT SUM(pd.applied_amount) 
 					FROM payment_detail pd 
-					WHERE pd.sale_ref_id=s.id 
+					WHERE pd.sale_ref_id=s.id
+					and pd.is_delete != 'Y' 
 					GROUP BY pd.sale_ref_id),0) 'paid_amount'
 				FROM 
 				sale s, 
 				customer c
 				WHERE s.center_id = '${center_id}'	and
 				c.id = s.customer_id and
+				
 				c.id = '${customer_id}' ) AS T1
 			WHERE T1.invoice_amt - T1.paid_amount > 0 
 			ORDER BY 2,1 desc `;
@@ -239,6 +257,7 @@ const getExcessPaidPayments = (customer_id) => {
 from 
 payment p
 where
+p.is_delete != 'Y' and
 p.customer_id = '${customer_id}' and
 p.excess_amount != '0.00' or
 p.excess_amount != null
@@ -251,6 +270,104 @@ id
 	return promisifyQuery(query);
 };
 
+const deletePayment = async (payment_id, user_id) => {
+	try {
+		const status = await prisma.$transaction(async (prisma) => {
+			const paymentDetailsArray =
+				await PaymentDetailsRepo.getPaymentDetails(payment_id, prisma);
+
+			let promise1 = await deletePaymentDetail(
+				paymentDetailsArray,
+				user_id,
+				prisma
+			);
+
+			let result = await PaymentMasterRepo.updatePaymentMasterToDelete(
+				paymentDetailsArray[0].payment.id,
+				user_id,
+				prisma
+			);
+
+			let result1 = await prepareAndAddPaymentLedgerReversalEntry(
+				paymentDetailsArray[0].payment.customer_id,
+				paymentDetailsArray[0].payment.center_id,
+
+				paymentDetailsArray[0].payment.payment_now_amt,
+				user_id,
+				prisma
+			);
+
+			return {
+				status: 'success',
+			};
+		});
+		return status;
+	} catch (error) {
+		console.log('Error while inserting Sale ' + error);
+		throw error;
+	}
+};
+
+const deletePaymentDetail = async (
+	paymentDetailsArray,
+
+	user_id,
+	prisma
+) => {
+	for await (const item of paymentDetailsArray) {
+		console.log('print:: ' + JSON.stringify(item));
+
+		let result = await PaymentDetailsRepo.updatePaymentDetailToDelete(
+			item.payment.id,
+			user_id,
+			prisma
+		);
+	}
+};
+
+async function prepareAndAddPaymentLedgerReversalEntry(
+	customer_id,
+	center_id,
+	payment_now_amt,
+	user_id,
+	prisma
+) {
+	return new Promise(async (resolve, reject) => {
+		let saleLedger = Ledger;
+		try {
+			let previousBalance = await SaleLedgerRepo.getCustomerBalance(
+				customer_id,
+				center_id,
+				prisma
+			);
+
+			console.log('previousBalance:: ' + JSON.stringify(previousBalance));
+			console.log(
+				'1previousBalance:: ' + JSON.stringify(payment_now_amt)
+			);
+
+			saleLedger.center_id = center_id;
+			saleLedger.customer_id = customer_id;
+
+			saleLedger.ledger_detail = 'Payment Reversal';
+			saleLedger.debit_amt = payment_now_amt;
+			saleLedger.balance_amt =
+				Number(previousBalance) - Number(payment_now_amt);
+
+			saleLedger.created_by = user_id;
+
+			let result = await SaleLedgerRepo.addSaleLedgerEntry(
+				saleLedger,
+				prisma
+			);
+		} catch (error) {
+			console.log('error in prepareSaleLedgerReversalEntry:: ' + error);
+			reject(error);
+		}
+		resolve(saleLedger);
+	});
+}
+
 module.exports = {
 	getPaymentsReceived,
 	getPaymentsReceivedDetails,
@@ -258,4 +375,15 @@ module.exports = {
 	getPendingInvoices,
 	getPendingReceivables,
 	getExcessPaidPayments,
+	deletePayment,
 };
+
+// let query = `
+// INSERT INTO ledger ( center_id, customer_id, invoice_ref_id, payment_ref_id, ledger_detail, debit_amt, balance_amt, ledger_date)
+// VALUES
+// 	( ? , ?, '${sale_ref_id}', ?, 'Payment', ?, IFNULL((select balance_amt from (select (balance_amt) as balance_amt
+// 		FROM ledger
+// 		where center_id = '${center_id}'  and customer_id = '${customer_id}'
+// 		ORDER BY  id DESC
+// 		LIMIT 1) a), 0) - '${received_amount}', '${today}'
+// 	) `;

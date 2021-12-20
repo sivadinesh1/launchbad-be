@@ -1,6 +1,12 @@
 // const {prisma} = require('../config/prisma');
 
-const { toTimeZoneFormat, currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
+const {
+	toTimeZoneFormat,
+	currentTimeInTimeZone,
+	bigIntToString,
+	escapeText,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const addPurchaseDetail = async (purchase, prisma) => {
 	try {
@@ -32,7 +38,10 @@ const addPurchaseDetail = async (purchase, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: addPurchaseDetail purchase-detail.repo.js ' + error.message);
+		console.log(
+			'error :: addPurchaseDetail purchase-detail.repo.js ' +
+				error.message
+		);
 		throw error;
 	}
 };
@@ -63,14 +72,21 @@ const editPurchaseDetail = async (purchase, prisma) => {
 				created_by: purchase.updated_by,
 				updated_by: purchase.updated_by,
 
-				createdAt: currentTimeInTimeZone(),
-				updatedAt: currentTimeInTimeZone(),
+				createdAt: new Date(
+					currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')
+				),
+				updatedAt: new Date(
+					currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')
+				),
 			},
 		});
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: addPurchaseDetail purchase-detail.repo.js ' + error.message);
+		console.log(
+			'error :: addPurchaseDetail purchase-detail.repo.js ' +
+				error.message
+		);
 		throw error;
 	}
 };

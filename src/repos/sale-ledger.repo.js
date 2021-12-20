@@ -1,6 +1,11 @@
 const { prisma } = require('../config/prisma');
 
-const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
+const {
+	currentTimeInTimeZone,
+	bigIntToString,
+	escapeText,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const addSaleLedgerEntry = async (ledger, prisma) => {
 	try {
@@ -16,14 +21,18 @@ const addSaleLedgerEntry = async (ledger, prisma) => {
 				credit_amt: Number(ledger.credit_amt),
 				debit_amt: Number(ledger.debit_amt),
 				balance_amt: Number(ledger.balance_amt),
+				createdAt: new Date(
+					currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')
+				),
 				created_by: Number(ledger.created_by),
-				updated_by: Number(ledger.updated_by),
 			},
 		});
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: sale-ledger.repo.js: addSaleLedgerEntry ' + error);
+		console.log(
+			'error :: sale-ledger.repo.js: addSaleLedgerEntry ' + error
+		);
 		throw error;
 	}
 };
@@ -47,7 +56,12 @@ const getCustomerBalance = async (customer_id, center_id, prisma) => {
 	return result.length === 0 ? 0 : result[0].balance_amt;
 };
 
-const getCreditAmtForInvoiceReversal = async (customer_id, center_id, invoice_ref_id, prisma) => {
+const getCreditAmtForInvoiceReversal = async (
+	customer_id,
+	center_id,
+	invoice_ref_id,
+	prisma
+) => {
 	try {
 		const result = await prisma.ledger.findMany({
 			select: {
@@ -68,12 +82,20 @@ const getCreditAmtForInvoiceReversal = async (customer_id, center_id, invoice_re
 		//let result = bigIntToString(result);
 		return result === '' ? 0 : result[0].credit_amt;
 	} catch (error) {
-		console.log('error :: sale-ledger.repo.js getCreditAmtForInvoiceReversal: ' + error);
+		console.log(
+			'error :: sale-ledger.repo.js getCreditAmtForInvoiceReversal: ' +
+				error
+		);
 		throw error;
 	}
 };
 
-const updateSaleLedgerCustomerChange = async (center_id, invoice_ref_id, old_customer_id, prisma) => {
+const updateSaleLedgerCustomerChange = async (
+	center_id,
+	invoice_ref_id,
+	old_customer_id,
+	prisma
+) => {
 	try {
 		const result = await prisma.ledger.delete({
 			where: {
@@ -85,7 +107,10 @@ const updateSaleLedgerCustomerChange = async (center_id, invoice_ref_id, old_cus
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: sale-ledger.repo.js updateSaleLedgerCustomerChange: ' + error);
+		console.log(
+			'error :: sale-ledger.repo.js updateSaleLedgerCustomerChange: ' +
+				error
+		);
 		throw error;
 	}
 };

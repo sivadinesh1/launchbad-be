@@ -1,6 +1,12 @@
-// const {prisma} = require('../config/prisma');
+const { prisma } = require('../config/prisma');
 
-const { toTimeZoneFormat, currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
+const {
+	toTimeZoneFormat,
+	currentTimeInTimeZone,
+	bigIntToString,
+	escapeText,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const addSaleMaster = async (sale, prisma) => {
 	try {
@@ -16,7 +22,8 @@ const addSaleMaster = async (sale, prisma) => {
 				lr_date: sale.lr_date !== null ? sale.lr_date : undefined,
 				invoice_type: sale.invoice_type,
 				order_no: sale.order_no,
-				order_date: sale.order_date !== null ? sale.order_date : undefined,
+				order_date:
+					sale.order_date !== null ? sale.order_date : undefined,
 				total_quantity: sale.total_quantity,
 				no_of_items: sale.no_of_items,
 				after_tax_value: sale.after_tax_value,
@@ -24,9 +31,16 @@ const addSaleMaster = async (sale, prisma) => {
 				sgs_t: sale.sgs_t,
 				igs_t: sale.igs_t,
 				total_value: sale.total_value,
-				transport_charges: sale.transport_charges === null ? undefined : sale.transport_charges,
-				unloading_charges: sale.unloading_charges === null ? undefined : sale.unloading_charges,
-				misc_charges: sale.misc_charges === null ? undefined : sale.misc_charges,
+				transport_charges:
+					sale.transport_charges === null
+						? undefined
+						: sale.transport_charges,
+				unloading_charges:
+					sale.unloading_charges === null
+						? undefined
+						: sale.unloading_charges,
+				misc_charges:
+					sale.misc_charges === null ? undefined : sale.misc_charges,
 				net_total: sale.net_total,
 				no_of_boxes: sale.no_of_boxes,
 				status: sale.status,
@@ -34,7 +48,10 @@ const addSaleMaster = async (sale, prisma) => {
 				revision: sale.revision,
 
 				stock_issue_ref: sale.stock_issue_ref,
-				stock_issue_date_ref: sale.stock_issue_date_ref != null ? sale.stock_issue_date_ref : undefined,
+				stock_issue_date_ref:
+					sale.stock_issue_date_ref != null
+						? sale.stock_issue_date_ref
+						: undefined,
 				round_off: sale.round_off,
 				retail_customer_name: sale.retail_customer_name,
 				retail_customer_address: sale.retail_customer_address,
@@ -68,7 +85,8 @@ const editSaleMaster = async (sale, prisma) => {
 				lr_date: sale.lr_date !== null ? sale.lr_date : undefined,
 				invoice_type: sale.invoice_type,
 				order_no: sale.order_no,
-				order_date: sale.order_date !== null ? sale.order_date : undefined,
+				order_date:
+					sale.order_date !== null ? sale.order_date : undefined,
 				total_quantity: sale.total_quantity,
 				no_of_items: sale.no_of_items,
 				after_tax_value: sale.after_tax_value,
@@ -86,7 +104,10 @@ const editSaleMaster = async (sale, prisma) => {
 				revision: sale.revision,
 
 				stock_issue_ref: sale.stock_issue_ref,
-				stock_issue_date_ref: sale.stock_issue_date_ref != null ? sale.stock_issue_date_ref : undefined,
+				stock_issue_date_ref:
+					sale.stock_issue_date_ref != null
+						? sale.stock_issue_date_ref
+						: undefined,
 				round_off: sale.round_off,
 				retail_customer_name: sale.retail_customer_name,
 				retail_customer_address: sale.retail_customer_address,
@@ -105,7 +126,24 @@ const editSaleMaster = async (sale, prisma) => {
 	}
 };
 
+const updateSalePaymentStatus = async (sale_id, status) => {
+	try {
+		const result = await prisma.sale.update({
+			where: {
+				id: sale_id,
+			},
+			data: {
+				payment_status: status,
+			},
+		});
+	} catch (error) {
+		console.log('error :: sale.repo.js updateSalePaymentStatus: ' + error);
+		throw error;
+	}
+};
+
 module.exports = {
 	addSaleMaster,
 	editSaleMaster,
+	updateSalePaymentStatus,
 };

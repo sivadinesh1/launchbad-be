@@ -12,7 +12,6 @@ let Ledger = {
 	debit_amt: 0.0,
 	balance_amt: 0.0,
 	created_by: '',
-	updated_by: '',
 };
 
 module.exports = { Ledger };

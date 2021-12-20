@@ -317,6 +317,7 @@ model sale {
   retail_customer_address String?   @db.VarChar(150)
   retail_customer_phone   String?   @db.VarChar(50)
   print_count             Int?
+  payment_status          String?   @default("N") @db.VarChar(1) 
   createdAt               DateTime? @default(now())
   updatedAt               DateTime? @updatedAt
   created_by              BigInt?
@@ -684,9 +685,9 @@ model ledger {
 
 
   createdAt  DateTime? @default(now())
-  updatedAt  DateTime? @updatedAt
+  
   created_by BigInt?
-  updated_by BigInt?
+  
 
   center   center   @relation(fields: [center_id], references: [id])
   customer customer @relation(fields: [customer_id], references: [id])
@@ -708,10 +709,12 @@ model payment {
   bank_ref            String   @default("") @db.VarChar(200)
   payment_ref         String   @default("") @db.VarChar(200)
   is_cancelled        String   @default("") @db.VarChar(20)
-  cancelled_date      DateTime
+  cancelled_date      DateTime?
   last_updated        DateTime
   bank_id             BigInt
   bank_name           String   @default("") @db.VarChar(200)
+
+  is_delete           String   @default("N") @db.VarChar(1)
 
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
@@ -735,7 +738,9 @@ model payment_detail {
   payment_ref_id     BigInt
   sale_ref_id        BigInt
   applied_amount     Decimal? @db.Decimal(12, 2)
-  sale_return_ref_id BigInt
+  sale_return_ref_id BigInt?
+
+  is_delete          String   @default("N") @db.VarChar(1)
 
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
@@ -745,7 +750,7 @@ model payment_detail {
   center      center      @relation(fields: [center_id], references: [id])
   payment     payment     @relation(fields: [payment_ref_id], references: [id])
   sale        sale        @relation(fields: [sale_ref_id], references: [id])
-  sale_return sale_return @relation(fields: [sale_return_ref_id], references: [id])
+  sale_return sale_return? @relation(fields: [sale_return_ref_id], references: [id])
 }
 
 model payment_mode {
