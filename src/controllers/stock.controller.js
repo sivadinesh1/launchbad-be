@@ -73,13 +73,16 @@ const deleteProductFromStock = catchAsync(async (req, res) => {
 	const data = await stockService.deleteProductFromStock(
 		req.params.product_id,
 		req.params.mrp,
-		req.user.center_id
+		req.user.center_id,
+		req.params.is_active,
+		Number(req.user.id)
 	);
 	return responseForward(data, 'deleteProductFromStock', res);
 });
 
 const stockCorrection = catchAsync(async (req, res) => {
 	req.body.updated_by = Number(req.user.id);
+	req.body.center_id = req.user.center_id;
 
 	const data = await stockService.stockCorrection(req.body);
 	return responseForward(data, 'stockCorrection', res);

@@ -2,7 +2,14 @@ const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const { responseForward } = require('../utils/utils');
 const catchAsync = require('../utils/catchAsync');
-const { generalService, vendorsService, productsService, customersService, brandsService, enquiryService } = require('../services');
+const {
+	generalService,
+	vendorsService,
+	productsService,
+	customersService,
+	brandsService,
+	enquiryService,
+} = require('../services');
 
 const searchProductInformation = catchAsync(async (req, res) => {
 	const data = await generalService.searchProductInformation(req.body);
@@ -11,25 +18,39 @@ const searchProductInformation = catchAsync(async (req, res) => {
 });
 
 const searchProduct = catchAsync(async (req, res) => {
-	const data = await productsService.searchProduct(req.body.center_id, req.body.product_search_text);
+	const data = await productsService.searchProduct(
+		req.user.center_id,
+		req.body.product_search_text,
+		req.body.offset,
+		req.body.length
+	);
 
 	return responseForward(data, 'searchProduct', res);
 });
 
 const searchCustomer = catchAsync(async (req, res) => {
-	const data = await customersService.getSearchCustomers(req.user.center_id, req.body.search_text);
+	const data = await customersService.getSearchCustomers(
+		req.user.center_id,
+		req.body.search_text
+	);
 
 	return responseForward(data, 'searchCustomer', res);
 });
 
 const searchVendors = catchAsync(async (req, res) => {
-	const data = await vendorsService.getSearchVendors(req.user.center_id, req.body.search_text);
+	const data = await vendorsService.getSearchVendors(
+		req.user.center_id,
+		req.body.search_text
+	);
 
 	return responseForward(data, 'searchVendors', res);
 });
 
 const searchBrand = catchAsync(async (req, res) => {
-	const data = await brandsService.getSearchBrands(req.user.center_id, req.body.search_text);
+	const data = await brandsService.getSearchBrands(
+		req.user.center_id,
+		req.body.search_text
+	);
 
 	return responseForward(data, 'searchBrand', res);
 });
@@ -52,22 +73,34 @@ const getAllActiveVendors = catchAsync(async (req, res) => {
 });
 
 const getAllActiveBrands = catchAsync(async (req, res) => {
-	const data = await brandsService.getAllBrands(Number(req.user.center_id), req.params.status);
+	const data = await brandsService.getAllBrands(
+		Number(req.user.center_id),
+		req.params.status
+	);
 	return responseForward(data, 'getAllActiveBrands', res);
 });
 
 const isVendorExists = catchAsync(async (req, res) => {
-	const data = await vendorsService.isVendorExists(req.params.name, req.user.center_id);
+	const data = await vendorsService.isVendorExists(
+		req.params.name,
+		req.user.center_id
+	);
 	return responseForward(data, 'isVendorExists', res);
 });
 
 const isCustomerExists = catchAsync(async (req, res) => {
-	const data = await customersService.isCustomerExists(req.params.name, req.user.center_id);
+	const data = await customersService.isCustomerExists(
+		req.params.name,
+		req.user.center_id
+	);
 	return responseForward(data, 'isCustomerExists', res);
 });
 
 const isBrandExists = catchAsync(async (req, res) => {
-	const data = await brandsService.isBrandExists(Number(req.user.center_id), req.params.name);
+	const data = await brandsService.isBrandExists(
+		Number(req.user.center_id),
+		req.params.name
+	);
 
 	return responseForward(data, 'isBrandExists', res);
 });
@@ -88,12 +121,18 @@ const deleteVendor = catchAsync(async (req, res) => {
 });
 
 const getBrandsMissingDiscountsByCustomer = catchAsync(async (req, res) => {
-	const data = await brandsService.getBrandsMissingDiscountsByCustomer(req.user.center_id, req.params.status, req.params.customer_id);
+	const data = await brandsService.getBrandsMissingDiscountsByCustomer(
+		req.user.center_id,
+		req.params.status,
+		req.params.customer_id
+	);
 	return responseForward(data, 'getBrandsMissingDiscountsByCustomer', res);
 });
 
 const getAllActiveCustomersByCenter = catchAsync(async (req, res) => {
-	const data = await generalService.getAllActiveCustomersByCenter(req.user.center_id);
+	const data = await generalService.getAllActiveCustomersByCenter(
+		req.user.center_id
+	);
 	return responseForward(data, 'getAllActiveCustomersByCenter', res);
 });
 
@@ -108,7 +147,9 @@ const getEnquiryById = catchAsync(async (req, res) => {
 });
 
 const getCustomerDetailsById = catchAsync(async (req, res) => {
-	const data = await enquiryService.getCustomerDetailsById(req.params.enquiry_id);
+	const data = await enquiryService.getCustomerDetailsById(
+		req.params.enquiry_id
+	);
 	return responseForward(data, 'getCustomerDetailsById', res);
 });
 
@@ -118,7 +159,10 @@ const updateTaxRate = catchAsync(async (req, res) => {
 });
 
 const getAllPaymentModes = catchAsync(async (req, res) => {
-	const data = await generalService.getAllPaymentModes(req.user.center_id, req.params.status);
+	const data = await generalService.getAllPaymentModes(
+		req.user.center_id,
+		req.params.status
+	);
 	return responseForward(data, 'getAllPaymentModes', res);
 });
 

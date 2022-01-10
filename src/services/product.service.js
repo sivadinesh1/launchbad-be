@@ -21,8 +21,13 @@ async function updateProduct(product) {
 	return await productRepoUpdateProduct(product);
 }
 
-async function searchProduct(center_id, product_search_text) {
-	return await productRepoSearchProduct(center_id, product_search_text);
+async function searchProduct(center_id, product_search_text, offset, length) {
+	return await productRepoSearchProduct(
+		center_id,
+		product_search_text,
+		offset,
+		length
+	);
 }
 
 // const updateProduct = (updateValues, res) => {

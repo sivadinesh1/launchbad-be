@@ -1,6 +1,11 @@
 const { prisma } = require('../config/prisma');
 
-const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
+const {
+	currentTimeInTimeZone,
+	bigIntToString,
+	escapeText,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const addStock = async (stock) => {
 	try {
@@ -43,6 +48,29 @@ const stockCorrection = async (stock) => {
 
 			data: {
 				available_stock: stock.available_stock,
+				updated_by: stock.created_by,
+			},
+		});
+
+		return result;
+	} catch (error) {
+		console.log('error :: stock.repo.js ' + error);
+		throw error;
+	}
+};
+
+// let query = `update stock set is_active = 'N' where product_id = ${product_id} and mrp = ${mrp}`;
+
+const deleteProductFromStockTable = async (stock) => {
+	try {
+		const result = await prisma.stock.updateMany({
+			where: {
+				product_id: stock.product_id,
+				mrp: stock.mrp,
+			},
+
+			data: {
+				is_active: stock.is_active,
 				updated_by: stock.created_by,
 			},
 		});
@@ -125,6 +153,7 @@ module.exports = {
 	stockMinus,
 	stockAdd,
 	getStockId,
+	deleteProductFromStockTable,
 };
 
 // const correctStock = async (product_id, mrp, stock_qty) => {

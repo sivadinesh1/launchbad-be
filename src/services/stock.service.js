@@ -1,10 +1,14 @@
 var pool = require('../config/db');
 
-const { toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
+const {
+	toTimeZoneFormat,
+	currentTimeInTimeZone,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
-const { StockRepo } = require('../repos/stock.repo');
+const StockRepo = require('../repos/stock.repo');
 
 const insertItemHistoryTable = async (
 	center_id,
@@ -20,7 +24,7 @@ const insertItemHistoryTable = async (
 	sale_return_id,
 	sale_return_det_id,
 	purchase_return_id,
-	purchase_return_det_id,
+	purchase_return_det_id
 ) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
@@ -31,7 +35,9 @@ values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purch
 '${action}', '${action_type}', '${txn_qty}', `;
 
 	// if (module !== 'Product') {
-	query = query + `	(select IFNULL(sum(available_stock), 0) as available_stock  from stock where product_id = '${product_id}'  ), `;
+	query =
+		query +
+		`	(select IFNULL(sum(available_stock), 0) as available_stock  from stock where product_id = '${product_id}'  ), `;
 	// }
 
 	query =
@@ -122,13 +128,27 @@ const getProductWithAllMRP = (product_id) => {
 	return promisifyQuery(query);
 };
 
-const deleteProductFromStock = async (product_id, mrp, center_id) => {
+const deleteProductFromStock = async (
+	product_id,
+	mrp,
+	center_id,
+	is_active,
+	user_id
+) => {
 	// check center_id
 	//let center_id;
 	//let query = `delete from stock where product_id = ${product_id} and mrp = ${mrp}`;
-	let query = `update stock set is_active = 'N' where product_id = ${product_id} and mrp = ${mrp}`;
+	// let query = `update stock set is_active = 'N' where product_id = ${product_id} and mrp = ${mrp}`;
 
-	let data = promisifyQuery(query);
+	// let data = promisifyQuery(query);
+
+	let data = await StockRepo.deleteProductFromStockTable(
+		product_id,
+		mrp,
+		center_id,
+		is_active,
+		user_id
+	);
 
 	let historyAddRes = await insertItemHistoryTable(
 		center_id,
@@ -144,7 +164,7 @@ const deleteProductFromStock = async (product_id, mrp, center_id) => {
 		'0', // sale_return_id
 		'0', // sale_return_det_id
 		'0', // purchase_return_id
-		'0', // purchase_return_det_id
+		'0' // purchase_return_det_id
 	);
 
 	let update = await updateLatestProductMRP(product_id, center_id);
@@ -197,11 +217,13 @@ const searchPurchase = async (requestBody) => {
 	let order = requestBody.order;
 
 	if (from_date !== '') {
-		from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
+		from_date =
+			toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
 	}
 
 	if (to_date !== '') {
-		to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
+		to_date =
+			toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
 	}
 
 	let vend_sql = `and p.vendor_id = '${vendor_id}' `;
@@ -257,11 +279,15 @@ const searchSales = async (requestBody) => {
 
 	if (search_type === 'all') {
 		if (from_date !== '') {
-			from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
+			from_date =
+				toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') +
+				' 00:00:00';
 		}
 
 		if (to_date !== '') {
-			to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
+			to_date =
+				toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') +
+				' 23:59:00';
 		}
 
 		let customer_sql = `and s.customer_id = '${customer_id}' `;
@@ -419,7 +445,12 @@ const deletePurchaseDetails = async (requestBody) => {
 	//
 
 	// step 3
-	let stockUpdatePromise = await updateStockViaId(quantity, product_id, stock_id, 'minus');
+	let stockUpdatePromise = await updateStockViaId(
+		quantity,
+		product_id,
+		stock_id,
+		'minus'
+	);
 
 	// step 4 , reverse item history table entries.
 
@@ -437,7 +468,7 @@ const deletePurchaseDetails = async (requestBody) => {
 		'0', // sale_return_id
 		'0', // sale_return_det_id
 		'0', // purchase_return_id
-		'0', // purchase_return_det_id
+		'0' // purchase_return_det_id
 	);
 
 	return {
@@ -450,7 +481,10 @@ const deletePurchaseById = async (purchase_id) => {
 
 	let idx = 0;
 
-	let retValue = await deletePurchaseDetailsRecs(purchaseDetails, purchase_id);
+	let retValue = await deletePurchaseDetailsRecs(
+		purchaseDetails,
+		purchase_id
+	);
 
 	if (retValue === 'done') {
 		{
@@ -518,7 +552,12 @@ const deletePurchaseDetailsRecs = async (purchaseDetails, purchase_id) => {
 		let deletePromise = await promisifyQuery(query);
 
 		// step 3
-		let stockUpdatePromise = await updateStockViaId(element.qty, element.product_id, element.stock_id, 'minus');
+		let stockUpdatePromise = await updateStockViaId(
+			element.qty,
+			element.product_id,
+			element.stock_id,
+			'minus'
+		);
 	});
 
 	if (purchaseDetails.length === idx) {

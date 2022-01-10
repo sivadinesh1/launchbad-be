@@ -1,6 +1,12 @@
 // const {prisma} = require('../config/prisma');
 
-const { toTimeZoneFormat, currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
+const {
+	toTimeZoneFormat,
+	currentTimeInTimeZone,
+	bigIntToString,
+	escapeText,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const addPurchaseMaster = async (purchase, prisma) => {
 	try {
@@ -32,7 +38,9 @@ const addPurchaseMaster = async (purchase, prisma) => {
 				no_of_boxes: Number(purchase.no_of_boxes),
 				status: purchase.status,
 
-				stock_inwards_date_time: new Date(currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')),
+				stock_inwards_date_time: new Date(
+					currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')
+				),
 				round_off: purchase.round_off,
 				revision: purchase.revision,
 
@@ -62,7 +70,7 @@ const editPurchaseMaster = async (purchase, prisma) => {
 				invoice_no: purchase.invoice_no,
 				invoice_date: new Date(purchase.invoice_date),
 
-				lr_date: purchase.lr_date,
+				lr_date: new Date(purchase.lr_date),
 
 				received_date: new Date(purchase.received_date),
 
@@ -83,7 +91,9 @@ const editPurchaseMaster = async (purchase, prisma) => {
 				no_of_boxes: Number(purchase.no_of_boxes),
 				status: purchase.status,
 
-				stock_inwards_date_time: new Date(currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')),
+				stock_inwards_date_time: new Date(
+					currentTimeInTimeZone('YYYY-MM-DD HH:mm:SS')
+				),
 				round_off: purchase.round_off,
 				revision: purchase.revision,
 

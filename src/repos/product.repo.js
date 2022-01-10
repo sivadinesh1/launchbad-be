@@ -111,7 +111,12 @@ const productRepoIsProductExists = async (product_code, center_id) => {
 };
 
 //public async updateProduct(product: IProduct) {
-const productRepoSearchProduct = async (center_id, search_text) => {
+const productRepoSearchProduct = async (
+	center_id,
+	search_text,
+	offset = 1,
+	length = 20
+) => {
 	let query = `
     select a.product_type as product_type, a.product_code as product_code, 
         a.product_description, 
@@ -139,11 +144,45 @@ const productRepoSearchProduct = async (center_id, search_text) => {
       product a
       where 
       a.center_id = '${center_id}' and
-      a.brand_id = bd.id and
-      ( a.product_code like '%${search_text}%' or
-      a.product_description like '%${search_text}%' ) limit 50
-    `;
-	console.log(query);
+      a.brand_id = bd.id `;
+
+	if (search_text !== '') {
+		query =
+			query +
+			` and ( a.product_code like '%${search_text}%' or
+		a.product_description like '%${search_text}%' )	`;
+	}
+
+	query = query + ` limit ${offset}, ${length} `;
+	console.log('dinesh' + query);
+	let result1 = await promisifyQuery(query);
+
+	let result2 = await productRepoSearchProductCountStar(
+		center_id,
+		search_text
+	);
+
+	return { full_count: result2[0].full_count, result: result1 };
+};
+
+const productRepoSearchProductCountStar = async (center_id, search_text) => {
+	let query = `
+    select count(*) as full_count
+      from 
+      brand bd,
+      product a
+      where 
+      a.center_id = '${center_id}' and
+      a.brand_id = bd.id `;
+
+	if (search_text !== '') {
+		query =
+			query +
+			` and ( a.product_code like '%${search_text}%' or
+		a.product_description like '%${search_text}%' )	`;
+	}
+
+	console.log('dinesh' + query);
 	return promisifyQuery(query);
 };
 
