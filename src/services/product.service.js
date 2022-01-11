@@ -2,7 +2,7 @@ var pool = require('../config/db');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
-const { insertItemHistoryTable, insertToStock } = require('./stock.service');
+const StockRepo = require('./../repos/stock.repo');
 
 const { Product } = require('../domain/Product');
 
@@ -14,7 +14,20 @@ const {
 } = require('../repos/product.repo');
 
 async function insertProduct(product) {
-	return await productRepoAddProduct(product);
+	let result = await productRepoAddProduct(product);
+
+	console.log('dinesh result', result);
+
+	let result1 = await StockRepo.insertToStock(
+		result.id,
+		product.mrp,
+		product.current_stock,
+		product.current_stock,
+		product.center_id,
+		product.created_by
+	);
+
+	return { status: 'success' };
 }
 
 async function updateProduct(product) {

@@ -71,8 +71,6 @@ const getCustomerBalanceReports = (
 
 		 `;
 
-	console.log('dinesh ' + query);
-
 	return promisifyQuery(query);
 };
 

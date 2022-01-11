@@ -38,6 +38,7 @@ const productRepoAddProduct = async (product) => {
 				margin: product.margin,
 				createdAt: product.createdAt,
 				created_by: product.created_by,
+				updated_by: product.created_by,
 			},
 		});
 
@@ -154,7 +155,7 @@ const productRepoSearchProduct = async (
 	}
 
 	query = query + ` limit ${offset}, ${length} `;
-	console.log('dinesh' + query);
+
 	let result1 = await promisifyQuery(query);
 
 	let result2 = await productRepoSearchProductCountStar(
@@ -182,7 +183,6 @@ const productRepoSearchProductCountStar = async (center_id, search_text) => {
 		a.product_description like '%${search_text}%' )	`;
 	}
 
-	console.log('dinesh' + query);
 	return promisifyQuery(query);
 };
 

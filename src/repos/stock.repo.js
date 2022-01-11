@@ -7,16 +7,43 @@ const {
 	promisifyQuery,
 } = require('../utils/utils');
 
-const addStock = async (stock) => {
+// const insertToStock = async (product_id, mrp, available_stock, open_stock) => {
+// 	let upDate = new Date();
+// 	let todayYYMMDD = toTimeZoneFormat(upDate, 'YYYY-MM-DD');
+
+// 	let query = `
+// 	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
+// 	values ('${product_id}', '${mrp}', '${available_stock}', '${open_stock}' , '${todayYYMMDD}')`;
+
+// 	return promisifyQuery(query);
+// };
+
+const insertToStock = async (
+	product_id,
+	mrp,
+	available_stock,
+	open_stock,
+	center_id,
+	user_id
+) => {
 	try {
 		const result = await prisma.stock.create({
 			data: {
-				center_id: stock.center_id,
+				product_id: Number(product_id),
+				mrp: mrp,
+				available_stock: available_stock,
+				open_stock: open_stock,
+				center_id: center_id,
 
-				createdAt: stock.createdAt,
-				created_by: stock.created_by,
+				createdAt: currentTimeInTimeZone(),
+				updatedAt: currentTimeInTimeZone(),
+				created_by: user_id,
+				updated_by: user_id,
 			},
 		});
+
+		console.log('dinesh.. stock ... ' + result);
+		console.log('dinesh..@ stock ... ' + bigIntToString(result));
 
 		return bigIntToString(result);
 	} catch (error) {
@@ -47,7 +74,7 @@ const stockCorrection = async (stock) => {
 			},
 
 			data: {
-				available_stock: stock.available_stock,
+				available_stock: Number(stock.corrected_stock),
 				updated_by: stock.created_by,
 			},
 		});
@@ -61,17 +88,22 @@ const stockCorrection = async (stock) => {
 
 // let query = `update stock set is_active = 'N' where product_id = ${product_id} and mrp = ${mrp}`;
 
-const deleteProductFromStockTable = async (stock) => {
+const deleteProductFromStockTable = async (
+	product_id,
+	mrp,
+	is_active,
+	user_id
+) => {
 	try {
 		const result = await prisma.stock.updateMany({
 			where: {
-				product_id: stock.product_id,
-				mrp: stock.mrp,
+				product_id: Number(product_id),
+				mrp: mrp,
 			},
 
 			data: {
-				is_active: stock.is_active,
-				updated_by: stock.created_by,
+				is_active: is_active,
+				updated_by: user_id,
 			},
 		});
 
@@ -147,7 +179,7 @@ const getStockId = async (product_id, mrp, prisma) => {
 };
 
 module.exports = {
-	addStock,
+	insertToStock,
 	stockCount,
 	stockCorrection,
 	stockMinus,

@@ -9,6 +9,7 @@ const {
 const { handleError, ErrorHandler } = require('../config/error');
 
 const StockRepo = require('../repos/stock.repo');
+const itemHistoryRepo = require('../repos/item-history.repo');
 
 const insertItemHistoryTable = async (
 	center_id,
@@ -77,31 +78,15 @@ const isStockIdExist = async (k) => {
 	return data[0].count;
 };
 
-const insertToStock = async (product_id, mrp, available_stock, open_stock) => {
-	let upDate = new Date();
-	let todayYYMMDD = toTimeZoneFormat(upDate, 'YYYY-MM-DD');
+// const insertToStock = async (product_id, mrp, available_stock, open_stock) => {
+// 	let upDate = new Date();
+// 	let todayYYMMDD = toTimeZoneFormat(upDate, 'YYYY-MM-DD');
 
-	let query = `
-	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
-	values ('${product_id}', '${mrp}', '${available_stock}', '${open_stock}' , '${todayYYMMDD}')`;
+// 	let query = `
+// 	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
+// 	values ('${product_id}', '${mrp}', '${available_stock}', '${open_stock}' , '${todayYYMMDD}')`;
 
-	return promisifyQuery(query);
-};
-
-// const correctStock = async (product_id, mrp, stock_qty) => {
-// 	let query = `update stock set available_stock =  '${stock_qty}' where product_id = '${product_id}' and mrp = '${mrp}' `;
-
-// 	let data = promisifyQuery(query);
-// 	return 'updated';
-// };
-
-// const correctStock = async (stock: IStock) => {
-// 	return StockRepo.updateStock(stock);
-
-// let query = `update stock set available_stock =  '${stock_qty}' where product_id = '${product_id}' and mrp = '${mrp}' `;
-
-// let data = promisifyQuery(query);
-//  return 'updated';
+// 	return promisifyQuery(query);
 // };
 
 // updateStock
@@ -135,57 +120,58 @@ const deleteProductFromStock = async (
 	is_active,
 	user_id
 ) => {
-	// check center_id
-	//let center_id;
-	//let query = `delete from stock where product_id = ${product_id} and mrp = ${mrp}`;
-	// let query = `update stock set is_active = 'N' where product_id = ${product_id} and mrp = ${mrp}`;
-
-	// let data = promisifyQuery(query);
-
 	let data = await StockRepo.deleteProductFromStockTable(
 		product_id,
 		mrp,
-		center_id,
 		is_active,
 		user_id
 	);
 
-	let historyAddRes = await insertItemHistoryTable(
-		center_id,
-		'Product',
-		product_id,
-		'0',
-		'0',
-		'0',
-		'0',
-		'PRD',
-		`Deleted MRP - ${mrp}`,
-		'0',
-		'0', // sale_return_id
-		'0', // sale_return_det_id
-		'0', // purchase_return_id
-		'0' // purchase_return_det_id
+	let itemHistory = {
+		center_id: center_id,
+		module: 'Product',
+		product_ref_id: product_id,
+		sale_id: '0',
+		sale_det_id: '0',
+		action: 'PRD',
+		action_type: `Item de-activated - ${mrp}`,
+		txn_qty: '0',
+		stock_level: 0,
+		txn_date: new Date(),
+		sale_return_id: 0,
+		sale_return_det_id: 0,
+		purchase_id: 0,
+		purchase_det_id: 0,
+		purchase_return_id: 0,
+		purchase_return_det_id: 0,
+
+		created_by: user_id,
+		updated_by: user_id,
+	};
+
+	let historyAddRes = await itemHistoryRepo.addItemHistoryStandalone(
+		itemHistory
 	);
 
-	let update = await updateLatestProductMRP(product_id, center_id);
+	// let update = await updateLatestProductMRP(product_id, center_id);
 
 	return {
 		result: data,
 	};
 };
 
-const updateLatestProductMRP = async (product_id, center_id) => {
-	let query = `
-	update product set 
-mrp = (select max(mrp) from stock where
-product_id = '${product_id}')
-where 
-id = '${product_id}' and
-center_id = '${center_id}'
-`;
+// const updateLatestProductMRP = async (product_id, center_id) => {
+// 	let query = `
+// 	update product set
+// mrp = (select max(mrp) from stock where
+// product_id = '${product_id}')
+// where
+// id = '${product_id}' and
+// center_id = '${center_id}'
+// `;
 
-	return promisifyQuery(query);
-};
+// 	return promisifyQuery(query);
+// };
 
 const searchAllDraftPurchase = async (center_id) => {
 	let query = `select p.*, v.id as vendor_id, v.vendor_name as vendor_name,
@@ -204,17 +190,16 @@ const searchAllDraftPurchase = async (center_id) => {
 	return promisifyQuery(query);
 };
 
-// str_to_date(stock_inwards_datetime, '%Y-%m-%d %T') between
-// str_to_date('2020-05-01 00:00:00', '%Y-%m-%d %T') and
-// str_to_date('2020-05-08 23:59:00', '%Y-%m-%d %T')
-
 const searchPurchase = async (requestBody) => {
 	let center_id = requestBody.center_id;
 	let status = requestBody.status;
 	let vendor_id = requestBody.vendor_id;
+	let invoice_no = requestBody.invoice_no;
 	let from_date;
 	let to_date;
 	let order = requestBody.order;
+	let offset = requestBody.offset;
+	let length = requestBody.length;
 
 	if (from_date !== '') {
 		from_date =
@@ -248,20 +233,69 @@ const searchPurchase = async (requestBody) => {
 		sql = sql + status_sql;
 	}
 
-	sql = sql + `order by str_to_date(received_date,  '%d-%m-%Y %T') ${order}`;
+	if (invoice_no.trim().length > 0) {
+		sql = sql + `and invoice_no = '${invoice_no.trim()}' `;
+	}
 
-	return promisifyQuery(sql);
+	sql = sql + `order by received_date ${order} limit ${offset}, ${length}`;
+
+	console.log('dinesh sql ', sql);
+
+	let result1 = await promisifyQuery(sql);
+
+	let result2 = await searchPurchaseCountStar(requestBody);
+
+	return { full_count: result2[0].full_count, result: result1 };
 };
 
-// center_id: "2"
-// customer_id: "all"
-// from_date: "2021-10-18T17:09:57.670Z"
-// invoice_no: ""
-// order: "desc"
-// sale_type: "all"
-// search_type: "all"
-// status: "all"
-// to_date: "2021-10-25T17:09:57.670Z"
+const searchPurchaseCountStar = async (requestBody) => {
+	let center_id = requestBody.center_id;
+	let status = requestBody.status;
+	let vendor_id = requestBody.vendor_id;
+	let from_date;
+	let to_date;
+	let invoice_no = requestBody.invoice_no;
+
+	if (from_date !== '') {
+		from_date =
+			toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
+	}
+
+	if (to_date !== '') {
+		to_date =
+			toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
+	}
+
+	let vend_sql = `and p.vendor_id = '${vendor_id}' `;
+	let status_sql = `and p.status = '${status}' `;
+
+	let sql = `select count(*) as full_count
+	from
+	purchase p,
+	vendor v
+	where
+	v.id = p.vendor_id and
+	
+	p.center_id = '${center_id}' and
+	received_date between '${from_date}' and '${to_date}'
+	`;
+
+	if (vendor_id !== 'all') {
+		sql = sql + vend_sql;
+	}
+
+	if (status !== 'all') {
+		sql = sql + status_sql;
+	}
+
+	if (invoice_no.trim().length > 0) {
+		sql = sql + `and invoice_no = '${invoice_no.trim()}' `;
+	}
+
+	console.log('dinesh sql ', sql);
+
+	return await promisifyQuery(sql);
+};
 
 const searchSales = async (requestBody) => {
 	let center_id = requestBody.center_id;
@@ -579,35 +613,7 @@ const deletePurchaseMasterById = async (purchase_id) => {
 };
 
 const stockCorrection = async (stock) => {
-	// let product_id = requestBody.product_id;
-	// let mrp = requestBody.mrp;
-	// let stock_qty = requestBody.corrected_stock;
-	// let center_id = requestBody.center_id;
-	// let stock: IStock;
-	// stock = {};
-	// let data = await correctStock(stock);
-
 	let result = await StockRepo.stockCorrection(stock);
-
-	// let data = await correctStock(product_id, mrp, stock_qty);
-
-	// 	let historyAddRes = await insertItemHistoryTable(
-	// const stockCorrection = async (stock: IStock) => {
-	//     stock.center_id,
-	//       'Product',
-	//       stock.product_id,
-	//       '0',
-	//       '0',
-	//       '0',
-	//       '0',
-	//       'PRD',
-	//       `Stock Correction: MRP - ${stock.mrp} : Qty - ${stock.corrected_qty}`,
-	//       '0',
-	//       '0', // sale_return_id
-	//       '0', // sale_return_det_id
-	//       '0', // purchase_return_id
-	//       '0', // purchase_return_det_id
-	// };
 
 	return {
 		result: result,
@@ -619,11 +625,10 @@ module.exports = {
 	updateStock,
 	updateStockViaId,
 	isStockIdExist,
-	insertToStock,
+	// insertToStock,
 
 	getProductWithAllMRP,
 	deleteProductFromStock,
-	updateLatestProductMRP,
 
 	searchAllDraftPurchase,
 	searchPurchase,
