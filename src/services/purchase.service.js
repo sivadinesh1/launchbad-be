@@ -9,10 +9,13 @@ const {
 	promisifyQuery,
 } = require('../utils/utils');
 
-const {
-	addPurchaseMaster,
-	editPurchaseMaster,
-} = require('../repos/purchase.repo');
+// const {
+// 	addPurchaseMaster,
+// 	editPurchaseMaster,
+// } = require('../repos/purchase.repo');
+
+const purchaseRepo = require('../repos/purchase.repo');
+
 const {
 	addPurchaseDetail,
 	editPurchaseDetail,
@@ -44,26 +47,65 @@ const { PurchaseLedger } = require('../domain/PurchaseLedger');
 const { updateVendorBalance } = require('../repos/vendor.repo');
 
 const insertPurchase = async (purchaseObject) => {
-	const purchase_object = { ...purchaseObject };
+	// request object for purchase entry (both add & edit)
+	//	const purchase_object = { ...purchaseObject };
+
+	const {
+		mode,
+		after_tax_value,
+		center_id,
+		cgs_t,
+		igs_t,
+		sgs_t,
+		invoice_date,
+		invoice_no,
+		lr_date,
+		lr_no,
+		misc_charges,
+		net_total,
+		no_of_boxes,
+		no_of_items,
+		order_date,
+		order_no,
+		purchase_id,
+		received_date,
+		revision,
+		round_off,
+		status,
+		temp_desc,
+		temp_mrp,
+		temp_purchase_price,
+		temp_quantity,
+		total_value,
+		transport_charges,
+		unloading_charges,
+		product_arr,
+		vendor_ctrl,
+		state,
+		...purchase_object
+	} = {
+		...purchaseObject,
+	};
+
+	let purchaseMaster = preparePurchaseMasterObject(purchase_object);
+
 	try {
 		const status = await prisma.$transaction(async (prisma) => {
-			let purchaseMaster = preparePurchaseMasterObject(purchase_object);
-			console.log('dinesh 11');
 			let newPK;
 			let purchase_master;
-
+			// if purchase_id not present its a add else its edit
 			if (purchase_object.purchase_id === '') {
-				purchase_master = await addPurchaseMaster(
+				purchase_master = await purchaseRepo.addPurchaseMaster(
 					purchaseMaster,
 					prisma
 				);
 			} else if (purchase_object.purchase_id !== '') {
-				purchase_master = await editPurchaseMaster(
+				purchase_master = await purchaseRepo.editPurchaseMaster(
 					purchaseMaster,
 					prisma
 				);
 			}
-			console.log('dineshZ1');
+
 			newPK = purchase_master.id;
 			console.log('PK generated: ' + JSON.stringify(newPK));
 
@@ -123,19 +165,9 @@ const insertPurchase = async (purchaseObject) => {
 	}
 };
 
+const addPurchaseMaster = () => {};
+
 function preparePurchaseMasterObject(purchase_object) {
-	let revisionCnt = 0;
-
-	// always very first insert will increment revision to 1, on consecutive inserts, it will be +1
-	if (purchase_object.status === 'C' && purchase_object.revision === 0) {
-		revisionCnt = 1;
-	} else if (
-		purchase_object.status === 'C' &&
-		purchase_object.revision !== 0
-	) {
-		revisionCnt = purchase_object.revision + 1;
-	}
-
 	let purchase = {
 		purchase_id:
 			purchase_object.purchase_id === ''
@@ -183,14 +215,29 @@ function preparePurchaseMasterObject(purchase_object) {
 		status: purchase_object.status,
 
 		round_off: purchase_object.round_off,
-		revision: revisionCnt,
+		revision: calculateRevisionCount(
+			purchase_object.status,
+			purchase_object.revision
+		),
 
 		created_by: purchase_object.updated_by,
 		updated_by: purchase_object.updated_by,
 	};
-	console.log('dinesh 33 ' + purchase);
+
 	return purchase;
 }
+
+calculateRevisionCount = (status, revision) => {
+	let revisionCnt = 0;
+
+	// always very first insert will increment revision to 1, on consecutive inserts, it will be +1
+	if (status === 'C' && revision === 0) {
+		revisionCnt = 1;
+	} else if (status === 'C' && revision !== 0) {
+		revisionCnt = revision + 1;
+	}
+	return revisionCnt;
+};
 
 function preparePurchaseLedgerEntryAfterReversal(
 	purchase_object,
