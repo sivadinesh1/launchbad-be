@@ -20,7 +20,7 @@ const addPurchaseMaster = async (purchase, prisma) => {
 				lr_date: purchase.lr_date,
 
 				received_date: new Date(purchase.received_date),
-
+				purchase_type: 'GST Invoice',
 				order_no: purchase.order_no,
 				order_date: purchase.order_date,
 

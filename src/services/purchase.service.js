@@ -3,14 +3,35 @@ const { prisma } = require('../config/prisma');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
-const { toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
+const {
+	toTimeZoneFormat,
+	currentTimeInTimeZone,
+	promisifyQuery,
+} = require('../utils/utils');
 
-const { addPurchaseMaster, editPurchaseMaster } = require('../repos/purchase.repo');
-const { addPurchaseDetail, editPurchaseDetail } = require('../repos/purchase-detail.repo');
+const {
+	addPurchaseMaster,
+	editPurchaseMaster,
+} = require('../repos/purchase.repo');
+const {
+	addPurchaseDetail,
+	editPurchaseDetail,
+} = require('../repos/purchase-detail.repo');
 
-const { getStockId, addStock, stockCount, stockCorrection, stockMinus, stockAdd } = require('../repos/stock.repo');
+// const {
+// 	getStockId,
+// 	addStock,
+// 	stockCount,
+// 	stockCorrection,
+// 	stockMinus,
+// 	stockAdd,
+// } = require('../repos/stock.repo');
 
-const { productRepoUpdateLatestPurchasePrice } = require('../repos/product.repo');
+const StockRepo = require('../repos/stock.repo');
+
+const {
+	productRepoUpdateLatestPurchasePrice,
+} = require('../repos/product.repo');
 const {
 	addPurchaseLedgerEntry,
 	getVendorBalance,
@@ -27,30 +48,68 @@ const insertPurchase = async (purchaseObject) => {
 	try {
 		const status = await prisma.$transaction(async (prisma) => {
 			let purchaseMaster = preparePurchaseMasterObject(purchase_object);
+			console.log('dinesh 11');
 			let newPK;
 			let purchase_master;
 
 			if (purchase_object.purchase_id === '') {
-				purchase_master = await addPurchaseMaster(purchaseMaster, prisma);
+				purchase_master = await addPurchaseMaster(
+					purchaseMaster,
+					prisma
+				);
 			} else if (purchase_object.purchase_id !== '') {
-				purchase_master = await editPurchaseMaster(purchaseMaster, prisma);
+				purchase_master = await editPurchaseMaster(
+					purchaseMaster,
+					prisma
+				);
 			}
+			console.log('dineshZ1');
 			newPK = purchase_master.id;
 			console.log('PK generated: ' + JSON.stringify(newPK));
 
-			let detailsInserted = await insertPurchaseDetails(purchase_object, purchase_master, newPK, prisma);
+			let detailsInserted = await insertPurchaseDetails(
+				purchase_object,
+				purchase_master,
+				newPK,
+				prisma
+			);
 
 			console.log('Purchase details entry done: ' + detailsInserted);
 
-			if (purchase_object.status === 'C' && purchase_object.purchase_id === '') {
-				let result = await prepareAndAddPurchaseLedgerEntry(purchase_object, purchase_master, prisma);
-				console.log('after prepare and purchase ledger entry: ' + result);
-				let result991 = await updateVendorBalanceAmt(purchase_object, prisma);
+			if (
+				purchase_object.status === 'C' &&
+				purchase_object.purchase_id === ''
+			) {
+				let result = await prepareAndAddPurchaseLedgerEntry(
+					purchase_object,
+					purchase_master,
+					prisma
+				);
+				console.log(
+					'after prepare and purchase ledger entry: ' + result
+				);
+				let result991 = await updateVendorBalanceAmt(
+					purchase_object,
+					prisma
+				);
 				console.log('after vendor balance amount : ' + result991);
-			} else if (purchase_object.status === 'C' && purchase_object.purchase_id !== '') {
-				let purchaseLedger = await prepareAndAddPurchaseLedgerReversalEntry(purchase_object, purchase_master, prisma);
+			} else if (
+				purchase_object.status === 'C' &&
+				purchase_object.purchase_id !== ''
+			) {
+				let purchaseLedger =
+					await prepareAndAddPurchaseLedgerReversalEntry(
+						purchase_object,
+						purchase_master,
+						prisma
+					);
 
-				let purchaseLedger1 = await preparePurchaseLedgerEntryAfterReversal(purchase_object, purchase_master, prisma);
+				let purchaseLedger1 =
+					await preparePurchaseLedgerEntryAfterReversal(
+						purchase_object,
+						purchase_master,
+						prisma
+					);
 			}
 
 			console.log('final status:: ' + newPK);
@@ -59,6 +118,8 @@ const insertPurchase = async (purchaseObject) => {
 		return status;
 	} catch (error) {
 		console.log('Error while inserting Purchase ' + error);
+	} finally {
+		prisma.$disconnect();
 	}
 };
 
@@ -68,29 +129,42 @@ function preparePurchaseMasterObject(purchase_object) {
 	// always very first insert will increment revision to 1, on consecutive inserts, it will be +1
 	if (purchase_object.status === 'C' && purchase_object.revision === 0) {
 		revisionCnt = 1;
-	} else if (purchase_object.status === 'C' && purchase_object.revision !== 0) {
+	} else if (
+		purchase_object.status === 'C' &&
+		purchase_object.revision !== 0
+	) {
 		revisionCnt = purchase_object.revision + 1;
 	}
 
 	let purchase = {
-		purchase_id: purchase_object.purchase_id === '' ? undefined : purchase_object.purchase_id,
+		purchase_id:
+			purchase_object.purchase_id === ''
+				? undefined
+				: purchase_object.purchase_id,
 		center_id: purchase_object.center_id,
 		vendor_id: purchase_object.vendor_ctrl.id,
 		invoice_no: purchase_object.invoice_no,
 		invoice_date:
-			purchase_object.invoice_date !== null || purchase_object.invoice_date !== ''
+			purchase_object.invoice_date !== null ||
+			purchase_object.invoice_date !== ''
 				? toTimeZoneFormat(purchase_object.invoice_date, 'YYYY-MM-DD')
 				: undefined,
 		lr_no: purchase_object.lr_no,
 
 		lr_date:
-			purchase_object.lr_date !== null && purchase_object.lr_date !== '' ? toTimeZoneFormat(purchase_object.lr_date, 'YYYY-MM-DD') : undefined,
+			purchase_object.lr_date !== null && purchase_object.lr_date !== ''
+				? toTimeZoneFormat(purchase_object.lr_date, 'YYYY-MM-DD')
+				: undefined,
 
-		received_date: purchase_object.received_date !== null ? toTimeZoneFormat(purchase_object.received_date, 'YYYY-MM-DD') : undefined,
+		received_date:
+			purchase_object.received_date !== null
+				? toTimeZoneFormat(purchase_object.received_date, 'YYYY-MM-DD')
+				: undefined,
 
 		order_no: purchase_object.order_no,
 		order_date:
-			purchase_object.order_date !== null && purchase_object.order_date !== ''
+			purchase_object.order_date !== null &&
+			purchase_object.order_date !== ''
 				? toTimeZoneFormat(purchase_object.order_date, 'YYYY-MM-DD')
 				: undefined,
 
@@ -114,24 +188,36 @@ function preparePurchaseMasterObject(purchase_object) {
 		created_by: purchase_object.updated_by,
 		updated_by: purchase_object.updated_by,
 	};
-
+	console.log('dinesh 33 ' + purchase);
 	return purchase;
 }
 
-function preparePurchaseLedgerEntryAfterReversal(purchase_object, purchase_master, prisma) {
+function preparePurchaseLedgerEntryAfterReversal(
+	purchase_object,
+	purchase_master,
+	prisma
+) {
 	return new Promise(async (resolve, reject) => {
 		let purchaseLedger = PurchaseLedger;
 		try {
-			let previousBalance = await getVendorBalance(purchase_object.vendor_ctrl.id, purchase_object.center_id, prisma);
+			let previousBalance = await getVendorBalance(
+				purchase_object.vendor_ctrl.id,
+				purchase_object.center_id,
+				prisma
+			);
 
 			console.log('object prev bal: ' + previousBalance);
-			console.log('object purchase_object.net_total bal: ' + purchase_object.net_total);
+			console.log(
+				'object purchase_object.net_total bal: ' +
+					purchase_object.net_total
+			);
 
 			purchaseLedger.center_id = purchase_object.center_id;
 			purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
 			purchaseLedger.purchase_ref_id = purchase_master.id;
 			purchaseLedger.ledger_detail = 'purchase';
-			purchaseLedger.balance_amt = Number(previousBalance) + Number(purchase_object.net_total);
+			purchaseLedger.balance_amt =
+				Number(previousBalance) + Number(purchase_object.net_total);
 			purchaseLedger.credit_amt = purchase_object.net_total;
 			purchaseLedger.created_by = purchase_object.updated_by;
 			purchaseLedger.updated_by = purchase_object.updated_by;
@@ -146,20 +232,32 @@ function preparePurchaseLedgerEntryAfterReversal(purchase_object, purchase_maste
 	});
 }
 
-function prepareAndAddPurchaseLedgerEntry(purchase_object, purchase_master, prisma) {
+function prepareAndAddPurchaseLedgerEntry(
+	purchase_object,
+	purchase_master,
+	prisma
+) {
 	return new Promise(async (resolve, reject) => {
 		let purchaseLedger = PurchaseLedger;
 		try {
-			let previousBalance = await getVendorBalance(purchase_object.vendor_ctrl.id, purchase_object.center_id, prisma);
+			let previousBalance = await getVendorBalance(
+				purchase_object.vendor_ctrl.id,
+				purchase_object.center_id,
+				prisma
+			);
 
 			console.log('object prev bal: ' + previousBalance);
-			console.log('object purchase_object.net_total bal: ' + purchase_object.net_total);
+			console.log(
+				'object purchase_object.net_total bal: ' +
+					purchase_object.net_total
+			);
 
 			purchaseLedger.center_id = purchase_object.center_id;
 			purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
 			purchaseLedger.purchase_ref_id = purchase_master.id;
 			purchaseLedger.ledger_detail = 'purchase';
-			purchaseLedger.balance_amt = Number(previousBalance) + Number(purchase_object.net_total);
+			purchaseLedger.balance_amt =
+				Number(previousBalance) + Number(purchase_object.net_total);
 			purchaseLedger.credit_amt = purchase_object.net_total;
 			purchaseLedger.created_by = purchase_object.updated_by;
 			purchaseLedger.updated_by = purchase_object.updated_by;
@@ -174,24 +272,34 @@ function prepareAndAddPurchaseLedgerEntry(purchase_object, purchase_master, pris
 	});
 }
 
-function prepareAndAddPurchaseLedgerReversalEntry(purchase_object, purchase_master, prisma) {
+function prepareAndAddPurchaseLedgerReversalEntry(
+	purchase_object,
+	purchase_master,
+	prisma
+) {
 	return new Promise(async (resolve, reject) => {
 		let purchaseLedger = PurchaseLedger;
 		try {
-			let previousBalance = await getVendorBalance(purchase_object.vendor_ctrl.id, purchase_object.center_id, prisma);
+			let previousBalance = await getVendorBalance(
+				purchase_object.vendor_ctrl.id,
+				purchase_object.center_id,
+				prisma
+			);
 
 			let debit_amt = await getCreditAmtForPurchaseReversal(
 				purchase_object.vendor_ctrl.id,
 				purchase_object.center_id,
 				purchase_master.id,
-				prisma,
+				prisma
 			);
 
 			purchaseLedger.center_id = purchase_object.center_id;
 			purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
 			purchaseLedger.purchase_ref_id = purchase_master.id;
 			purchaseLedger.ledger_detail = 'Purchase Reversal';
-			(purchaseLedger.debit_amt = debit_amt), (purchaseLedger.balance_amt = Number(previousBalance) - Number(debit_amt));
+			(purchaseLedger.debit_amt = debit_amt),
+				(purchaseLedger.balance_amt =
+					Number(previousBalance) - Number(debit_amt));
 			purchaseLedger.credit_amt = 0.0;
 			purchaseLedger.created_by = purchase_object.updated_by;
 			purchaseLedger.updated_by = purchase_object.updated_by;
@@ -206,46 +314,131 @@ function prepareAndAddPurchaseLedgerReversalEntry(purchase_object, purchase_mast
 	});
 }
 
-async function insertPurchaseDetails(purchase_object, purchase_master, newPK, prisma) {
+async function insertPurchaseDetails(
+	purchase_object,
+	purchase_master,
+	newPK,
+	prisma
+) {
 	try {
 		for await (const product_item of purchase_object.product_arr) {
-			let purchase_detail = await preparePurchaseDetail(purchase_object.center_id, product_item, newPK, prisma);
+			let purchase_detail = await preparePurchaseDetail(
+				purchase_object,
+				product_item,
+				newPK,
+				prisma
+			);
 
-			console.log('::purchase_detail:: ' + JSON.stringify(purchase_detail));
-
+			console.log(
+				'::purchase_detail:: ' + JSON.stringify(purchase_detail)
+			);
+			let product_detail_add_obj;
 			if (product_item.pur_det_id === '') {
-				await addPurchaseDetail(purchase_detail, prisma);
+				product_detail_add_obj = await addPurchaseDetail(
+					purchase_detail,
+					prisma
+				);
 			} else {
 				await editPurchaseDetail(purchase_detail, prisma);
 			}
 
 			console.log('after add purchase detail: ');
 
-			let inserted_latest_PurchasePrice = await productRepoUpdateLatestPurchasePrice(
-				purchase_detail.purchase_price,
-				purchase_detail.mrp,
-				purchase_detail.product_id,
-				prisma,
+			let inserted_latest_PurchasePrice =
+				await productRepoUpdateLatestPurchasePrice(
+					purchase_detail.purchase_price,
+					purchase_detail.mrp,
+					purchase_detail.product_id,
+					prisma
+				);
+
+			console.log(
+				'Update product latest purchase price: ' +
+					JSON.stringify(inserted_latest_PurchasePrice)
 			);
 
-			console.log('Update product latest purchase price: ' + JSON.stringify(inserted_latest_PurchasePrice));
+			let p_detail_id =
+				product_item.pur_det_id === ''
+					? product_detail_add_obj.id
+					: product_item.pur_det_id;
+
+			let stock_id_Exist = await StockRepo.getStockId(
+				product_item.product_id,
+				product_item.mrp,
+				prisma
+			);
+
+			// console.log('print result :: ' + JSON.stringify(result));
+
+			// check if productId + mrp exist, if exists (count ===1) then update stock else create new stock
+			//	let stock_id_Exist = await StockRepo.isStockIdExist(k, res);
+
+			if (
+				`${product_item.mrp_change_flag}` === 'Y' &&
+				stock_id_Exist === 0
+			) {
+				// get pur_det_id for both insert and update - check
+				// if insert its: data.insertId
+				// for update its k.k.pur_det_id
+
+				// if mrp flag is true the insert new record to stocks
+				let stock_id = await insertStock(k);
+				let is_updated = await updatePurchaseDetail(
+					p_detail_id,
+					purchase_detail.stock_id
+				);
+				//		insertItemHistory(product_item, newPK, data.insertId, cloneReq);
+			} else {
+				// else update the stock tbl, only of the status is "C - completed", draft should be ignored
+
+				//	if (cloneReq.status === "C") {
+				// update stock for both status C & D (Completed & Draft)
+				let qty_to_update =
+					product_item.quantity - product_item.old_val;
+				// const stockAdd = async (qty_to_update, stock_pk, updated_by, prisma) => {
+				let is_updated = StockRepo.stockAdd(
+					qty_to_update,
+					purchase_detail.stock_id,
+					purchase_detail.updated_by,
+					prisma
+				);
+
+				// let is_updated = await updateStock(
+				// 	qty_to_update,
+				// 	product_item.product_id,
+				// 	product_item.mrp,
+				// 	'add',
+				// 	res
+				// );
+				//		insertItemHistory(k, newPK, data.insertId, cloneReq);
+
+				//		}
+			}
 		}
 		return 'success';
 	} catch (error) {
-		console.log('error in insert purchase details loop: ' + JSON.stringify(error));
-		return error;
+		throw new Error(`Errored while inserting purchase..` + error.message);
 	}
 }
 
-const preparePurchaseDetail = async (center_id, product_item, newPK, prisma) => {
-	let result = await getStockId(product_item.product_id, product_item.mrp, prisma);
+const preparePurchaseDetail = async (
+	purchase_object,
+	product_item,
+	newPK,
+	prisma
+) => {
+	let result = await StockRepo.getStockId(
+		product_item.product_id,
+		product_item.mrp,
+		prisma
+	);
 
 	console.log('print result :: ' + JSON.stringify(result));
 
 	return new Promise(function (resolve, reject) {
 		let purchase = {
 			pur_det_id: product_item.pur_det_id,
-			center_id: center_id,
+			center_id: purchase_object.center_id,
 			purchase_id: newPK,
 			product_id: product_item.product_id,
 			quantity: product_item.quantity,
@@ -259,6 +452,8 @@ const preparePurchaseDetail = async (center_id, product_item, newPK, prisma) => 
 			after_tax_value: product_item.after_tax_value,
 			total_value: product_item.total_value,
 			stock_id: result[0].id,
+			created_by: purchase_object.updated_by,
+			updated_by: purchase_object.updated_by,
 		};
 		resolve(purchase);
 	});
@@ -273,7 +468,14 @@ function insertStock(k) {
 	return new Promise(function (resolve, reject) {
 		pool.query(query2, function (err, data) {
 			if (err) {
-				return reject(new ErrorHandler('500', `Error insertStock in Purchase js. ${query2}`, err), res);
+				return reject(
+					new ErrorHandler(
+						'500',
+						`Error insertStock in Purchase js. ${query2}`,
+						err
+					),
+					res
+				);
 			} else {
 				resolve(data.insertId);
 			}
@@ -292,7 +494,14 @@ function updatePurchaseDetail(purchaseDetailId, stockid) {
 	return new Promise(function (resolve, reject) {
 		pool.query(query3, function (err, data) {
 			if (err) {
-				return reject(new ErrorHandler('500', 'Error updatePurchaseDetail in Purchasejs.', err), res);
+				return reject(
+					new ErrorHandler(
+						'500',
+						'Error updatePurchaseDetail in Purchasejs.',
+						err
+					),
+					res
+				);
 			} else {
 				resolve('purchase_detail_updated');
 			}
@@ -309,7 +518,10 @@ where id = '${k.product_id}'  `;
 
 	pool.query(query2, function (err, data) {
 		if (err) {
-			console.log('error while inserting updateLatestPurchasePrice ' + JSON.stringify(err));
+			console.log(
+				'error while inserting updateLatestPurchasePrice ' +
+					JSON.stringify(err)
+			);
 		} else {
 			//updated mrp/purchase price in product table
 		}
@@ -318,12 +530,19 @@ where id = '${k.product_id}'  `;
 
 //vPurchase_id - purchase_id && vPurchase_det_id - new purchase_detail id
 // k - looped purchase details array
-const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, res) => {
+const insertItemHistory = async (
+	k,
+	vPurchase_id,
+	vPurchase_det_id,
+	cloneReq,
+	res
+) => {
 	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
 	let purchase = 'Purchase';
 	// if purchase details id is missing its new else update
 	let purchase_det_id = k.pur_det_id === '' ? vPurchase_det_id : k.pur_det_id;
-	let txn_quantity = k.pur_det_id === '' ? k.quantity : k.quantity - k.old_val;
+	let txn_quantity =
+		k.pur_det_id === '' ? k.quantity : k.quantity - k.old_val;
 	// let action_type = "ADD";
 	let purchase_id = vPurchase_id === '' ? k.purchase_id : vPurchase_id;
 
@@ -371,7 +590,7 @@ const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, re
 			'0', // sale_return_det_id
 			'0', // purchase_return_id
 			'0', // purchase_return_det_id
-			res,
+			res
 		);
 	}
 };
@@ -379,9 +598,17 @@ const insertItemHistory = async (k, vPurchase_id, vPurchase_det_id, cloneReq, re
 function updateVendorBalanceAmt(purchase_object, prisma) {
 	return new Promise(async (resolve, reject) => {
 		try {
-			let balanceAmt = await getVendorBalance(purchase_object.vendor_ctrl.id, purchase_object.center_id, prisma);
+			let balanceAmt = await getVendorBalance(
+				purchase_object.vendor_ctrl.id,
+				purchase_object.center_id,
+				prisma
+			);
 
-			let result91 = await updateVendorBalance(purchase_object.vendor_ctrl.id, balanceAmt, prisma);
+			let result91 = await updateVendorBalance(
+				purchase_object.vendor_ctrl.id,
+				balanceAmt,
+				prisma
+			);
 			resolve('success');
 		} catch (error) {
 			reject(error);

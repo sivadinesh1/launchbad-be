@@ -49,14 +49,14 @@ values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purch
 	return promisifyQuery(query);
 };
 
-const updateStock = (qty_to_update, product_id, mrp, mode) => {
-	let query =
-		mode === 'add'
-			? `update stock set available_stock =  available_stock + '${qty_to_update}' where product_id = '${product_id}' and mrp = '${mrp}' `
-			: `update stock set available_stock =  available_stock - '${qty_to_update}' where product_id = '${product_id}' and mrp = '${mrp}' `;
+// const updateStock = (qty_to_update, product_id, mrp, mode) => {
+// 	let query =
+// 		mode === 'add'
+// 			? `update stock set available_stock =  available_stock + '${qty_to_update}' where product_id = '${product_id}' and mrp = '${mrp}' `
+// 			: `update stock set available_stock =  available_stock - '${qty_to_update}' where product_id = '${product_id}' and mrp = '${mrp}' `;
 
-	return promisifyQuery(query);
-};
+// 	return promisifyQuery(query);
+// };
 
 // dinesh check
 // multiply by * -1 so that qty_to_update is minus, query works as expected
@@ -304,30 +304,28 @@ const searchSales = async (requestBody) => {
 	let from_date = requestBody.from_date;
 	let to_date = requestBody.to_date;
 	let invoice_type = requestBody.invoice_type;
-	let search_type = requestBody.search_type;
+
 	let invoice_no = requestBody.invoice_no;
 	let order = requestBody.order;
+	let offset = requestBody.offset;
+	let length = requestBody.length;
 
 	let sql = '';
-	let query = '';
 
-	if (search_type === 'all') {
-		if (from_date !== '') {
-			from_date =
-				toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') +
-				' 00:00:00';
-		}
+	if (from_date !== '') {
+		from_date =
+			toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
+	}
 
-		if (to_date !== '') {
-			to_date =
-				toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') +
-				' 23:59:00';
-		}
+	if (to_date !== '') {
+		to_date =
+			toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
+	}
 
-		let customer_sql = `and s.customer_id = '${customer_id}' `;
-		let status_sql = `and s.status = '${status}' `;
+	let customer_sql = `and s.customer_id = '${customer_id}' `;
+	let status_sql = `and s.status = '${status}' `;
 
-		sql = `select s.*, c.id as customer_id, c.name as customer_name
+	sql = `select s.*, c.id as customer_id, c.name as customer_name
         from
         sale s,
         customer c
@@ -338,42 +336,90 @@ const searchSales = async (requestBody) => {
 				'${from_date}' and
 				'${to_date}' `;
 
-		// filter by customer
-		if (customer_id !== 'all') {
-			sql = sql + customer_sql;
-		}
-		// filter by status
-		if (status !== 'all') {
-			sql = sql + status_sql;
-		}
+	// filter by customer
+	if (customer_id !== 'all') {
+		sql = sql + customer_sql;
+	}
+	// filter by status
+	if (status !== 'all') {
+		sql = sql + status_sql;
+	}
 
-		// filter by invoice type
-		if (invoice_type === 'GI') {
-			sql = sql + " and s.invoice_type = 'gstInvoice' ";
-		} else if (invoice_type === 'SI') {
-			sql = sql + " and s.invoice_type = 'stockIssue' ";
-		}
+	// filter by invoice type
+	if (invoice_type === 'GI') {
+		sql = sql + " and s.invoice_type = 'gstInvoice' ";
+	} else if (invoice_type === 'SI') {
+		sql = sql + " and s.invoice_type = 'stockIssue' ";
+	}
 
-		if (invoice_no.trim().length > 0) {
-			sql = sql + `and invoice_no = '${invoice_no.trim()}' `;
-		}
+	if (invoice_no.trim().length > 0) {
+		sql = sql + `and invoice_no = '${invoice_no.trim()}' `;
+	}
 
-		sql = sql + ' order by invoice_no ' + order;
-	} else if (search_type !== 'all') {
-		query = ` 
-		  select s.*, c.id as customer_id, c.name as customer_name
-			from
+	sql = sql + ` order by invoice_date ${order} limit ${offset}, ${length}`;
+
+	let result1 = await promisifyQuery(sql);
+
+	let result2 = await searchSalesCountStar(requestBody);
+
+	return { full_count: result2[0].full_count, result: result1 };
+};
+
+const searchSalesCountStar = async (requestBody) => {
+	let center_id = requestBody.center_id;
+	let status = requestBody.status;
+	let customer_id = requestBody.customer_id;
+	let from_date = requestBody.from_date;
+	let to_date = requestBody.to_date;
+	let invoice_type = requestBody.invoice_type;
+
+	let invoice_no = requestBody.invoice_no;
+	let sql = '';
+	if (from_date !== '') {
+		from_date =
+			toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
+	}
+
+	if (to_date !== '') {
+		to_date =
+			toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:00';
+	}
+
+	let customer_sql = `and s.customer_id = '${customer_id}' `;
+	let status_sql = `and s.status = '${status}' `;
+
+	sql = `select count(*) as full_count
+        from
         sale s,
         customer c
         where
         c.id = s.customer_id and
-        s.center_id = '${center_id}'
-        and
-        invoice_no = '${invoice_no.trim()}'
-		`;
+				s.center_id = '${center_id}' and
+				invoice_date between
+				'${from_date}' and
+				'${to_date}' `;
+
+	// filter by customer
+	if (customer_id !== 'all') {
+		sql = sql + customer_sql;
+	}
+	// filter by status
+	if (status !== 'all') {
+		sql = sql + status_sql;
 	}
 
-	return promisifyQuery(search_type === 'all' ? sql : query);
+	// filter by invoice type
+	if (invoice_type === 'GI') {
+		sql = sql + " and s.invoice_type = 'gstInvoice' ";
+	} else if (invoice_type === 'SI') {
+		sql = sql + " and s.invoice_type = 'stockIssue' ";
+	}
+
+	if (invoice_no.trim().length > 0) {
+		sql = sql + `and invoice_no = '${invoice_no.trim()}' `;
+	}
+
+	return await promisifyQuery(sql);
 };
 
 const purchaseMaster = async (purchase_id) => {
@@ -622,7 +668,7 @@ const stockCorrection = async (stock) => {
 
 module.exports = {
 	insertItemHistoryTable,
-	updateStock,
+	// updateStock,
 	updateStockViaId,
 	isStockIdExist,
 	// insertToStock,

@@ -6,26 +6,37 @@ const cookie = require('cookie');
 const auth =
 	(...requiredRights) =>
 	async (req, res, next) => {
-		let cCookie = cookie.parse(req ? req.headers.cookie || '' : document.cookie);
+		let cCookie = cookie.parse(
+			req ? req.headers.cookie || '' : document.cookie
+		);
 
 		try {
-			let user = JWT.verify(cCookie['authToken'], process.env.ACCESS_TOKEN_SECRET);
+			let user = JWT.verify(
+				cCookie['authToken'],
+				process.env.ACCESS_TOKEN_SECRET
+			);
 			req.user = user;
 			//console.log('user:: ' + JSON.stringify(user));
 			setTimezone(user.timezone);
 
 			next();
 		} catch (error) {
+			console.log('dinesh :: ' + JSON.stringify(error));
 			// throw new Error('Authorization Failed');
 			return res.status(401).send('Authorization Failed');
 		}
 	};
 
 const parseCookies = async (req) => {
-	let cCookie = cookie.parse(req ? req.headers.cookie || '' : document.cookie);
+	let cCookie = cookie.parse(
+		req ? req.headers.cookie || '' : document.cookie
+	);
 
 	try {
-		let user = JWT.verify(cCookie['authToken'], process.env.ACCESS_TOKEN_SECRET);
+		let user = JWT.verify(
+			cCookie['authToken'],
+			process.env.ACCESS_TOKEN_SECRET
+		);
 		req.user = user;
 	} catch (err) {
 		console.log('ccook:: error' + JSON.stringify(err));

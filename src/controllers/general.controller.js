@@ -20,7 +20,7 @@ const searchProductInformation = catchAsync(async (req, res) => {
 const searchProduct = catchAsync(async (req, res) => {
 	const data = await productsService.searchProduct(
 		req.user.center_id,
-		req.body.product_search_text,
+		req.body.search_text,
 		req.body.offset,
 		req.body.length
 	);

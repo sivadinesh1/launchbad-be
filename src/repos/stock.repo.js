@@ -140,7 +140,7 @@ const stockAdd = async (qty_to_update, stock_pk, updated_by, prisma) => {
 	try {
 		const result = await prisma.stock.updateMany({
 			where: {
-				id: stock_pk,
+				id: Number(stock_pk),
 			},
 
 			data: {

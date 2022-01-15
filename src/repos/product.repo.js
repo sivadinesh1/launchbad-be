@@ -126,7 +126,7 @@ const productRepoSearchProduct = async (
         IFNULL((select sum(s2.available_stock) from stock s2 where s2.product_id = a.id ), 0) as available_stock, 
         IFNULL((		select stock_level from item_history ih 
           where ih.product_ref_id = a.id order by ih.id desc limit 1), 0) as true_stock,
-        a.packet_size, a.unit_price, a.purchase_price as purchase_price, a.id as id, 
+        a.packet_size, a.unit_price, a.purchase_price as purchase_price, a.id as product_id, 
       
       a.packet_size as packet_size, 
       a.rack_info, 
@@ -155,7 +155,7 @@ const productRepoSearchProduct = async (
 	}
 
 	query = query + ` limit ${offset}, ${length} `;
-
+	console.log('dinesh  ' + query);
 	let result1 = await promisifyQuery(query);
 
 	let result2 = await productRepoSearchProductCountStar(

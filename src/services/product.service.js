@@ -34,10 +34,10 @@ async function updateProduct(product) {
 	return await productRepoUpdateProduct(product);
 }
 
-async function searchProduct(center_id, product_search_text, offset, length) {
+async function searchProduct(center_id, search_text, offset, length) {
 	return await productRepoSearchProduct(
 		center_id,
-		product_search_text,
+		search_text,
 		offset,
 		length
 	);
