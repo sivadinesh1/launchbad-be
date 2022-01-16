@@ -216,9 +216,8 @@ modify txn_date datetime;
 
 alter table item_history
 add column createdAt datetime,
-add column updatedAt datetime,
-add column created_by bigint,
-add column updated_by bigint;alter table ledger
+add column created_by bigint;
+alter table ledger
 add column createdAt datetime,
 add column created_by bigint;drop table load_stock;
 drop table load_stock1;

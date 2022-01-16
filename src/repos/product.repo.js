@@ -7,7 +7,7 @@ const {
 	promisifyQuery,
 } = require('../utils/utils');
 
-const productRepoAddProduct = async (product) => {
+const addProduct = async (product, prisma) => {
 	try {
 		const result = await prisma.product.create({
 			data: {
@@ -36,20 +36,34 @@ const productRepoAddProduct = async (product) => {
 				average_purchase_price: product.average_purchase_price,
 				average_sale_price: product.average_sale_price,
 				margin: product.margin,
-				createdAt: product.createdAt,
+				createdAt: currentTimeInTimeZone(),
 				created_by: product.created_by,
 				updated_by: product.created_by,
+
+				stock: {
+					create: {
+						mrp: product.mrp,
+						available_stock: product.current_stock,
+						open_stock: product.current_stock,
+						center_id: product.center_id,
+
+						createdAt: currentTimeInTimeZone(),
+						updatedAt: currentTimeInTimeZone(),
+						created_by: product.created_by,
+						updated_by: product.created_by,
+					},
+				},
 			},
 		});
 
 		return bigIntToString(result);
 	} catch (error) {
 		console.log('error :: product.repo.js ' + error);
-		throw error;
+		throw new Error(`Errored while add product ..` + error.message);
 	}
 };
 
-const productRepoUpdateProduct = async (product) => {
+const updateProduct = async (product, prisma) => {
 	try {
 		const result = await prisma.product.update({
 			where: {
@@ -89,11 +103,11 @@ const productRepoUpdateProduct = async (product) => {
 		return bigIntToString(result);
 	} catch (error) {
 		console.log('error :: product.repo.js ' + error);
-		throw error;
+		throw new Error(`Errored while update product ..` + error.message);
 	}
 };
 
-const productRepoIsProductExists = async (product_code, center_id) => {
+const isProductExists = async (product_code, center_id, prisma) => {
 	try {
 		const result = await prisma.product.count({
 			where: {
@@ -104,15 +118,13 @@ const productRepoIsProductExists = async (product_code, center_id) => {
 
 		return result;
 	} catch (error) {
-		console.log(
-			'error :: productRepoIsProductExists: product.repo.js ' + error
-		);
-		throw error;
+		console.log('error :: IsProductExists: product.repo.js ' + error);
+		throw new Error(`Errored while isProductExists ..` + error.message);
 	}
 };
 
 //public async updateProduct(product: IProduct) {
-const productRepoSearchProduct = async (
+const searchProduct = async (
 	center_id,
 	search_text,
 	offset = 1,
@@ -155,18 +167,15 @@ const productRepoSearchProduct = async (
 	}
 
 	query = query + ` limit ${offset}, ${length} `;
-	console.log('dinesh  ' + query);
+
 	let result1 = await promisifyQuery(query);
 
-	let result2 = await productRepoSearchProductCountStar(
-		center_id,
-		search_text
-	);
+	let result2 = await searchProductCountStar(center_id, search_text);
 
 	return { full_count: result2[0].full_count, result: result1 };
 };
 
-const productRepoSearchProductCountStar = async (center_id, search_text) => {
+const searchProductCountStar = async (center_id, search_text) => {
 	let query = `
     select count(*) as full_count
       from 
@@ -186,12 +195,7 @@ const productRepoSearchProductCountStar = async (center_id, search_text) => {
 	return promisifyQuery(query);
 };
 
-const productRepoUpdateLatestPurchasePrice = async (
-	purchase_price,
-	mrp,
-	id,
-	prisma
-) => {
+const updateLatestPurchasePrice = async (purchase_price, mrp, id, prisma) => {
 	try {
 		const result = await prisma.product.update({
 			where: {
@@ -207,14 +211,17 @@ const productRepoUpdateLatestPurchasePrice = async (
 		return bigIntToString(result);
 	} catch (error) {
 		console.log('error :: product.repo.js ' + error.message);
-		throw error;
+
+		throw new Error(
+			`Errored while updateLatestPurchasePrice ..` + error.message
+		);
 	}
 };
 
 module.exports = {
-	productRepoAddProduct,
-	productRepoUpdateProduct,
-	productRepoIsProductExists,
-	productRepoSearchProduct,
-	productRepoUpdateLatestPurchasePrice,
+	addProduct,
+	updateProduct,
+	isProductExists,
+	searchProduct,
+	updateLatestPurchasePrice,
 };

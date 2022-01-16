@@ -1,6 +1,9 @@
-const { prisma } = require('../config/prisma');
-
-const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
+const {
+	currentTimeInTimeZone,
+	bigIntToString,
+	escapeText,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const addPurchaseLedgerEntry = async (purchase_ledger, prisma) => {
 	try {
@@ -23,28 +26,39 @@ const addPurchaseLedgerEntry = async (purchase_ledger, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: purchase-ledger.repo.js: addPurchaseLedgerEntry ' + error.message);
+		console.log(
+			'error :: purchase-ledger.repo.js: addPurchaseLedgerEntry ' +
+				error.message
+		);
 		throw error;
 	}
 };
 
 const getVendorBalance = async (vendor_id, center_id, prisma) => {
-	const result = await prisma.purchase_ledger.findMany({
-		select: {
-			balance_amt: true,
-		},
-		where: {
-			vendor_id: Number(vendor_id),
-			center_id: Number(center_id),
-		},
+	try {
+		const result = await prisma.purchase_ledger.findMany({
+			select: {
+				balance_amt: true,
+			},
+			where: {
+				vendor_id: Number(vendor_id),
+				center_id: Number(center_id),
+			},
 
-		orderBy: {
-			id: 'desc',
-		},
-		take: 1,
-	});
+			orderBy: {
+				id: 'desc',
+			},
+			take: 1,
+		});
 
-	return result.length === 0 ? 0 : result[0].balance_amt;
+		return result.length === 0 ? 0 : result[0].balance_amt;
+	} catch (error) {
+		console.log(
+			'error :: purchase-ledger.repo.js: addPurchaseLedgerEntry ' +
+				error.message
+		);
+		throw error;
+	}
 };
 
 // IFNULL((select credit_amt from (select (credit_amt) as credit_amt
@@ -54,7 +68,12 @@ const getVendorBalance = async (vendor_id, center_id, prisma) => {
 // ORDER BY  id DESC
 // LIMIT 1) a), 0),
 
-const getCreditAmtForPurchaseReversal = async (vendor_id, center_id, purchase_ref_id, prisma) => {
+const getCreditAmtForPurchaseReversal = async (
+	vendor_id,
+	center_id,
+	purchase_ref_id,
+	prisma
+) => {
 	try {
 		const result = await prisma.purchase_ledger.findMany({
 			select: {
@@ -75,12 +94,20 @@ const getCreditAmtForPurchaseReversal = async (vendor_id, center_id, purchase_re
 
 		return bigIntToString(result[0].credit_amt);
 	} catch (error) {
-		console.log('error :: purchase-ledger.repo.js getCreditAmtForPurchaseReversal: ' + error);
+		console.log(
+			'error :: purchase-ledger.repo.js getCreditAmtForPurchaseReversal: ' +
+				error
+		);
 		throw error;
 	}
 };
 
-const updatePurchaseLedgerVendorChange = async (center_id, purchase_ref_id, old_vendor_id, prisma) => {
+const updatePurchaseLedgerVendorChange = async (
+	center_id,
+	purchase_ref_id,
+	old_vendor_id,
+	prisma
+) => {
 	try {
 		const result = await prisma.purchase_ledger.delete({
 			where: {
@@ -92,7 +119,10 @@ const updatePurchaseLedgerVendorChange = async (center_id, purchase_ref_id, old_
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: purchase-ledger.repo.js updatePurchaseLedgerVendorChange: ' + error);
+		console.log(
+			'error :: purchase-ledger.repo.js updatePurchaseLedgerVendorChange: ' +
+				error
+		);
 		throw error;
 	}
 };

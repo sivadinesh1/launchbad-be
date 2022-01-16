@@ -239,8 +239,6 @@ const searchPurchase = async (requestBody) => {
 
 	sql = sql + `order by received_date ${order} limit ${offset}, ${length}`;
 
-	console.log('dinesh sql ', sql);
-
 	let result1 = await promisifyQuery(sql);
 
 	let result2 = await searchPurchaseCountStar(requestBody);
@@ -291,8 +289,6 @@ const searchPurchaseCountStar = async (requestBody) => {
 	if (invoice_no.trim().length > 0) {
 		sql = sql + `and invoice_no = '${invoice_no.trim()}' `;
 	}
-
-	console.log('dinesh sql ', sql);
 
 	return await promisifyQuery(sql);
 };

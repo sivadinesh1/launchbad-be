@@ -25,7 +25,7 @@ const getFinancialYearRow = async (center_id, prisma) => {
 };
 
 const getNextInvSequenceNo = async (center_id) => {
-	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await getFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.findUnique({
 		where: {
@@ -44,7 +44,7 @@ const getNextInvSequenceNo = async (center_id) => {
 };
 
 const getNextStockIssueSequenceNoAsync = async (center_id) => {
-	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await getFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.findUnique({
 		where: {
@@ -64,7 +64,7 @@ const getNextStockIssueSequenceNoAsync = async (center_id) => {
 };
 
 const updateInvoiceSequence = async (center_id, prisma) => {
-	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await getFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.update({
 		where: {
@@ -81,7 +81,7 @@ const updateInvoiceSequence = async (center_id, prisma) => {
 };
 
 const updateDraftInvoiceSequenceGenerator = async (center_id, prisma) => {
-	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await getFinancialYearRow(center_id, prisma); // get the row id
 
 	const result = await prisma.financial_year.update({
 		where: {
@@ -98,7 +98,7 @@ const updateDraftInvoiceSequenceGenerator = async (center_id, prisma) => {
 };
 
 const updateStockIssueSequenceGenerator = async (center_id, prisma) => {
-	let rowId = await financialYearRepoGetFinancialYearRow(center_id, prisma); // get the row id
+	let rowId = await getFinancialYearRow(center_id, prisma); // get the row id
 	const result = await prisma.financial_year.update({
 		where: {
 			center_id: Number(rowId),

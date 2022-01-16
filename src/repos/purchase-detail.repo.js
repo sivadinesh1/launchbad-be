@@ -91,7 +91,24 @@ const editPurchaseDetail = async (purchase, prisma) => {
 	}
 };
 
+const updatePurchaseDetailStockMRPChange = async (
+	purchase_detail_id,
+	stock_id
+) => {
+	const result = await prisma.brand.update({
+		where: {
+			id: Number(purchase_detail_id),
+		},
+		data: {
+			stock_id: stock_id,
+		},
+	});
+
+	return bigIntToString(result);
+};
+
 module.exports = {
 	addPurchaseDetail,
 	editPurchaseDetail,
+	updatePurchaseDetailStockMRPChange,
 };

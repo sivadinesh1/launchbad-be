@@ -18,37 +18,28 @@ const {
 // 	return promisifyQuery(query);
 // };
 
-const insertToStock = async (
-	product_id,
-	mrp,
-	available_stock,
-	open_stock,
-	center_id,
-	user_id
-) => {
+const insertToStock = async (stock, prisma) => {
 	try {
 		const result = await prisma.stock.create({
 			data: {
-				product_id: Number(product_id),
-				mrp: mrp,
-				available_stock: available_stock,
-				open_stock: open_stock,
-				center_id: center_id,
+				product_id: Number(stock.product_id),
+				mrp: stock.mrp,
+				available_stock: stock.available_stock,
+				open_stock: stock.open_stock,
+				center_id: stock.center_id,
 
 				createdAt: currentTimeInTimeZone(),
 				updatedAt: currentTimeInTimeZone(),
-				created_by: user_id,
-				updated_by: user_id,
+				created_by: stock.user_id,
+				updated_by: stock.user_id,
 			},
 		});
 
-		console.log('dinesh.. stock ... ' + result);
-		console.log('dinesh..@ stock ... ' + bigIntToString(result));
-
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: stock.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: insertToStock stock.repo.js ` + error.message
+		);
 	}
 };
 
@@ -81,8 +72,9 @@ const stockCorrection = async (stock) => {
 
 		return result;
 	} catch (error) {
-		console.log('error :: stock.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: stockCorrection stock.repo.js ` + error.message
+		);
 	}
 };
 
@@ -109,8 +101,10 @@ const deleteProductFromStockTable = async (
 
 		return result;
 	} catch (error) {
-		console.log('error :: stock.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: deleteProductFromStockTable stock.repo.js ` +
+				error.message
+		);
 	}
 };
 
@@ -131,8 +125,7 @@ const stockMinus = async (qty_to_update, stock_pk, updated_by, prisma) => {
 
 		return result;
 	} catch (error) {
-		console.log('error :: stock.repo.js : stockMinus:' + error);
-		throw error;
+		throw new Error(`error :: stockMinus stock.repo.js ` + error.message);
 	}
 };
 
@@ -151,10 +144,9 @@ const stockAdd = async (qty_to_update, stock_pk, updated_by, prisma) => {
 			},
 		});
 
-		return result;
+		return result.count;
 	} catch (error) {
-		console.log('error :: stock.repo.js : stockAdd: ' + error);
-		throw error;
+		throw new Error(`error :: stockAdd stock.repo.js ` + error.message);
 	}
 };
 
@@ -173,8 +165,7 @@ const getStockId = async (product_id, mrp, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: stock.repo.js : getStockId: ' + error);
-		throw error;
+		throw new Error(`error :: getStockId stock.repo.js ` + error.message);
 	}
 };
 

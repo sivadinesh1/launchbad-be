@@ -1,44 +1,25 @@
 const { prisma } = require('../config/prisma');
 
-// const {
-// 	financialYearRepoGetNextInvSequenceNo,
-// 	financialYearRepoUpdateInvoiceSequence,
-// 	financialYearRepoUpdateDraftInvoiceSequenceGenerator,
-// } = require('../repos/financial-year.repo');
-
-const financialYearRepo = require('../repos/financial-year.repo');
-
-const { SaleRepo } = require('../repos/sale.repo');
-const {
-	addSaleDetail,
-	editSaleDetail,
-	getSaleDetails,
-} = require('../repos/sale-detail.repo');
-const { addItemHistory } = require('../repos/item-history.repo');
-const { updateEnquiryAfterSale } = require('../repos/enquiry.repo');
-const { updateCustomerBalance } = require('../repos/customer.repo');
-const { addAudit } = require('../repos/audit.repo');
-
-var pool = require('../config/db');
-const {
-	addSaleLedgerRecord,
-	addReverseSaleLedgerRecord,
-	addSaleLedgerAfterReversalRecord,
-} = require('./accounts.service');
-
-const {
-	addStock,
-	stockCount,
-	stockCorrection,
-	stockMinus,
-	stockAdd,
-} = require('../repos/stock.repo');
-
-const { ItemHistory } = require('../domain/ItemHistory');
+// Repors
+const FinancialYearRepo = require('../repos/financial-year.repo');
+const SaleRepo = require('../repos/sale.repo');
+const SaleDetailRepo = require('../repos/sale-detail.repo');
+const ItemHistoryRepo = require('../repos/item-history.repo');
+const EnquiryRepo = require('../repos/enquiry.repo');
+const CustomerRepo = require('../repos/customer.repo');
+const AuditRepo = require('../repos/audit.repo');
+const StockRepo = require('../repos/stock.repo');
 const SaleLedgerRepo = require('../repos/sale-ledger.repo');
+
+// Services
+const { addSaleLedgerRecord } = require('./accounts.service');
+const { insertItemHistoryTable, updateStockViaId } = require('./stock.service');
+
+// model
 const { Ledger } = require('../domain/Ledger');
 const { Audit } = require('../domain/Audit');
 
+// Utils
 const {
 	getTimezone,
 	formatSequenceNumber,
@@ -47,19 +28,12 @@ const {
 	promisifyQuery,
 } = require('../utils/utils');
 
-const { insertItemHistoryTable, updateStockViaId } = require('./stock.service');
-
-const { addSaleMaster, editSaleMaster } = require('./../repos/sale.repo');
-
 const getNextInvSequenceNo = async (center_id, invoice_type) => {
 	let nextInvSeqNo;
 	if (invoice_type === 'gstInvoice') {
-		nextInvSeqNo =
-			await financialYearRepo.financialYearRepoGetNextInvSequenceNo(
-				center_id
-			);
+		nextInvSeqNo = await FinancialYearRepo.getNextInvSequenceNo(center_id);
 	} else if (invoice_type === 'stockIssue') {
-		nextInvSeqNo = await financialYearRepoGetNextStockIssueSequenceNo(
+		nextInvSeqNo = await FinancialYearRepo.getNextStockIssueSequenceNoAsync(
 			center_id
 		);
 	}
@@ -76,7 +50,7 @@ const getSalesMaster = async (sales_id) => {
 };
 
 const getSalesDetails = async (sales_id) => {
-	let result = await getSaleDetails(sales_id);
+	let result = await SaleDetailRepo.getSaleDetails(sales_id);
 	return result;
 
 	// let query = ` select sd.*, sd.id as id, sd.sale_id as sale_id,
@@ -111,11 +85,10 @@ const insertSale = async (saleMaster, saleDetails) => {
 				saleMaster.revision === 0 &&
 				saleMaster.inv_gen_mode === 'A'
 			) {
-				let result =
-					await financialYearRepo.financialYearRepoUpdateInvoiceSequence(
-						saleMaster.center_id,
-						prisma
-					);
+				let result = await FinancialYearRepo.updateInvoiceSequence(
+					saleMaster.center_id,
+					prisma
+				);
 				invNo = formatSequenceNumber(result.inv_seq);
 				saleMaster.invoice_no = invNo;
 			} else if (
@@ -126,7 +99,7 @@ const insertSale = async (saleMaster, saleDetails) => {
 				saleMaster.invoice_no.startsWith('SI') === false
 			) {
 				let result =
-					await financialYearRepo.financialYearRepoUpdateDraftInvoiceSequenceGenerator(
+					await FinancialYearRepo.updateDraftInvoiceSequenceGenerator(
 						saleMaster.center_id,
 						prisma
 					);
@@ -138,9 +111,9 @@ const insertSale = async (saleMaster, saleDetails) => {
 			// sale master insert/update
 			let sale_master;
 			if (saleMaster.id === null) {
-				sale_master = await addSaleMaster(saleMaster, prisma);
+				sale_master = await SaleRepo.addSaleMaster(saleMaster, prisma);
 			} else {
-				sale_master = await editSaleMaster(saleMaster, prisma);
+				sale_master = await SaleRepo.editSaleMaster(saleMaster, prisma);
 			}
 
 			let detailsInserted = await insertSaleDetails(
@@ -213,54 +186,67 @@ const insertSale = async (saleMaster, saleDetails) => {
 
 async function insertSaleDetails(saleMaster, saleDetails, sale_master, prisma) {
 	for await (const item of saleDetails) {
-		let result;
+		try {
+			let result;
 
-		if (item.id === null || item.id === 0) {
-			result = await addSaleDetail(
-				item,
-				sale_master.id,
-				sale_master.updated_by,
+			if (item.id === null || item.id === 0) {
+				result = await SaleDetailRepo.addSaleDetail(
+					item,
+					sale_master.id,
+					sale_master.updated_by,
+					prisma
+				);
+			} else {
+				result = await SaleDetailRepo.editSaleDetail(
+					item,
+					sale_master.id,
+					sale_master.updated_by,
+					prisma
+				);
+			}
+
+			// after sale details is updated, then update stock (as this is sale, reduce available stock) tbl & product tbl
+			let qty_to_update = item.quantity - item.old_val;
+
+			let result2 = await StockRepo.stockMinus(
+				qty_to_update,
+				item.stock_id,
+				saleMaster.updated_by,
 				prisma
 			);
-		} else {
-			result = await editSaleDetail(
+
+			let itemHistory = await prepareItemHistory(
 				item,
 				sale_master.id,
-				sale_master.updated_by,
+				result.id,
+				saleMaster,
 				prisma
 			);
-		}
 
-		// after sale details is updated, then update stock (as this is sale, reduce available stock) tbl & product tbl
-		let qty_to_update = item.quantity - item.old_val;
+			if (
+				saleMaster.status === 'C' ||
+				(saleMaster.status === 'D' &&
+					saleMaster.invoice_type === 'stockIssue')
+			) {
+				result3 = await ItemHistoryRepo.addItemHistory(
+					itemHistory,
+					prisma
+				);
+			}
 
-		let result2 = await stockMinus(
-			qty_to_update,
-			item.stock_id,
-			saleMaster.updated_by,
-			prisma
-		);
-
-		let itemHistory = await prepareItemHistory(
-			item,
-			sale_master.id,
-			result.id,
-			saleMaster
-		);
-
-		if (
-			saleMaster.status === 'C' ||
-			(saleMaster.status === 'D' &&
-				saleMaster.invoice_type === 'stockIssue')
-		) {
-			result3 = await addItemHistory(itemHistory, prisma);
-		}
-
-		if (saleMaster.enquiry_ref !== 0 && saleMaster.enquiry_ref !== null) {
-			await updateEnquiryAfterSale(
-				saleMaster.enquiry_ref,
-				sale_master.id,
-				prisma
+			if (
+				saleMaster.enquiry_ref !== 0 &&
+				saleMaster.enquiry_ref !== null
+			) {
+				await EnquiryRepo.updateEnquiryAfterSale(
+					saleMaster.enquiry_ref,
+					sale_master.id,
+					prisma
+				);
+			}
+		} catch (error) {
+			throw new Error(
+				`error :: insertSaleDetails sale.services.js ` + error.message
 			);
 		}
 	}
@@ -275,7 +261,7 @@ function updateCustomerBalanceAmt(sale_master, prisma) {
 				prisma
 			);
 
-			let result91 = await updateCustomerBalance(
+			let result91 = await CustomerRepo.updateCustomerBalance(
 				sale_master.customer_id,
 				balanceAmt,
 				prisma
@@ -414,7 +400,7 @@ async function prepareAndAddCustomerChangeAudit(
 			audit.created_by = saleMaster.updated_by;
 			audit.updated_by = saleMaster.updated_by;
 
-			let auditResult = await addAudit(audit, prisma);
+			let auditResult = await AuditRepo.addAudit(audit, prisma);
 		} catch (error) {
 			console.log(
 				'error in Sales.Service.js :: prepareCustomerChangeAudit:: ' +
@@ -426,8 +412,14 @@ async function prepareAndAddCustomerChangeAudit(
 	});
 }
 
-async function prepareItemHistory(item, sale_id, sale_detail_id, saleMaster) {
-	const product_count = await stockCount(item.product_id, prisma);
+async function prepareItemHistory(
+	item,
+	sale_id,
+	sale_detail_id,
+	saleMaster,
+	prisma
+) {
+	const product_count = await StockRepo.stockCount(item.product_id, prisma);
 
 	// to avoid duplicate entry of history items when editing completed records
 	// with same qty. (status = 'c'). If status=C & k.qty - k.old_val !== 0 then updateHistoryTable
@@ -490,7 +482,7 @@ async function prepareItemHistory(item, sale_id, sale_detail_id, saleMaster) {
 		action: '',
 		action_type: action_type,
 		txn_qty: txn_qty,
-		stock_level: 0,
+		stock_level: product_count,
 		txn_date: new Date(),
 		sale_return_id: 0,
 		sale_return_det_id: 0,
@@ -766,11 +758,10 @@ const convertSale = async (requestBody) => {
 	try {
 		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
 		const status = await prisma.$transaction(async (prisma) => {
-			let result =
-				await financialYearRepo.financialYearRepoUpdateInvoiceSequence(
-					center_id,
-					prisma
-				);
+			let result = await FinancialYearRepo.updateInvoiceSequence(
+				center_id,
+				prisma
+			);
 			invNo = formatSequenceNumber(result.inv_seq);
 
 			// await updateSequenceGenerator({

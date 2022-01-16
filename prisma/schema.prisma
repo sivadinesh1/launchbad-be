@@ -657,10 +657,9 @@ model item_history {
   purchase_return_id     BigInt
   purchase_return_det_id BigInt
 
-  createdAt  DateTime? @default(now())
-  updatedAt  DateTime? @updatedAt
+  createdAt  DateTime? 
   created_by BigInt?
-  updated_by BigInt?
+  
 
 
   center          center          @relation(fields: [center_id], references: [id])

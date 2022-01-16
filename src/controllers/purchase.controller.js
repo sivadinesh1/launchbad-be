@@ -7,9 +7,12 @@ const { purchaseService } = require('../services');
 const insertPurchase = catchAsync(async (req, res) => {
 	try {
 		let purchaseObject = req.body;
-		purchaseObject.updated_by = Number(req.user.id);
+		// purchaseObject.updated_by = Number(req.user.id);
 
-		const data = await purchaseService.insertPurchase(purchaseObject);
+		const data = await purchaseService.insertPurchase(
+			purchaseObject,
+			Number(req.user.id)
+		);
 		return responseForward(data, 'insertPurchaseDetails', res);
 	} catch (error) {
 		console.log('ERROR:' + JSON.stringify(error));

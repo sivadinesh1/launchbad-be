@@ -65,8 +65,7 @@ const addSaleMaster = async (sale, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: addSale sale.repo.js ' + error);
-		throw error;
+		throw new Error(`error :: addSale sale.repo.js ` + error.message);
 	}
 };
 
@@ -121,8 +120,9 @@ const editSaleMaster = async (sale, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: brand.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: editSaleMaster sale.repo.js ` + error.message
+		);
 	}
 };
 
@@ -137,8 +137,9 @@ const updateSalePaymentStatus = async (sale_id, status) => {
 			},
 		});
 	} catch (error) {
-		console.log('error :: sale.repo.js updateSalePaymentStatus: ' + error);
-		throw error;
+		throw new Error(
+			`error :: updateSalePaymentStatus sale.repo.js ` + error.message
+		);
 	}
 };
 

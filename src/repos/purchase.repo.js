@@ -8,7 +8,7 @@ const {
 	promisifyQuery,
 } = require('../utils/utils');
 
-const addPurchaseMaster = async (purchase, prisma) => {
+const addPurchaseMaster = async (purchase, user_id, prisma) => {
 	try {
 		const result = await prisma.purchase.create({
 			data: {
@@ -44,8 +44,8 @@ const addPurchaseMaster = async (purchase, prisma) => {
 				round_off: purchase.round_off,
 				revision: purchase.revision,
 
-				created_by: purchase.updated_by,
-				updated_by: purchase.updated_by,
+				created_by: user_id,
+				updated_by: user_id,
 				createdAt: currentTimeInTimeZone(),
 				updatedAt: currentTimeInTimeZone(),
 			},
@@ -53,12 +53,13 @@ const addPurchaseMaster = async (purchase, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: addPurchase purchase.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: addPurchase purchase.repo.js ` + error.message
+		);
 	}
 };
 
-const editPurchaseMaster = async (purchase, prisma) => {
+const editPurchaseMaster = async (purchase, user_id, prisma) => {
 	try {
 		const result = await prisma.purchase.update({
 			where: {
@@ -97,8 +98,8 @@ const editPurchaseMaster = async (purchase, prisma) => {
 				round_off: purchase.round_off,
 				revision: purchase.revision,
 
-				created_by: purchase.updated_by,
-				updated_by: purchase.updated_by,
+				created_by: user_id,
+				updated_by: user_id,
 				createdAt: currentTimeInTimeZone(),
 				updatedAt: currentTimeInTimeZone(),
 			},
@@ -106,8 +107,9 @@ const editPurchaseMaster = async (purchase, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: addPurchase purchase.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: editPurchaseMaster purchase.repo.js ` + error.message
+		);
 	}
 };
 

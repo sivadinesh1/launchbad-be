@@ -22,7 +22,7 @@ const addItemHistory = async (itemHistory, prisma) => {
 				action_type: itemHistory.action_type,
 				txn_qty: Number(itemHistory.txn_qty),
 				stock_level: Number(itemHistory.stock_level),
-				txn_date: itemHistory.txn_date,
+				txn_date: currentTimeInTimeZone(),
 				sale_return_id: Number(itemHistory.sale_return_id),
 				sale_return_det_id: Number(itemHistory.sale_return_det_id),
 				purchase_return_id: Number(itemHistory.purchase_return_id),
@@ -30,15 +30,16 @@ const addItemHistory = async (itemHistory, prisma) => {
 					itemHistory.purchase_return_det_id
 				),
 
-				created_by: itemHistory.updated_by,
-				updated_by: itemHistory.updated_by,
+				created_by: itemHistory.created_by,
+				createdAt: currentTimeInTimeZone(),
 			},
 		});
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: brand.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: addItemHistory item-history.repo.js ` + error.message
+		);
 	}
 };
 
@@ -65,15 +66,16 @@ const addItemHistoryStandalone = async (itemHistory) => {
 					itemHistory.purchase_return_det_id
 				),
 
-				created_by: itemHistory.updated_by,
-				updated_by: itemHistory.updated_by,
+				created_by: itemHistory.created_by,
+				createdAt: currentTimeInTimeZone(),
 			},
 		});
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: brand.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: addItemHistory item-history.repo.js ` + error.message
+		);
 	}
 };
 

@@ -1,7 +1,4 @@
-var pool = require('../config/db');
 const { prisma } = require('../config/prisma');
-
-const { handleError, ErrorHandler } = require('../config/error');
 
 const {
 	toTimeZoneFormat,
@@ -9,114 +6,52 @@ const {
 	promisifyQuery,
 } = require('../utils/utils');
 
-// const {
-// 	addPurchaseMaster,
-// 	editPurchaseMaster,
-// } = require('../repos/purchase.repo');
-
+// repos
 const purchaseRepo = require('../repos/purchase.repo');
-
-const {
-	addPurchaseDetail,
-	editPurchaseDetail,
-} = require('../repos/purchase-detail.repo');
-
-// const {
-// 	getStockId,
-// 	addStock,
-// 	stockCount,
-// 	stockCorrection,
-// 	stockMinus,
-// 	stockAdd,
-// } = require('../repos/stock.repo');
-
+const PurchaseDetailRepo = require('../repos/purchase-detail.repo');
 const StockRepo = require('../repos/stock.repo');
+const ItemHistoryRepo = require('../repos/item-history.repo');
+const ProductRepo = require('../repos/product.repo');
+const VendorRepo = require('../repos/vendor.repo');
+const PurchaseLedgerRepo = require('../repos/purchase-ledger.repo');
 
-const {
-	productRepoUpdateLatestPurchasePrice,
-} = require('../repos/product.repo');
-const {
-	addPurchaseLedgerEntry,
-	getVendorBalance,
-	getCreditAmtForPurchaseReversal,
-	updatePurchaseLedgerVendorChange,
-} = require('../repos/purchase-ledger.repo');
-
+// domain
 const { PurchaseLedger } = require('../domain/PurchaseLedger');
 
-const { updateVendorBalance } = require('../repos/vendor.repo');
-
-const insertPurchase = async (purchaseObject) => {
+const insertPurchase = async (purchaseObject, user_id) => {
 	// request object for purchase entry (both add & edit)
-	//	const purchase_object = { ...purchaseObject };
+	const purchase_object = { ...purchaseObject };
 
-	const {
-		mode,
-		after_tax_value,
-		center_id,
-		cgs_t,
-		igs_t,
-		sgs_t,
-		invoice_date,
-		invoice_no,
-		lr_date,
-		lr_no,
-		misc_charges,
-		net_total,
-		no_of_boxes,
-		no_of_items,
-		order_date,
-		order_no,
-		purchase_id,
-		received_date,
-		revision,
-		round_off,
-		status,
-		temp_desc,
-		temp_mrp,
-		temp_purchase_price,
-		temp_quantity,
-		total_value,
-		transport_charges,
-		unloading_charges,
-		product_arr,
-		vendor_ctrl,
-		state,
-		...purchase_object
-	} = {
-		...purchaseObject,
-	};
-
-	let purchaseMaster = preparePurchaseMasterObject(purchase_object);
+	let purchaseMaster = preparePurchaseMasterObject(purchase_object, user_id);
 
 	try {
-		const status = await prisma.$transaction(async (prisma) => {
+		const response = await prisma.$transaction(async (prisma) => {
 			let newPK;
 			let purchase_master;
 			// if purchase_id not present its a add else its edit
 			if (purchase_object.purchase_id === '') {
 				purchase_master = await purchaseRepo.addPurchaseMaster(
 					purchaseMaster,
+					user_id,
 					prisma
 				);
 			} else if (purchase_object.purchase_id !== '') {
 				purchase_master = await purchaseRepo.editPurchaseMaster(
 					purchaseMaster,
+					user_id,
 					prisma
 				);
 			}
 
 			newPK = purchase_master.id;
-			console.log('PK generated: ' + JSON.stringify(newPK));
 
 			let detailsInserted = await insertPurchaseDetails(
 				purchase_object,
-				purchase_master,
+
 				newPK,
+				user_id,
 				prisma
 			);
-
-			console.log('Purchase details entry done: ' + detailsInserted);
 
 			if (
 				purchase_object.status === 'C' &&
@@ -125,16 +60,14 @@ const insertPurchase = async (purchaseObject) => {
 				let result = await prepareAndAddPurchaseLedgerEntry(
 					purchase_object,
 					purchase_master,
+					user_id,
 					prisma
 				);
-				console.log(
-					'after prepare and purchase ledger entry: ' + result
-				);
-				let result991 = await updateVendorBalanceAmt(
+
+				let vendor_balance_update = await updateVendorBalanceAmt(
 					purchase_object,
 					prisma
 				);
-				console.log('after vendor balance amount : ' + result991);
 			} else if (
 				purchase_object.status === 'C' &&
 				purchase_object.purchase_id !== ''
@@ -143,6 +76,7 @@ const insertPurchase = async (purchaseObject) => {
 					await prepareAndAddPurchaseLedgerReversalEntry(
 						purchase_object,
 						purchase_master,
+						user_id,
 						prisma
 					);
 
@@ -150,24 +84,20 @@ const insertPurchase = async (purchaseObject) => {
 					await preparePurchaseLedgerEntryAfterReversal(
 						purchase_object,
 						purchase_master,
+						user_id,
 						prisma
 					);
 			}
 
-			console.log('final status:: ' + newPK);
 			return { status: 'success', id: newPK };
 		});
-		return status;
+		return response;
 	} catch (error) {
 		console.log('Error while inserting Purchase ' + error);
-	} finally {
-		prisma.$disconnect();
 	}
 };
 
-const addPurchaseMaster = () => {};
-
-function preparePurchaseMasterObject(purchase_object) {
+function preparePurchaseMasterObject(purchase_object, user_id) {
 	let purchase = {
 		purchase_id:
 			purchase_object.purchase_id === ''
@@ -220,8 +150,8 @@ function preparePurchaseMasterObject(purchase_object) {
 			purchase_object.revision
 		),
 
-		created_by: purchase_object.updated_by,
-		updated_by: purchase_object.updated_by,
+		created_by: user_id,
+		updated_by: user_id,
 	};
 
 	return purchase;
@@ -239,132 +169,134 @@ calculateRevisionCount = (status, revision) => {
 	return revisionCnt;
 };
 
-function preparePurchaseLedgerEntryAfterReversal(
+const preparePurchaseLedgerEntryAfterReversal = async (
 	purchase_object,
 	purchase_master,
+	user_id,
 	prisma
-) {
-	return new Promise(async (resolve, reject) => {
-		let purchaseLedger = PurchaseLedger;
-		try {
-			let previousBalance = await getVendorBalance(
-				purchase_object.vendor_ctrl.id,
-				purchase_object.center_id,
-				prisma
-			);
+) => {
+	let purchaseLedger = PurchaseLedger;
+	try {
+		let previousBalance = await PurchaseLedgerRepo.getVendorBalance(
+			purchase_object.vendor_ctrl.id,
+			purchase_object.center_id,
+			prisma
+		);
 
-			console.log('object prev bal: ' + previousBalance);
-			console.log(
-				'object purchase_object.net_total bal: ' +
-					purchase_object.net_total
-			);
+		purchaseLedger.center_id = purchase_object.center_id;
+		purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
+		purchaseLedger.purchase_ref_id = purchase_master.id;
+		purchaseLedger.ledger_detail = 'purchase';
+		purchaseLedger.balance_amt =
+			Number(previousBalance) + Number(purchase_object.net_total);
+		purchaseLedger.credit_amt = purchase_object.net_total;
+		purchaseLedger.created_by = user_id;
+		purchaseLedger.updated_by = user_id;
 
-			purchaseLedger.center_id = purchase_object.center_id;
-			purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
-			purchaseLedger.purchase_ref_id = purchase_master.id;
-			purchaseLedger.ledger_detail = 'purchase';
-			purchaseLedger.balance_amt =
-				Number(previousBalance) + Number(purchase_object.net_total);
-			purchaseLedger.credit_amt = purchase_object.net_total;
-			purchaseLedger.created_by = purchase_object.updated_by;
-			purchaseLedger.updated_by = purchase_object.updated_by;
+		let result = await PurchaseLedgerRepo.addPurchaseLedgerEntry(
+			purchaseLedger,
+			prisma
+		);
 
-			let result = await addPurchaseLedgerEntry(purchaseLedger, prisma);
+		return result;
+	} catch (error) {
+		throw new Error(
+			`error :: preparePurchaseLedgerEntryAfterReversal purchase.service.js ` +
+				error.message
+		);
+	}
+};
 
-			resolve(result);
-		} catch (error) {
-			console.log('error in prepareSaleLedgerEntry:: ' + error);
-			reject(error);
-		}
-	});
-}
-
-function prepareAndAddPurchaseLedgerEntry(
+const prepareAndAddPurchaseLedgerEntry = async (
 	purchase_object,
 	purchase_master,
+	user_id,
 	prisma
-) {
-	return new Promise(async (resolve, reject) => {
-		let purchaseLedger = PurchaseLedger;
-		try {
-			let previousBalance = await getVendorBalance(
-				purchase_object.vendor_ctrl.id,
-				purchase_object.center_id,
-				prisma
-			);
+) => {
+	let purchaseLedger = PurchaseLedger;
+	try {
+		let previousBalance = await PurchaseLedgerRepo.getVendorBalance(
+			purchase_object.vendor_ctrl.id,
+			purchase_object.center_id,
+			prisma
+		);
 
-			console.log('object prev bal: ' + previousBalance);
-			console.log(
-				'object purchase_object.net_total bal: ' +
-					purchase_object.net_total
-			);
+		purchaseLedger.center_id = purchase_object.center_id;
+		purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
+		purchaseLedger.purchase_ref_id = purchase_master.id;
+		purchaseLedger.ledger_detail = 'purchase';
+		purchaseLedger.balance_amt =
+			Number(previousBalance) + Number(purchase_object.net_total);
+		purchaseLedger.credit_amt = purchase_object.net_total;
+		purchaseLedger.created_by = user_id;
+		purchaseLedger.updated_by = user_id;
 
-			purchaseLedger.center_id = purchase_object.center_id;
-			purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
-			purchaseLedger.purchase_ref_id = purchase_master.id;
-			purchaseLedger.ledger_detail = 'purchase';
-			purchaseLedger.balance_amt =
-				Number(previousBalance) + Number(purchase_object.net_total);
-			purchaseLedger.credit_amt = purchase_object.net_total;
-			purchaseLedger.created_by = purchase_object.updated_by;
-			purchaseLedger.updated_by = purchase_object.updated_by;
+		let result = await PurchaseLedgerRepo.addPurchaseLedgerEntry(
+			purchaseLedger,
+			prisma
+		);
 
-			let result = await addPurchaseLedgerEntry(purchaseLedger, prisma);
+		return result;
+	} catch (error) {
+		throw new Error(
+			`error :: prepareAndAddPurchaseLedgerEntry purchase.service.js ` +
+				error.message
+		);
+	}
+};
 
-			resolve(result);
-		} catch (error) {
-			console.log('error in prepareSaleLedgerEntry:: ' + error);
-			reject(error);
-		}
-	});
-}
-
-function prepareAndAddPurchaseLedgerReversalEntry(
+const prepareAndAddPurchaseLedgerReversalEntry = async (
 	purchase_object,
 	purchase_master,
+	user_id,
 	prisma
-) {
-	return new Promise(async (resolve, reject) => {
-		let purchaseLedger = PurchaseLedger;
-		try {
-			let previousBalance = await getVendorBalance(
-				purchase_object.vendor_ctrl.id,
-				purchase_object.center_id,
-				prisma
-			);
+) => {
+	try {
+		let previousBalance = await PurchaseLedgerRepo.getVendorBalance(
+			purchase_object.vendor_ctrl.id,
+			purchase_object.center_id,
+			prisma
+		);
 
-			let debit_amt = await getCreditAmtForPurchaseReversal(
+		let debit_amt =
+			await PurchaseLedgerRepo.getCreditAmtForPurchaseReversal(
 				purchase_object.vendor_ctrl.id,
 				purchase_object.center_id,
 				purchase_master.id,
 				prisma
 			);
 
-			purchaseLedger.center_id = purchase_object.center_id;
-			purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
-			purchaseLedger.purchase_ref_id = purchase_master.id;
-			purchaseLedger.ledger_detail = 'Purchase Reversal';
-			(purchaseLedger.debit_amt = debit_amt),
-				(purchaseLedger.balance_amt =
-					Number(previousBalance) - Number(debit_amt));
-			purchaseLedger.credit_amt = 0.0;
-			purchaseLedger.created_by = purchase_object.updated_by;
-			purchaseLedger.updated_by = purchase_object.updated_by;
+		let purchaseLedger = PurchaseLedger;
+		purchaseLedger.center_id = purchase_object.center_id;
+		purchaseLedger.vendor_id = purchase_object.vendor_ctrl.id;
+		purchaseLedger.purchase_ref_id = purchase_master.id;
+		purchaseLedger.ledger_detail = 'Purchase Reversal';
+		(purchaseLedger.debit_amt = debit_amt),
+			(purchaseLedger.balance_amt =
+				Number(previousBalance) - Number(debit_amt));
+		purchaseLedger.credit_amt = 0.0;
+		purchaseLedger.created_by = user_id;
+		purchaseLedger.updated_by = user_id;
 
-			let result = await addPurchaseLedgerEntry(purchaseLedger, prisma);
+		let result = await PurchaseLedgerRepo.addPurchaseLedgerEntry(
+			purchaseLedger,
+			prisma
+		);
 
-			resolve(result);
-		} catch (error) {
-			console.log('error in prepareSaleLedgerEntry:: ' + error);
-			reject(error);
-		}
-	});
-}
+		return result;
+	} catch (error) {
+		throw new Error(
+			`error :: prepareAndAddPurchaseLedgerReversalEntry purchase.service.js ` +
+				error.message
+		);
+	}
+};
 
 async function insertPurchaseDetails(
 	purchase_object,
-	purchase_master,
+
 	newPK,
+	user_id,
 	prisma
 ) {
 	try {
@@ -373,36 +305,31 @@ async function insertPurchaseDetails(
 				purchase_object,
 				product_item,
 				newPK,
+				user_id,
 				prisma
 			);
 
-			console.log(
-				'::purchase_detail:: ' + JSON.stringify(purchase_detail)
-			);
 			let product_detail_add_obj;
 			if (product_item.pur_det_id === '') {
-				product_detail_add_obj = await addPurchaseDetail(
+				product_detail_add_obj =
+					await PurchaseDetailRepo.addPurchaseDetail(
+						purchase_detail,
+						prisma
+					);
+			} else {
+				await PurchaseDetailRepo.editPurchaseDetail(
 					purchase_detail,
 					prisma
 				);
-			} else {
-				await editPurchaseDetail(purchase_detail, prisma);
 			}
 
-			console.log('after add purchase detail: ');
-
 			let inserted_latest_PurchasePrice =
-				await productRepoUpdateLatestPurchasePrice(
+				await ProductRepo.updateLatestPurchasePrice(
 					purchase_detail.purchase_price,
 					purchase_detail.mrp,
 					purchase_detail.product_id,
 					prisma
 				);
-
-			console.log(
-				'Update product latest purchase price: ' +
-					JSON.stringify(inserted_latest_PurchasePrice)
-			);
 
 			let p_detail_id =
 				product_item.pur_det_id === ''
@@ -414,8 +341,6 @@ async function insertPurchaseDetails(
 				product_item.mrp,
 				prisma
 			);
-
-			// console.log('print result :: ' + JSON.stringify(result));
 
 			// check if productId + mrp exist, if exists (count ===1) then update stock else create new stock
 			//	let stock_id_Exist = await StockRepo.isStockIdExist(k, res);
@@ -429,12 +354,36 @@ async function insertPurchaseDetails(
 				// for update its k.k.pur_det_id
 
 				// if mrp flag is true the insert new record to stocks
-				let stock_id = await insertStock(k);
-				let is_updated = await updatePurchaseDetail(
+				// 	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
+				// 	values ('${k.product_id}', '${k.mrp}', '${k.quantity}', 0, '${todayYYMMDD}')`;
+				let stock = {
+					product_id: product_item.product_id,
+					mrp: product_item.mrp,
+					available_stock: product_item.quantity,
+					open_stock: 0,
+					center_id: purchase_object.center_id,
+					user_id: user_id,
+				};
+
+				let stock_id = await StockRepo.addStock(stock, prisma);
+
+				let is_updated =
+					await PurchaseDetailRepo.updatePurchaseDetailStockMRPChange(
+						p_detail_id,
+						purchase_detail.stock_id
+					);
+
+				let item_history = await prepareItemHistory(
+					product_item,
+					newPK,
 					p_detail_id,
-					purchase_detail.stock_id
+					purchase_object
 				);
-				//		insertItemHistory(product_item, newPK, data.insertId, cloneReq);
+
+				let item_history_add_obj = await ItemHistoryRepo.addItemHistory(
+					item_history,
+					prisma
+				);
 			} else {
 				// else update the stock tbl, only of the status is "C - completed", draft should be ignored
 
@@ -442,24 +391,26 @@ async function insertPurchaseDetails(
 				// update stock for both status C & D (Completed & Draft)
 				let qty_to_update =
 					product_item.quantity - product_item.old_val;
+
 				// const stockAdd = async (qty_to_update, stock_pk, updated_by, prisma) => {
-				let is_updated = StockRepo.stockAdd(
+				let is_updated = await StockRepo.stockAdd(
 					qty_to_update,
 					purchase_detail.stock_id,
 					purchase_detail.updated_by,
 					prisma
 				);
 
-				// let is_updated = await updateStock(
-				// 	qty_to_update,
-				// 	product_item.product_id,
-				// 	product_item.mrp,
-				// 	'add',
-				// 	res
-				// );
-				//		insertItemHistory(k, newPK, data.insertId, cloneReq);
+				let item_history = await prepareItemHistory(
+					product_item,
+					newPK,
+					p_detail_id,
+					purchase_object
+				);
 
-				//		}
+				let item_history_add_obj = await ItemHistoryRepo.addItemHistory(
+					item_history,
+					prisma
+				);
 			}
 		}
 		return 'success';
@@ -472,6 +423,7 @@ const preparePurchaseDetail = async (
 	purchase_object,
 	product_item,
 	newPK,
+	user_id,
 	prisma
 ) => {
 	let result = await StockRepo.getStockId(
@@ -480,123 +432,54 @@ const preparePurchaseDetail = async (
 		prisma
 	);
 
-	console.log('print result :: ' + JSON.stringify(result));
+	let purchase = {
+		pur_det_id: product_item.pur_det_id,
+		center_id: purchase_object.center_id,
+		purchase_id: newPK,
+		product_id: product_item.product_id,
+		quantity: product_item.quantity,
+		purchase_price: product_item.purchase_price,
+		mrp: product_item.mrp,
+		batch_date: currentTimeInTimeZone('DD-MM-YYYY'),
+		tax: product_item.tax,
+		igs_t: product_item.igs_t,
+		cgs_t: product_item.cgs_t,
+		sgs_t: product_item.sgs_t,
+		after_tax_value: product_item.after_tax_value,
+		total_value: product_item.total_value,
+		stock_id: result[0].id,
+		created_by: user_id,
+		updated_by: user_id,
+	};
 
-	return new Promise(function (resolve, reject) {
-		let purchase = {
-			pur_det_id: product_item.pur_det_id,
-			center_id: purchase_object.center_id,
-			purchase_id: newPK,
-			product_id: product_item.product_id,
-			quantity: product_item.quantity,
-			purchase_price: product_item.purchase_price,
-			mrp: product_item.mrp,
-			batch_date: currentTimeInTimeZone('DD-MM-YYYY'),
-			tax: product_item.tax,
-			igs_t: product_item.igs_t,
-			cgs_t: product_item.cgs_t,
-			sgs_t: product_item.sgs_t,
-			after_tax_value: product_item.after_tax_value,
-			total_value: product_item.total_value,
-			stock_id: result[0].id,
-			created_by: purchase_object.updated_by,
-			updated_by: purchase_object.updated_by,
-		};
-		resolve(purchase);
-	});
+	return purchase;
 };
-
-function insertStock(k) {
-	todayYYMMDD = currentTimeInTimeZone('YYYY-MM-DD');
-	let query2 = `
-	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
-	values ('${k.product_id}', '${k.mrp}', '${k.quantity}', 0, '${todayYYMMDD}')`;
-
-	return new Promise(function (resolve, reject) {
-		pool.query(query2, function (err, data) {
-			if (err) {
-				return reject(
-					new ErrorHandler(
-						'500',
-						`Error insertStock in Purchase js. ${query2}`,
-						err
-					),
-					res
-				);
-			} else {
-				resolve(data.insertId);
-			}
-		});
-	});
-}
-
-function updatePurchaseDetail(purchaseDetailId, stockid) {
-	todayYYMMDD = currentTimeInTimeZone('YYYY-MM-DD');
-
-	let query3 = `
-
-			update purchase_detail set stock_id =  '${stockid}'
-			where id  = '${purchaseDetailId}' `;
-
-	return new Promise(function (resolve, reject) {
-		pool.query(query3, function (err, data) {
-			if (err) {
-				return reject(
-					new ErrorHandler(
-						'500',
-						'Error updatePurchaseDetail in Purchasejs.',
-						err
-					),
-					res
-				);
-			} else {
-				resolve('purchase_detail_updated');
-			}
-		});
-	});
-}
 
 // UPDATE PRODUCT TABLE when purchasing, for company both unit_price (use in sales screen reports) & purchase_price are same
-const updateLatestPurchasePrice = (k) => {
-	let query2 = `
-
-update product set purchase_price = '${k.purchase_price}', unit_price = '${k.purchase_price}', mrp = '${k.mrp}'
-where id = '${k.product_id}'  `;
-
-	pool.query(query2, function (err, data) {
-		if (err) {
-			console.log(
-				'error while inserting updateLatestPurchasePrice ' +
-					JSON.stringify(err)
-			);
-		} else {
-			//updated mrp/purchase price in product table
-		}
-	});
-};
 
 //vPurchase_id - purchase_id && vPurchase_det_id - new purchase_detail id
 // k - looped purchase details array
-const insertItemHistory = async (
-	k,
+const prepareItemHistory = async (
+	item,
 	vPurchase_id,
 	vPurchase_det_id,
-	cloneReq,
-	res
+	purchase_object
 ) => {
-	let today = currentTimeInTimeZone('DD-MM-YYYY HH:mm:ss');
+	const product_count = await StockRepo.stockCount(item.product_id, prisma);
+
 	let purchase = 'Purchase';
 	// if purchase details id is missing its new else update
-	let purchase_det_id = k.pur_det_id === '' ? vPurchase_det_id : k.pur_det_id;
+	let purchase_det_id =
+		item.pur_det_id === '' ? vPurchase_det_id : item.pur_det_id;
 	let txn_quantity =
-		k.pur_det_id === '' ? k.quantity : k.quantity - k.old_val;
+		item.pur_det_id === '' ? item.quantity : item.quantity - item.old_val;
 	// let action_type = "ADD";
-	let purchase_id = vPurchase_id === '' ? k.purchase_id : vPurchase_id;
+	let purchase_id = vPurchase_id === '' ? item.purchase_id : vPurchase_id;
 
 	// scenario: purchase added > draft status > now create purchase entry. txn_quantity will be zero, because old_val & current_val will be same
 	// this is a fix for above scenario
-	if (cloneReq.revision === 0 && txn_quantity === 0) {
-		txn_quantity = k.quantity;
+	if (purchase_object.revision === 0 && txn_quantity === 0) {
+		txn_quantity = item.quantity;
 	}
 
 	//let purchase_det_id = k.pur_det_id;
@@ -610,58 +493,63 @@ const insertItemHistory = async (
 	// }
 
 	if (txn_quantity < 0) {
-		action_type = `Edited: ${k.old_val} To: ${k.quantity}`;
-		txn_quantity = k.old_val - k.quantity;
-	} else if (txn_quantity > 0 && cloneReq.revision > 0) {
-		action_type = `Edited: ${k.old_val} To: ${k.quantity}`;
-		txn_quantity = k.quantity - k.old_val;
+		action_type = `Edited: ${item.old_val} To: ${item.quantity}`;
+		txn_quantity = item.old_val - item.quantity;
+	} else if (txn_quantity > 0 && purchase_object.revision > 0) {
+		action_type = `Edited: ${item.old_val} To: ${item.quantity}`;
+		txn_quantity = item.quantity - item.old_val;
 	}
 
-	if (k.mrp_change_flag === 'Y') {
-		purchase = purchase + ' MRP Change - ' + k.mrp;
+	if (item.mrp_change_flag === 'Y') {
+		purchase = purchase + ' MRP Change - ' + item.mrp;
 	}
 
-	if (txn_quantity !== 0) {
-		let itemHistory = await insertItemHistoryTable(
-			cloneReq.center_id,
-			purchase,
-			k.product_id,
-			purchase_id,
-			purchase_det_id, //purchase_det_id
-			'0', // sale_id
-			'0', //sale_det_id
-			'PUR',
-			action_type,
-			txn_quantity, //txn_quantity
-			'0', // sale_return_id
-			'0', // sale_return_det_id
-			'0', // purchase_return_id
-			'0', // purchase_return_det_id
-			res
+	let itemHistory = {
+		center_id: purchase_object.center_id,
+		module: 'Purchase',
+		product_ref_id: item.product_id,
+		sale_id: '0',
+		sale_det_id: '0',
+		action: 'PUR',
+		action_type: action_type,
+		txn_qty: txn_quantity,
+		stock_level: product_count,
+		txn_date: new Date(),
+		sale_return_id: 0,
+		sale_return_det_id: 0,
+		purchase_id: purchase_id,
+		purchase_det_id: purchase_det_id,
+		purchase_return_id: 0,
+		purchase_return_det_id: 0,
+
+		created_by: item.updated_by,
+	};
+
+	return itemHistory;
+};
+
+const updateVendorBalanceAmt = async (purchase_object, prisma) => {
+	try {
+		let balanceAmt = await PurchaseLedgerRepo.getVendorBalance(
+			purchase_object.vendor_ctrl.id,
+			purchase_object.center_id,
+			prisma
+		);
+
+		let result91 = await VendorRepo.updateVendorBalance(
+			purchase_object.vendor_ctrl.id,
+			balanceAmt,
+			prisma
+		);
+
+		return { status: 'vendor_balance_updated' };
+	} catch (error) {
+		throw new Error(
+			`error :: updateVendorBalanceAmt purchase.service.js ` +
+				error.message
 		);
 	}
 };
-
-function updateVendorBalanceAmt(purchase_object, prisma) {
-	return new Promise(async (resolve, reject) => {
-		try {
-			let balanceAmt = await getVendorBalance(
-				purchase_object.vendor_ctrl.id,
-				purchase_object.center_id,
-				prisma
-			);
-
-			let result91 = await updateVendorBalance(
-				purchase_object.vendor_ctrl.id,
-				balanceAmt,
-				prisma
-			);
-			resolve('success');
-		} catch (error) {
-			reject(error);
-		}
-	});
-}
 
 module.exports = {
 	insertPurchase,

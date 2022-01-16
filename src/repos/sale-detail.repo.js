@@ -1,6 +1,11 @@
 const { prisma } = require('../config/prisma');
 
-const { currentTimeInTimeZone, bigIntToString, escapeText, promisifyQuery } = require('../utils/utils');
+const {
+	currentTimeInTimeZone,
+	bigIntToString,
+	escapeText,
+	promisifyQuery,
+} = require('../utils/utils');
 
 const addSaleDetail = async (saleDetail, sale_id, updated_by, prisma) => {
 	try {
@@ -35,8 +40,9 @@ const addSaleDetail = async (saleDetail, sale_id, updated_by, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: addSale sale.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: addSaleDetail sale-detail.repo.js ` + error.message
+		);
 	}
 };
 
@@ -75,8 +81,9 @@ const editSaleDetail = async (saleDetail, sale_id, updated_by, prisma) => {
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: addSale sale.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: editSaleDetail sale-detail.repo.js ` + error.message
+		);
 	}
 };
 
@@ -93,8 +100,9 @@ const getSaleDetails = async (sale_id) => {
 		});
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: addSale sale.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: getSaleDetails sale-detail.repo.js ` + error.message
+		);
 	}
 };
 

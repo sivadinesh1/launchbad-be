@@ -1,41 +1,62 @@
-var pool = require('../config/db');
-
-const { handleError, ErrorHandler } = require('../config/error');
-
-const StockRepo = require('./../repos/stock.repo');
-
-const { Product } = require('../domain/Product');
-
-const {
-	productRepoAddProduct,
-	productRepoUpdateProduct,
-	productRepoIsProductExists,
-	productRepoSearchProduct,
-} = require('../repos/product.repo');
+const { prisma } = require('../config/prisma');
+// Repos
+const ItemHistoryRepo = require('../repos/item-history.repo');
+const ProductRepo = require('../repos/product.repo');
 
 async function insertProduct(product) {
-	let result = await productRepoAddProduct(product);
+	try {
+		const response = await prisma.$transaction(async (prisma) => {
+			// insert in product table & stock table
+			let result = await ProductRepo.addProduct(product, prisma);
 
-	console.log('dinesh result', result);
+			// prepare item history
+			let item_history = prepareItemHistory(product, result.id);
 
-	let result1 = await StockRepo.insertToStock(
-		result.id,
-		product.mrp,
-		product.current_stock,
-		product.current_stock,
-		product.center_id,
-		product.created_by
-	);
+			// insert in item history table
+			let result1 = await ItemHistoryRepo.addItemHistory(
+				item_history,
+				prisma
+			);
 
-	return { status: 'success' };
+			return { status: 'success' };
+		});
+		return response;
+	} catch (error) {
+		throw new Error(
+			`error :: insertProduct product.service.js ` + error.message
+		);
+	}
 }
 
+const prepareItemHistory = (product, product_ref_id) => {
+	let item_history = {
+		center_id: product.center_id,
+		module: 'Purchase',
+		product_ref_id: product_ref_id,
+		purchase_id: 0,
+		purchase_det_id: 0,
+		sale_id: 0,
+		sale_det_id: 0,
+		action: `PUR`,
+		action_type: `New Product - ${product.mrp}`,
+		txn_qty: 0,
+		stock_level: product.current_stock,
+
+		sale_return_id: 0,
+		sale_return_det_id: 0,
+		purchase_return_id: 0,
+		purchase_return_det_id: 0,
+	};
+
+	return item_history;
+};
+
 async function updateProduct(product) {
-	return await productRepoUpdateProduct(product);
+	return await ProductRepo.updateProduct(product, prisma);
 }
 
 async function searchProduct(center_id, search_text, offset, length) {
-	return await productRepoSearchProduct(
+	return await ProductRepo.searchProduct(
 		center_id,
 		search_text,
 		offset,
@@ -43,29 +64,12 @@ async function searchProduct(center_id, search_text, offset, length) {
 	);
 }
 
-// const updateProduct = (updateValues, res) => {
-// 	let today = currentTimeInTimeZone('Asia/Kolkata', 'YYYY-MM-DD HH:mm:ss');
-
-// 	let escapedDescription = escapeText(updateValues.description);
-
-// 	let query = `
-// 			update product set center_id = '${updateValues.center_id}', brand_id = '${updateValues.brand_id}',
-// 			product_code = '${updateValues.product_code}', description = '${escapedDescription}',unit = '${updateValues.unit}',
-// 			packetsize = '${updateValues.packetsize}', hsncode = '${updateValues.hsncode}',currentstock = '${updateValues.currentstock}',
-// 			unit_price = '${updateValues.unit_price}', mrp = '${updateValues.mrp}',purchase_price = '${updateValues.purchase_price}',
-// 			salesprice = '${updateValues.salesprice}', rackno = '${updateValues.rackno}',location = '${updateValues.location}',
-// 			maxdiscount = '${updateValues.maxdiscount}', alternatecode = '${updateValues.alternatecode}',taxrate = '${updateValues.taxrate}',
-// 			minqty = '${updateValues.minqty}', itemdiscount = '${updateValues.itemdiscount}',reorderqty = '${updateValues.reorderqty}',
-// 			avgpurprice = '${updateValues.avgpurprice}', avgsaleprice = '${updateValues.avgsaleprice}',margin = '${updateValues.margin}',
-// 			rackno = '${updateValues.rackno}', updatedon = '${today}'
-// 			where
-// 			id = '${updateValues.product_id}'
-// 	`;
-// 	return promisifyQuery(query);
-// };
-
 const isProductExists = async (product_code, center_id) => {
-	let result = await productRepoIsProductExists(product_code, center_id);
+	let result = await ProductRepo.isProductExists(
+		product_code,
+		center_id,
+		prisma
+	);
 
 	if (result === 0) {
 		return { status: 'false' };

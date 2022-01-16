@@ -12,6 +12,4 @@ modify txn_date datetime;
 
 alter table item_history
 add column createdAt datetime,
-add column updatedAt datetime,
-add column created_by bigint,
-add column updated_by bigint;
+add column created_by bigint;
