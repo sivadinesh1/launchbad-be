@@ -72,6 +72,24 @@ const getAllActiveVendors = catchAsync(async (req, res) => {
 	return responseForward(data, 'getAllActiveVendors', res);
 });
 
+const getAllActiveVendorsPost = catchAsync(async (req, res) => {
+	const data = await generalService.getAllActiveVendorsPost(
+		req.user.center_id,
+		req.body.offset,
+		req.body.length
+	);
+	return responseForward(data, 'getAllActiveVendorsPost', res);
+});
+
+const getAllActiveBrandsPost = catchAsync(async (req, res) => {
+	const data = await brandsService.getAllActiveBrandsPost(
+		req.user.center_id,
+		req.body.offset,
+		req.body.length
+	);
+	return responseForward(data, 'getAllActiveBrandsPost', res);
+});
+
 const getAllActiveBrands = catchAsync(async (req, res) => {
 	const data = await brandsService.getAllBrands(
 		Number(req.user.center_id),
@@ -136,6 +154,15 @@ const getAllActiveCustomersByCenter = catchAsync(async (req, res) => {
 	return responseForward(data, 'getAllActiveCustomersByCenter', res);
 });
 
+const getAllActiveCustomers = catchAsync(async (req, res) => {
+	const data = await generalService.getAllActiveCustomers(
+		req.user.center_id,
+		req.body.offset,
+		req.body.length
+	);
+	return responseForward(data, 'getAllActiveCustomersByCenter', res);
+});
+
 const addPartsDetailsEnquiry = catchAsync(async (req, res) => {
 	const data = await generalService.addPartsDetailsEnquiry(req.body);
 	return responseForward(data, 'addPartsDetailsEnquiry', res);
@@ -189,4 +216,7 @@ module.exports = {
 	getCustomerDetailsById,
 	updateTaxRate,
 	getAllPaymentModes,
+	getAllActiveCustomers,
+	getAllActiveVendorsPost,
+	getAllActiveBrandsPost,
 };

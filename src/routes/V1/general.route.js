@@ -6,47 +6,105 @@ const { auth } = require('../../middleware/auth.js');
 
 const generalController = require('../../controllers/general.controller');
 
-router.route('/search-product-information').post(auth('getUsers'), generalController.searchProductInformation);
+router
+	.route('/search-product-information')
+	.post(auth('getUsers'), generalController.searchProductInformation);
 
-router.route('/search-product').post(auth('getUsers'), generalController.searchProduct);
-router.route('/search-customer').post(auth('getUsers'), generalController.searchCustomer);
+router
+	.route('/search-product')
+	.post(auth('getUsers'), generalController.searchProduct);
+router
+	.route('/search-customer')
+	.post(auth('getUsers'), generalController.searchCustomer);
 
-router.route('/search-vendor').post(auth('getUsers'), generalController.searchVendors);
+router
+	.route('/search-vendor')
+	.post(auth('getUsers'), generalController.searchVendors);
 
-router.route('/search-brand').post(auth('getUsers'), generalController.searchBrand);
+router
+	.route('/search-brand')
+	.post(auth('getUsers'), generalController.searchBrand);
 
-router.route('/inventory/all').post(auth('getUsers'), generalController.getAllInventory);
+router
+	.route('/inventory/all')
+	.post(auth('getUsers'), generalController.getAllInventory);
 
-router.route('/all-clients').post(auth('getUsers'), generalController.getAllClients);
+router
+	.route('/all-clients')
+	.post(auth('getUsers'), generalController.getAllClients);
 
-router.route('/all-active-vendors').get(auth('getUsers'), generalController.getAllActiveVendors);
+router
+	.route('/all-active-vendors')
+	.get(auth('getUsers'), generalController.getAllActiveVendors);
 
-router.route('/all-active-brands/:status').get(auth('getUsers'), generalController.getAllActiveBrands);
+router
+	.route('/all-active-vendors')
+	.post(auth('getUsers'), generalController.getAllActiveVendorsPost);
 
-router.route('/vendor-exists/:name').get(auth('getUsers'), generalController.isVendorExists);
+router
+	.route('/all-active-brands/:status')
+	.get(auth('getUsers'), generalController.getAllActiveBrands);
 
-router.route('/customer-exists/:name').get(auth('getUsers'), generalController.isCustomerExists);
+router
+	.route('/all-active-brands')
+	.post(auth('getUsers'), generalController.getAllActiveBrandsPost);
 
-router.route('/brand-exists/:name').get(auth('getUsers'), generalController.isBrandExists);
-router.route('/brand-delete/:id').get(auth('getUsers'), generalController.deleteBrand);
+router
+	.route('/vendor-exists/:name')
+	.get(auth('getUsers'), generalController.isVendorExists);
 
-router.route('/enquiry-delete/:id').get(auth('getUsers'), generalController.deleteEnquiry);
+router
+	.route('/customer-exists/:name')
+	.get(auth('getUsers'), generalController.isCustomerExists);
 
-router.route('/vendor-delete/:id').get(auth('getUsers'), generalController.deleteVendor);
+router
+	.route('/brand-exists/:name')
+	.get(auth('getUsers'), generalController.isBrandExists);
+router
+	.route('/brand-delete/:id')
+	.get(auth('getUsers'), generalController.deleteBrand);
 
-router.route('/brands-missing-discounts/:status/:customer_id').get(auth('getUsers'), generalController.getBrandsMissingDiscountsByCustomer);
+router
+	.route('/enquiry-delete/:id')
+	.get(auth('getUsers'), generalController.deleteEnquiry);
 
-router.route('/all-active-customers').get(auth('getUsers'), generalController.getAllActiveCustomersByCenter);
+router
+	.route('/vendor-delete/:id')
+	.get(auth('getUsers'), generalController.deleteVendor);
 
-router.route('/add-parts-details-enquiry').post(auth('getUsers'), generalController.addPartsDetailsEnquiry);
+router
+	.route('/brands-missing-discounts/:status/:customer_id')
+	.get(
+		auth('getUsers'),
+		generalController.getBrandsMissingDiscountsByCustomer
+	);
 
-router.route('/get-enquiry/:enquiry_id').get(auth('getUsers'), generalController.getEnquiryById);
+router
+	.route('/all-active-customers')
+	.get(auth('getUsers'), generalController.getAllActiveCustomersByCenter);
+router
+	.route('/all-active-customers')
+	.post(auth('getUsers'), generalController.getAllActiveCustomers);
 
-router.route('/get-customer-details/:enquiry_id').get(auth('getUsers'), generalController.getCustomerDetailsById);
+router
+	.route('/add-parts-details-enquiry')
+	.post(auth('getUsers'), generalController.addPartsDetailsEnquiry);
 
-router.route('/update-tax-rate').post(auth('getUsers'), generalController.updateTaxRate);
+router
+	.route('/get-enquiry/:enquiry_id')
+	.get(auth('getUsers'), generalController.getEnquiryById);
 
-router.route('/all-payment-modes/:status').get(auth('getUsers'), generalController.getAllPaymentModes);
+router
+	.route('/get-customer-details/:enquiry_id')
+	.get(auth('getUsers'), generalController.getCustomerDetailsById);
+
+router
+	.route('/update-tax-rate')
+	.post(auth('getUsers'), generalController.updateTaxRate);
+
+router
+	.route('/all-payment-modes/:status')
+	.get(auth('getUsers'), generalController.getAllPaymentModes);
 
 module.exports = router;
 
@@ -92,7 +150,7 @@ router.post('/create-meeting', (req, res) => {
 				headers: {
 					Authorization: `Bearer ${access_token}`,
 				},
-			},
+			}
 		)
 		.then((res) => {
 			console.log(res.data);

@@ -15,7 +15,7 @@ const addPurchaseDetail = async (purchase, prisma) => {
 				center_id: Number(purchase.center_id),
 				purchase_id: Number(purchase.purchase_id),
 				product_id: Number(purchase.product_id),
-
+				hsn_code: escapeText(purchase.hsn_code),
 				quantity: Number(purchase.quantity),
 				purchase_price: Number(purchase.purchase_price),
 				mrp: Number(purchase.mrp),
@@ -56,7 +56,7 @@ const editPurchaseDetail = async (purchase, prisma) => {
 				center_id: Number(purchase.center_id),
 				purchase_id: Number(purchase.purchase_id),
 				product_id: Number(purchase.product_id),
-
+				hsn_code: escapeText(purchase.hsn_code),
 				quantity: Number(purchase.quantity),
 				purchase_price: Number(purchase.purchase_price),
 				mrp: Number(purchase.mrp),

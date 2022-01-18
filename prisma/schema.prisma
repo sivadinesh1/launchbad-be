@@ -821,6 +821,7 @@ model purchase_detail {
   purchase_id     BigInt
   product_id      BigInt
   stock_id        BigInt
+  hsn_code        String    @default("") @db.VarChar(50)
   quantity        Int
   purchase_price  Decimal? @default(0.00) @db.Decimal(12, 2)
   mrp             Decimal? @default(0.00) @db.Decimal(12, 2)

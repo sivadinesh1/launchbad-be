@@ -17,12 +17,12 @@ const addPurchaseMaster = async (purchase, user_id, prisma) => {
 				invoice_no: purchase.invoice_no,
 				invoice_date: new Date(purchase.invoice_date),
 
-				lr_date: purchase.lr_date,
+				lr_date: new Date(purchase.lr_date),
 
 				received_date: new Date(purchase.received_date),
 				purchase_type: 'GST Invoice',
 				order_no: purchase.order_no,
-				order_date: purchase.order_date,
+				order_date: new Date(purchase.order_date),
 
 				total_quantity: Number(purchase.total_quantity),
 				no_of_items: purchase.no_of_items,

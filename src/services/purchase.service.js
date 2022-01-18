@@ -438,6 +438,7 @@ const preparePurchaseDetail = async (
 		purchase_id: newPK,
 		product_id: product_item.product_id,
 		quantity: product_item.quantity,
+		hsn_code: product_item.hsn_code,
 		purchase_price: product_item.purchase_price,
 		mrp: product_item.mrp,
 		batch_date: currentTimeInTimeZone('DD-MM-YYYY'),
