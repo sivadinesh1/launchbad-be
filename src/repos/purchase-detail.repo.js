@@ -93,14 +93,15 @@ const editPurchaseDetail = async (purchase, prisma) => {
 
 const updatePurchaseDetailStockMRPChange = async (
 	purchase_detail_id,
-	stock_id
+	stock_id,
+	prisma
 ) => {
-	const result = await prisma.brand.update({
+	const result = await prisma.purchase_detail.update({
 		where: {
 			id: Number(purchase_detail_id),
 		},
 		data: {
-			stock_id: stock_id,
+			stock_id: Number(stock_id),
 		},
 	});
 

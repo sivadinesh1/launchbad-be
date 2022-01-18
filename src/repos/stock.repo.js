@@ -26,7 +26,7 @@ const insertToStock = async (stock, prisma) => {
 				mrp: stock.mrp,
 				available_stock: stock.available_stock,
 				open_stock: stock.open_stock,
-				center_id: stock.center_id,
+				center_id: Number(stock.center_id),
 
 				createdAt: currentTimeInTimeZone(),
 				updatedAt: currentTimeInTimeZone(),

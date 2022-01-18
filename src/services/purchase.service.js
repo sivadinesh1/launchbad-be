@@ -45,6 +45,7 @@ const insertPurchase = async (purchaseObject, user_id) => {
 
 			newPK = purchase_master.id;
 
+			// LOOP & Insert purchase_details (+ few other steps)
 			let detailsInserted = await insertPurchaseDetails(
 				purchase_object,
 
@@ -93,7 +94,7 @@ const insertPurchase = async (purchaseObject, user_id) => {
 		});
 		return response;
 	} catch (error) {
-		console.log('Error while inserting Purchase ' + error);
+		console.log('Error while inserting Purchase ' + error.message);
 	}
 };
 
@@ -301,6 +302,29 @@ async function insertPurchaseDetails(
 ) {
 	try {
 		for await (const product_item of purchase_object.product_arr) {
+			// check if productId + mrp exist, if exists (count ===1) then update stock else create new stock
+			//	let stock_id_Exist = await StockRepo.isStockIdExist(k, res);
+
+			if (`${product_item.mrp_change_flag}` === 'Y') {
+				// get pur_det_id for both insert and update - check
+				// if insert its: data.insertId
+				// for update its k.k.pur_det_id
+
+				// if mrp flag is true the insert new record to stocks
+				// 	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
+				// 	values ('${k.product_id}', '${k.mrp}', '${k.quantity}', 0, '${todayYYMMDD}')`;
+				let stock = {
+					product_id: product_item.product_id,
+					mrp: product_item.mrp,
+					available_stock: product_item.quantity,
+					open_stock: 0,
+					center_id: purchase_object.center_id,
+					user_id: user_id,
+				};
+
+				let stock_id = await StockRepo.insertToStock(stock, prisma);
+			}
+
 			let purchase_detail = await preparePurchaseDetail(
 				purchase_object,
 				product_item,
@@ -336,55 +360,16 @@ async function insertPurchaseDetails(
 					? product_detail_add_obj.id
 					: product_item.pur_det_id;
 
-			let stock_id_Exist = await StockRepo.getStockId(
-				product_item.product_id,
-				product_item.mrp,
-				prisma
-			);
+			// let stock_id_Exist = await StockRepo.getStockId(
+			// 	product_item.product_id,
+			// 	product_item.mrp,
+			// 	prisma
+			// );
 
 			// check if productId + mrp exist, if exists (count ===1) then update stock else create new stock
 			//	let stock_id_Exist = await StockRepo.isStockIdExist(k, res);
 
-			if (
-				`${product_item.mrp_change_flag}` === 'Y' &&
-				stock_id_Exist === 0
-			) {
-				// get pur_det_id for both insert and update - check
-				// if insert its: data.insertId
-				// for update its k.k.pur_det_id
-
-				// if mrp flag is true the insert new record to stocks
-				// 	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
-				// 	values ('${k.product_id}', '${k.mrp}', '${k.quantity}', 0, '${todayYYMMDD}')`;
-				let stock = {
-					product_id: product_item.product_id,
-					mrp: product_item.mrp,
-					available_stock: product_item.quantity,
-					open_stock: 0,
-					center_id: purchase_object.center_id,
-					user_id: user_id,
-				};
-
-				let stock_id = await StockRepo.addStock(stock, prisma);
-
-				let is_updated =
-					await PurchaseDetailRepo.updatePurchaseDetailStockMRPChange(
-						p_detail_id,
-						purchase_detail.stock_id
-					);
-
-				let item_history = await prepareItemHistory(
-					product_item,
-					newPK,
-					p_detail_id,
-					purchase_object
-				);
-
-				let item_history_add_obj = await ItemHistoryRepo.addItemHistory(
-					item_history,
-					prisma
-				);
-			} else {
+			if (`${product_item.mrp_change_flag}` === 'N') {
 				// else update the stock tbl, only of the status is "C - completed", draft should be ignored
 
 				//	if (cloneReq.status === "C") {
@@ -392,26 +377,33 @@ async function insertPurchaseDetails(
 				let qty_to_update =
 					product_item.quantity - product_item.old_val;
 
-				// const stockAdd = async (qty_to_update, stock_pk, updated_by, prisma) => {
+				// Update Stock Table
 				let is_updated = await StockRepo.stockAdd(
 					qty_to_update,
 					purchase_detail.stock_id,
 					purchase_detail.updated_by,
 					prisma
 				);
+			}
 
-				let item_history = await prepareItemHistory(
-					product_item,
-					newPK,
+			let is_updated =
+				await PurchaseDetailRepo.updatePurchaseDetailStockMRPChange(
 					p_detail_id,
-					purchase_object
-				);
-
-				let item_history_add_obj = await ItemHistoryRepo.addItemHistory(
-					item_history,
+					purchase_detail.stock_id,
 					prisma
 				);
-			}
+
+			let item_history = await prepareItemHistory(
+				product_item,
+				newPK,
+				p_detail_id,
+				purchase_object
+			);
+
+			let item_history_add_obj = await ItemHistoryRepo.addItemHistory(
+				item_history,
+				prisma
+			);
 		}
 		return 'success';
 	} catch (error) {
