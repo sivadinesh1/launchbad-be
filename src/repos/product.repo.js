@@ -127,7 +127,7 @@ const isProductExists = async (product_code, center_id, prisma) => {
 const searchProduct = async (
 	center_id,
 	search_text,
-	offset = 1,
+	offset = 0,
 	length = 20
 ) => {
 	let query = `

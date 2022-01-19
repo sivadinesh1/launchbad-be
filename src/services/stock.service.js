@@ -352,7 +352,7 @@ const searchSales = async (requestBody) => {
 		sql = sql + `and invoice_no = '${invoice_no.trim()}' `;
 	}
 
-	sql = sql + ` order by invoice_date ${order} limit ${offset}, ${length}`;
+	sql = sql + ` order by invoice_no ${order} limit ${offset}, ${length}`;
 
 	let result1 = await promisifyQuery(sql);
 

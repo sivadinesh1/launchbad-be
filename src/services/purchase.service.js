@@ -397,7 +397,8 @@ async function insertPurchaseDetails(
 				product_item,
 				newPK,
 				p_detail_id,
-				purchase_object
+				purchase_object,
+				prisma
 			);
 
 			let item_history_add_obj = await ItemHistoryRepo.addItemHistory(
@@ -456,7 +457,8 @@ const prepareItemHistory = async (
 	item,
 	vPurchase_id,
 	vPurchase_det_id,
-	purchase_object
+	purchase_object,
+	prisma
 ) => {
 	const product_count = await StockRepo.stockCount(item.product_id, prisma);
 

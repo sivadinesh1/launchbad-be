@@ -126,7 +126,7 @@ const getAllActiveVendors = async (center_id) => {
 	return promisifyQuery(query);
 };
 
-const getAllActiveVendorsPost = async (center_id, offset = 1, length = 20) => {
+const getAllActiveVendorsPost = async (center_id, offset = 0, length = 20) => {
 	let query = `select v.id, v.center_id, v.vendor_name, v.address1, v.address2, v.address3, v.district, s.id as state_id, s.code, s.description as state,
 	v.pin, v.gst, v.phone, v.mobile, v.mobile2, v.whatsapp, v.email, v.is_active, v.credit_amt,
 	v.balance_amt, 
@@ -171,7 +171,7 @@ const getAllActiveCustomersByCenter = async (center_id) => {
 	return promisifyQuery(query);
 };
 
-const getAllActiveCustomers = async (center_id, offset = 1, length = 20) => {
+const getAllActiveCustomers = async (center_id, offset = 0, length = 20) => {
 	let query = `select c.id, c.center_id, c.name, c.address1, c.address2, c.district, s.id as state_id, s.code, s.description,
 	c.pin, c.gst, c.phone, c.mobile, c.mobile2, c.whatsapp, c.email, 
 	c.is_active, c.credit_amt as credit_amt, c.balance_amt as balance_amt, 

@@ -24,7 +24,7 @@ async function getAllBrands(center_id, status) {
 	return brandRepoGetAllBrands(center_id, status);
 }
 
-const getAllActiveBrandsPost = async (center_id, offset = 1, length = 20) => {
+const getAllActiveBrandsPost = async (center_id, offset = 0, length = 20) => {
 	let query = `select * from brand b
 	where 
 	b.center_id = '${center_id}' and is_active = 'A' order by b.brand_name`;

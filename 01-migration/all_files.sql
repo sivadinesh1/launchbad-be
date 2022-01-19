@@ -445,7 +445,8 @@ add column center_id bigint after purchase_id,
 add column createdAt datetime,
 add column updatedAt datetime,
 add column created_by bigint,
-add column updated_by bigint;
+add column updated_by bigint,
+add column hsn_code varchar(50);
 
 ALTER TABLE purchase_detail 
 change qty quantity int(11),
@@ -464,7 +465,11 @@ update purchase_detail set batchdate = '9999-01-20' where batchdate = '';
 ALTER TABLE purchase_detail 
 change batchdate batch_date date;
 
-update purchase_detail set batch_date = null where batch_date = '9999-01-20';ALTER TABLE purchase_ledger CHANGE ledger_date ledger_date datetime;
+update purchase_detail set batch_date = null where batch_date = '9999-01-20';
+
+update purchase_detail pd set center_id = (select center_id from purchase p where p.id = pd.purchase_id);
+
+update purchase_detail pd set hsn_code = (select hsn_code from product p where p.id = pd.product_id);ALTER TABLE purchase_ledger CHANGE ledger_date ledger_date datetime;
 
 alter table purchase_ledger
 add column createdAt datetime,

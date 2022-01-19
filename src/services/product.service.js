@@ -39,7 +39,7 @@ const prepareItemHistory = (product, product_ref_id) => {
 		sale_det_id: 0,
 		action: `PUR`,
 		action_type: `New Product - ${product.mrp}`,
-		txn_qty: 0,
+		txn_qty: product.current_stock,
 		stock_level: product.current_stock,
 
 		sale_return_id: 0,
