@@ -10,6 +10,7 @@ const searchAllDraftPurchase = catchAsync(async (req, res) => {
 });
 
 const searchPurchase = catchAsync(async (req, res) => {
+	req.body.center_id = req.user.center_id;
 	const data = await stockService.searchPurchase(req.body);
 	return responseForward(data, 'searchPurchase', res);
 });

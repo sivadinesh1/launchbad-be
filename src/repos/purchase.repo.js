@@ -16,7 +16,7 @@ const addPurchaseMaster = async (purchase, user_id, prisma) => {
 				vendor_id: Number(purchase.vendor_id),
 				invoice_no: purchase.invoice_no,
 				invoice_date: new Date(purchase.invoice_date),
-
+				lr_no: purchase.lr_no,
 				lr_date: new Date(purchase.lr_date),
 
 				received_date: new Date(purchase.received_date),
@@ -71,6 +71,7 @@ const editPurchaseMaster = async (purchase, user_id, prisma) => {
 				invoice_no: purchase.invoice_no,
 				invoice_date: new Date(purchase.invoice_date),
 
+				lr_no: purchase.lr_no,
 				lr_date: new Date(purchase.lr_date),
 
 				received_date: new Date(purchase.received_date),

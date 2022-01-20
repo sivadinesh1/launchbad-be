@@ -401,10 +401,12 @@ async function insertPurchaseDetails(
 				prisma
 			);
 
-			let item_history_add_obj = await ItemHistoryRepo.addItemHistory(
-				item_history,
-				prisma
-			);
+			if (item_history.txn_qty !== 0) {
+				let item_history_add_obj = await ItemHistoryRepo.addItemHistory(
+					item_history,
+					prisma
+				);
+			}
 		}
 		return 'success';
 	} catch (error) {
