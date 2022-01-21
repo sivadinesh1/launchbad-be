@@ -305,7 +305,26 @@ async function insertPurchaseDetails(
 			// check if productId + mrp exist, if exists (count ===1) then update stock else create new stock
 			//	let stock_id_Exist = await StockRepo.isStockIdExist(k, res);
 
-			if (`${product_item.mrp_change_flag}` === 'Y') {
+			let stock_id_Exist = await StockRepo.getStockId(
+				product_item.product_id,
+				product_item.mrp,
+				prisma
+			);
+
+			console.log('dinesh stock id exist:' + stock_id_Exist);
+			console.log(
+				'dinesh22 stock id exist:' + JSON.stringify(stock_id_Exist)
+			);
+
+			console.log(
+				'dinesh22 33stock id exist:' +
+					JSON.stringify(stock_id_Exist.length)
+			);
+
+			if (
+				`${product_item.mrp_change_flag}` === 'Y' &&
+				stock_id_Exist.length === 0
+			) {
 				// get pur_det_id for both insert and update - check
 				// if insert its: data.insertId
 				// for update its k.k.pur_det_id
@@ -369,7 +388,11 @@ async function insertPurchaseDetails(
 			// check if productId + mrp exist, if exists (count ===1) then update stock else create new stock
 			//	let stock_id_Exist = await StockRepo.isStockIdExist(k, res);
 
-			if (`${product_item.mrp_change_flag}` === 'N') {
+			if (
+				`${product_item.mrp_change_flag}` === 'N' ||
+				(`${product_item.mrp_change_flag}` === 'Y' &&
+					stock_id_Exist.length > 0)
+			) {
 				// else update the stock tbl, only of the status is "C - completed", draft should be ignored
 
 				//	if (cloneReq.status === "C") {
@@ -398,6 +421,7 @@ async function insertPurchaseDetails(
 				newPK,
 				p_detail_id,
 				purchase_object,
+				user_id,
 				prisma
 			);
 
@@ -460,6 +484,7 @@ const prepareItemHistory = async (
 	vPurchase_id,
 	vPurchase_det_id,
 	purchase_object,
+	user_id,
 	prisma
 ) => {
 	const product_count = await StockRepo.stockCount(item.product_id, prisma);
@@ -503,12 +528,13 @@ const prepareItemHistory = async (
 
 	let itemHistory = {
 		center_id: purchase_object.center_id,
-		module: 'Purchase',
+		module: purchase,
 		product_ref_id: item.product_id,
 		sale_id: '0',
 		sale_det_id: '0',
 		action: 'PUR',
 		action_type: action_type,
+		mrp: item.mrp,
 		txn_qty: txn_quantity,
 		stock_level: product_count,
 		txn_date: new Date(),
@@ -519,7 +545,7 @@ const prepareItemHistory = async (
 		purchase_return_id: 0,
 		purchase_return_det_id: 0,
 
-		created_by: item.updated_by,
+		created_by: user_id,
 	};
 
 	return itemHistory;

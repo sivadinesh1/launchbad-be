@@ -481,6 +481,7 @@ async function prepareItemHistory(
 		sale_det_id: saleDetailId,
 		action: '',
 		action_type: action_type,
+		mrp: item.mrp,
 		txn_qty: txn_qty,
 		stock_level: product_count,
 		txn_date: new Date(),

@@ -11,5 +11,6 @@ ALTER TABLE item_history
 modify txn_date datetime;
 
 alter table item_history
+add column mrp decimal(10,2),
 add column createdAt datetime,
 add column created_by bigint;

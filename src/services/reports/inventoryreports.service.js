@@ -8,7 +8,7 @@ const getProductInventoryReport = (requestBody) => {
 
 	let query = ` select ih.id, module, p.id as product_id, p.product_code as product_code, p.product_description as product_description,
   p.mrp as mrp,
-  b.brand_name as brand_name,  ih.module,
+  b.brand_name as brand_name,  ih.module, ih.mrp as ih_mrp,
 
   (select invoice_no from purchase where id = ih.purchase_id) as pur_inv_no,
   (select invoice_no from sale where id = ih.sale_id) as invoice_no,

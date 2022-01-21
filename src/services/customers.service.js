@@ -1,7 +1,12 @@
 const { prisma } = require('../config/prisma');
 var pool = require('../config/db');
 
-const { toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery, bigIntToString } = require('../utils/utils');
+const {
+	toTimeZoneFormat,
+	currentTimeInTimeZone,
+	promisifyQuery,
+	bigIntToString,
+} = require('../utils/utils');
 
 // insert row in customer tbl
 const insertCustomer = async (insertValues) => {
@@ -18,7 +23,7 @@ const insertCustomer = async (insertValues) => {
 			end_date: new Date('9999-04-01'),
 			brand_id: 0,
 			created_by: Number(insertValues.created_by),
-			updated_by: Number(insertValues.updated_by)
+			updated_by: Number(insertValues.updated_by),
 		},
 		{
 			center_id: Number(insertValues.center_id),
@@ -30,7 +35,7 @@ const insertCustomer = async (insertValues) => {
 			end_date: new Date('9999-04-01'),
 			brand_id: 0,
 			created_by: Number(insertValues.created_by),
-			updated_by: Number(insertValues.updated_by)
+			updated_by: Number(insertValues.updated_by),
 		},
 		{
 			center_id: Number(insertValues.center_id),
@@ -42,7 +47,7 @@ const insertCustomer = async (insertValues) => {
 			end_date: new Date('9999-04-01'),
 			brand_id: 0,
 			created_by: Number(insertValues.created_by),
-			updated_by: Number(insertValues.updated_by)
+			updated_by: Number(insertValues.updated_by),
 		},
 		{
 			center_id: Number(insertValues.center_id),
@@ -54,7 +59,7 @@ const insertCustomer = async (insertValues) => {
 			end_date: new Date('9999-04-01'),
 			brand_id: 0,
 			created_by: Number(insertValues.created_by),
-			updated_by: Number(insertValues.updated_by)
+			updated_by: Number(insertValues.updated_by),
 		},
 		{
 			center_id: Number(insertValues.center_id),
@@ -66,13 +71,16 @@ const insertCustomer = async (insertValues) => {
 			end_date: new Date('9999-04-01'),
 			brand_id: 0,
 			created_by: Number(insertValues.created_by),
-			updated_by: Number(insertValues.updated_by)
+			updated_by: Number(insertValues.updated_by),
 		},
 	];
 
 	const retVal = await insertCustomerDiscount(taxSlabArr);
 
-	const finalReturnValue = await insertCustomerShippingAddressBlock(insertValues, data.id);
+	const finalReturnValue = await insertCustomerShippingAddressBlock(
+		insertValues,
+		data.id
+	);
 
 	return finalReturnValue;
 };
@@ -101,7 +109,10 @@ const insertCustomerBlock = async (insertValues) => {
 	return bigIntToString(result);
 };
 
-const insertCustomerShippingAddressBlock = async (insertValues, customer_id) => {
+const insertCustomerShippingAddressBlock = async (
+	insertValues,
+	customer_id
+) => {
 	const result = await prisma.customer_shipping_address.create({
 		data: {
 			customer_id: Number(customer_id),
@@ -120,18 +131,18 @@ const insertCustomerShippingAddressBlock = async (insertValues, customer_id) => 
 };
 
 const updateCustomer = async (updateValues, id) => {
-	const result = await prisma.vendor.update({
+	const result = await prisma.customer.update({
 		where: {
 			id: Number(id),
 		},
 		data: {
-			center_id: updateValues.center_id,
-			vendor_name: updateValues.vendor_name,
+			// center: { center_id: Number(updateValues.center_id) },
+			name: updateValues.name,
 			address1: updateValues.address1,
 			address2: updateValues.address2,
 			address3: updateValues.address3,
 			district: updateValues.district,
-			state_id: updateValues.state_id,
+			state_id: Number(updateValues.state_id),
 			pin: updateValues.pin,
 			gst: updateValues.gst,
 			phone: updateValues.phone,
@@ -143,7 +154,7 @@ const updateCustomer = async (updateValues, id) => {
 	});
 	return bigIntToString(result);
 };
-
+// data: { user: { connect: { id: "123" } } }
 // fetch rows from discount tbl
 const getCustomerDiscount = async (center_id, customer_id) => {
 	const customerDiscountDetails = await prisma.discount.findMany({
@@ -289,8 +300,6 @@ FROM
 	let values = [center_id];
 
 	return promisifyQuery(query, values);
-
-
 };
 
 // insert row in discount tbl
@@ -411,31 +420,32 @@ const insertDiscountsByBrands = (insertValues) => {
 			type: insertValues.disc_type,
 			value: e.gst_value,
 			gst_slab: e.gst_slab,
-			
+
 			start_date: new Date(currentTimeInTimeZone('YYYY-MM-DD')),
 			end_date: new Date('9999-04-01'),
 		};
 
 		await insertCustomerDiscount(formObj);
 	});
-	return "success";
+	return 'success';
 };
 
 // SHIPPING ADDRESS
 // fetch rows from customer shipping address tbl
 const getCustomerShippingAddress = async (customer_id) => {
-	const customerShippingAddress = await prisma.customer_shipping_address.findMany({
-		where: {
-			is_active: 'A',
-			customer_id: Number(customer_id),
-		},
-		include: {
-			state: true,
-		},
-		orderBy: {
-			id: 'desc',
-		},
-	});
+	const customerShippingAddress =
+		await prisma.customer_shipping_address.findMany({
+			where: {
+				is_active: 'A',
+				customer_id: Number(customer_id),
+			},
+			include: {
+				state: true,
+			},
+			orderBy: {
+				id: 'desc',
+			},
+		});
 
 	return customerShippingAddress;
 };

@@ -20,6 +20,7 @@ const addItemHistory = async (itemHistory, prisma) => {
 				sale_det_id: Number(itemHistory.sale_det_id),
 				action: itemHistory.action,
 				action_type: itemHistory.action_type,
+				mrp: itemHistory.mrp,
 				txn_qty: Number(itemHistory.txn_qty),
 				stock_level: Number(itemHistory.stock_level),
 				txn_date: currentTimeInTimeZone(),
