@@ -10,11 +10,16 @@ async function insertProduct(product) {
 			let result = await ProductRepo.addProduct(product, prisma);
 
 			// prepare item history
-			let item_history = prepareItemHistory(product, result.id);
+			let item_history = prepareItemHistory(
+				product,
+				result.id,
+				product.created_by
+			);
 
 			// insert in item history table
 			let result1 = await ItemHistoryRepo.addItemHistory(
 				item_history,
+
 				prisma
 			);
 
@@ -28,7 +33,7 @@ async function insertProduct(product) {
 	}
 }
 
-const prepareItemHistory = (product, product_ref_id) => {
+const prepareItemHistory = (product, product_ref_id, user_id) => {
 	let item_history = {
 		center_id: product.center_id,
 		module: 'Purchase',
@@ -47,6 +52,7 @@ const prepareItemHistory = (product, product_ref_id) => {
 		sale_return_det_id: 0,
 		purchase_return_id: 0,
 		purchase_return_det_id: 0,
+		created_by: user_id,
 	};
 
 	return item_history;

@@ -85,7 +85,11 @@ const stockCorrection = catchAsync(async (req, res) => {
 	req.body.updated_by = Number(req.user.id);
 	req.body.center_id = req.user.center_id;
 
-	const data = await stockService.stockCorrection(req.body);
+	const data = await stockService.stockCorrection(
+		req.body,
+		req.user.center_id,
+		req.user.id
+	);
 	return responseForward(data, 'stockCorrection', res);
 });
 

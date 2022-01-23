@@ -19,6 +19,16 @@ const insertPurchase = catchAsync(async (req, res) => {
 	}
 });
 
+const deletePurchaseDetails = catchAsync(async (req, res) => {
+	const data = await purchaseService.deletePurchaseDetails(
+		req.body,
+		Number(req.user.center_id),
+		Number(req.user.id)
+	);
+	return responseForward(data, 'deletePurchaseDetails', res);
+});
+
 module.exports = {
 	insertPurchase,
+	deletePurchaseDetails,
 };

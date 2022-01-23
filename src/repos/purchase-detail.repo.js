@@ -108,8 +108,27 @@ const updatePurchaseDetailStockMRPChange = async (
 	return bigIntToString(result);
 };
 
+const deletePurchaseDetailById = async (purchase_detail_id, prisma) => {
+	try {
+		const result = await prisma.purchase_detail.delete({
+			where: {
+				id: Number(purchase_detail_id),
+			},
+		});
+
+		return bigIntToString(result);
+	} catch (error) {
+		console.log(
+			'error :: purchase-detail.repo.js deletePurchaseDetailById: ' +
+				error
+		);
+		throw error;
+	}
+};
+
 module.exports = {
 	addPurchaseDetail,
 	editPurchaseDetail,
 	updatePurchaseDetailStockMRPChange,
+	deletePurchaseDetailById,
 };

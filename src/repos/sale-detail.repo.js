@@ -106,8 +106,46 @@ const getSaleDetails = async (sale_id) => {
 	}
 };
 
+const getSaleDetailsTxn = async (sale_id, prisma) => {
+	try {
+		const result = await prisma.sale_detail.findMany({
+			where: {
+				sale_id: Number(sale_id),
+			},
+			include: {
+				product: true,
+				stock: true,
+			},
+		});
+		return bigIntToString(result);
+	} catch (error) {
+		throw new Error(
+			`error :: getSaleDetails sale-detail.repo.js ` + error.message
+		);
+	}
+};
+
+const deleteSaleDetailById = async (sale_detail_id, prisma) => {
+	try {
+		const result = await prisma.sale_detail.delete({
+			where: {
+				id: Number(sale_detail_id),
+			},
+		});
+
+		return bigIntToString(result);
+	} catch (error) {
+		console.log(
+			'error :: sale-detail.repo.js deleteSaleDetailById: ' + error
+		);
+		throw error;
+	}
+};
+
 module.exports = {
 	addSaleDetail,
 	editSaleDetail,
 	getSaleDetails,
+	getSaleDetailsTxn,
+	deleteSaleDetailById,
 };

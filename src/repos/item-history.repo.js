@@ -31,7 +31,7 @@ const addItemHistory = async (itemHistory, prisma) => {
 					itemHistory.purchase_return_det_id
 				),
 
-				created_by: itemHistory.created_by,
+				created_by: Number(itemHistory.created_by),
 				createdAt: currentTimeInTimeZone(),
 			},
 		});

@@ -1,3 +1,4 @@
+const { prisma } = require('../config/prisma');
 var pool = require('../config/db');
 
 const {
@@ -10,6 +11,7 @@ const { handleError, ErrorHandler } = require('../config/error');
 
 const StockRepo = require('../repos/stock.repo');
 const itemHistoryRepo = require('../repos/item-history.repo');
+const ItemHistoryRepo = require('../repos/item-history.repo');
 
 const insertItemHistoryTable = async (
 	center_id,
@@ -21,6 +23,7 @@ const insertItemHistoryTable = async (
 	sale_det_id,
 	action,
 	action_type,
+	mrp,
 	txn_qty,
 	sale_return_id,
 	sale_return_det_id,
@@ -30,10 +33,10 @@ const insertItemHistoryTable = async (
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `
-insert into item_history (center_id, module, product_ref_id, purchase_id, purchase_det_id, sale_id, sale_det_id, action, action_type, txn_qty, stock_level, txn_date, sale_return_id, sale_return_det_id, purchase_return_id, purchase_return_det_id)
+insert into item_history (center_id, module, product_ref_id, purchase_id, purchase_det_id, sale_id, sale_det_id, action, action_type, mrp, txn_qty, stock_level, txn_date, sale_return_id, sale_return_det_id, purchase_return_id, purchase_return_det_id)
 values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purchase_det_id}',
 '${sale_id}', '${sale_det_id}',
-'${action}', '${action_type}', '${txn_qty}', `;
+'${action}', '${action_type}', '${mrp}', '${txn_qty}', `;
 
 	// if (module !== 'Product') {
 	query =
@@ -48,15 +51,6 @@ values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purch
 
 	return promisifyQuery(query);
 };
-
-// const updateStock = (qty_to_update, product_id, mrp, mode) => {
-// 	let query =
-// 		mode === 'add'
-// 			? `update stock set available_stock =  available_stock + '${qty_to_update}' where product_id = '${product_id}' and mrp = '${mrp}' `
-// 			: `update stock set available_stock =  available_stock - '${qty_to_update}' where product_id = '${product_id}' and mrp = '${mrp}' `;
-
-// 	return promisifyQuery(query);
-// };
 
 // dinesh check
 // multiply by * -1 so that qty_to_update is minus, query works as expected
@@ -77,17 +71,6 @@ const isStockIdExist = async (k) => {
 	let data = promisifyQuery(query);
 	return data[0].count;
 };
-
-// const insertToStock = async (product_id, mrp, available_stock, open_stock) => {
-// 	let upDate = new Date();
-// 	let todayYYMMDD = toTimeZoneFormat(upDate, 'YYYY-MM-DD');
-
-// 	let query = `
-// 	insert into stock (product_id, mrp, available_stock, open_stock, updatedAt)
-// 	values ('${product_id}', '${mrp}', '${available_stock}', '${open_stock}' , '${todayYYMMDD}')`;
-
-// 	return promisifyQuery(query);
-// };
 
 // updateStock
 
@@ -159,19 +142,6 @@ const deleteProductFromStock = async (
 		result: data,
 	};
 };
-
-// const updateLatestProductMRP = async (product_id, center_id) => {
-// 	let query = `
-// 	update product set
-// mrp = (select max(mrp) from stock where
-// product_id = '${product_id}')
-// where
-// id = '${product_id}' and
-// center_id = '${center_id}'
-// `;
-
-// 	return promisifyQuery(query);
-// };
 
 const searchAllDraftPurchase = async (center_id) => {
 	let query = `select p.*, v.id as vendor_id, v.vendor_name as vendor_name,
@@ -482,76 +452,6 @@ pd.purchase_id = '${purchase_id}'
 	return promisifyQuery(sql);
 };
 
-const deletePurchaseDetails = async (requestBody) => {
-	let center_id = requestBody.center_id;
-	let id = requestBody.pur_det_id;
-	let purchase_id = requestBody.purchase_id;
-	let quantity = requestBody.quantity;
-	let product_id = requestBody.product_id;
-	let stock_id = requestBody.stock_id;
-	let mrp = requestBody.mrp;
-
-	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
-
-	let auditQuery = `
-	INSERT INTO audit (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
-	VALUES
-		('Purchase', '${purchase_id}', '${id}', 'delete', 
-		(SELECT CONCAT('[{', result, '}]') as final
-		FROM (
-			SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"purchaseId": ', purchase_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"quantity": "', quantity, '"')) SEPARATOR '},{') as result
-			FROM (
-				SELECT purchase_id, product_id, quantity
-				FROM purchase_detail where id = '${id}'
-			) t1
-		) t2)
-		, '', '${today}', '${center_id}'
-		) `;
-
-	// step 1
-	let auditPromise = promisifyQuery(auditQuery);
-
-	// step 2
-
-	let query = `
-			delete from purchase_detail where id = '${id}' `;
-
-	let deletePromise = promisifyQuery(query);
-
-	//
-
-	// step 3
-	let stockUpdatePromise = await updateStockViaId(
-		quantity,
-		product_id,
-		stock_id,
-		'minus'
-	);
-
-	// step 4 , reverse item history table entries.
-
-	let itemHistory = await insertItemHistoryTable(
-		center_id,
-		'Purchase',
-		product_id,
-		purchase_id,
-		id, //purchase_det_id
-		'0', // sale_id
-		'0', //sale_det_id
-		'PUR',
-		`Deleted MRP - ${mrp}`,
-		quantity, //txn_qty
-		'0', // sale_return_id
-		'0', // sale_return_det_id
-		'0', // purchase_return_id
-		'0' // purchase_return_det_id
-	);
-
-	return {
-		result: 'success',
-	};
-};
-
 const deletePurchaseById = async (purchase_id) => {
 	let purchaseDetails = await getPurchaseDetails(purchase_id);
 
@@ -597,69 +497,77 @@ pd.purchase_id = '${purchase_id}'
 	return promisifyQuery(query);
 }
 
-const deletePurchaseDetailsRecs = async (purchaseDetails, purchase_id) => {
-	let idx = 0;
+const stockCorrection = async (stock, center_id, user_id) => {
+	try {
+		const status = await prisma.$transaction(async (prisma) => {
+			let result = await StockRepo.stockCorrection(stock, user_id);
 
-	purchaseDetails.forEach(async (element, index) => {
-		idx = index + 1;
-		let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
+			// todo : update item history
+			let itemHistory = await prepareItemHistoryDelete(
+				center_id,
+				stock.product_id,
+				stock.id,
+				stock.available_stock,
+				stock.corrected_stock,
+				stock.mrp,
+				stock.reason,
+				user_id,
+				prisma
+			);
 
-		let auditQuery = `
-		INSERT INTO audit (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
-		VALUES
-			('Purchase', '${purchase_id}', '${element.pur_det_id}', 'delete', 
-			(SELECT CONCAT('[{', result, '}]') as final
-			FROM (
-				SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"purchaseId": ', purchase_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"qty": "', qty, '"')) SEPARATOR '},{') as result
-				FROM (
-					SELECT purchase_id, product_id, qty
-					FROM purchase_detail where id = '${element.pur_det_id}'
-				) t1
-			) t2)
-			, '', '${today}', (select center_id from purchase where id = '${purchase_id}')
-			) `;
+			let result3 = await ItemHistoryRepo.addItemHistory(
+				itemHistory,
+				prisma
+			);
 
-		// step 1
-		let auditPromise = await promisifyQuery(auditQuery);
-
-		// step 2
-		let query = `
-				delete from purchase_detail where id = '${element.id}' `;
-		let deletePromise = await promisifyQuery(query);
-
-		// step 3
-		let stockUpdatePromise = await updateStockViaId(
-			element.qty,
-			element.product_id,
-			element.stock_id,
-			'minus'
-		);
-	});
-
-	if (purchaseDetails.length === idx) {
-		return new Promise(function (resolve, reject) {
-			resolve('done');
-		}).catch(() => {
-			/* do whatever you want here */
+			return {
+				result: result,
+			};
 		});
+		return status;
+	} catch (error) {
+		console.log('Error while stockCorrection Stock.service.js ' + error);
+		throw error;
 	}
 };
 
-const deletePurchaseMasterById = async (purchase_id) => {
-	let query = `
-		delete from purchase where 
-	id = '${purchase_id}' `;
+const prepareItemHistoryDelete = async (
+	center_id,
+	product_id,
+	stock_id,
+	available_stock,
+	corrected_stock,
+	mrp,
+	reason,
+	user_id,
+	prisma
+) => {
+	const product_count = await StockRepo.stockCount(product_id, prisma);
 
-	let data = promisifyQuery(query);
-	return { result: 'success' };
-};
+	let itemHistory = {
+		center_id: center_id,
+		module: 'Stock Correction',
+		product_ref_id: product_id,
+		sale_id: '0',
+		sale_det_id: '0',
+		action: 'CUR',
+		action_type: `Correction - Old Qty: ${available_stock} - ${reason}`,
+		mrp: `${mrp}`,
 
-const stockCorrection = async (stock) => {
-	let result = await StockRepo.stockCorrection(stock);
+		txn_qty: corrected_stock,
+		stock_level: product_count,
+		txn_date: new Date(),
+		sale_return_id: 0,
+		sale_return_det_id: 0,
+		purchase_id: '0',
+		purchase_det_id: '0',
+		purchase_return_id: 0,
+		purchase_return_det_id: 0,
 
-	return {
-		result: result,
+		created_by: user_id,
 	};
+
+	return itemHistory;
 };
 
 module.exports = {
@@ -679,8 +587,8 @@ module.exports = {
 	deleteSaleDetails,
 	deleteItemHistory,
 	purchaseDetails,
-	deletePurchaseDetails,
+
 	deletePurchaseById,
-	deletePurchaseMasterById,
+
 	stockCorrection,
 };

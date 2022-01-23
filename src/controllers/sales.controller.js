@@ -10,12 +10,19 @@ const { SaleDetail } = require('../domain/SaleDetail');
 const { handleError, ErrorHandler } = require('../config/error');
 
 const getNextSaleInvoiceNoAsync = catchAsync(async (req, res) => {
-	const data = await salesService.getNextInvSequenceNo(req.user.center_id, req.params.invoice_type);
+	const data = await salesService.getNextInvSequenceNo(
+		req.user.center_id,
+		req.params.invoice_type
+	);
 	return responseForward(data, 'getNextSaleInvoiceNoAsync', res);
 });
 
 const deleteSalesDetails = catchAsync(async (req, res) => {
-	const data = await salesService.deleteSalesDetails(req.body);
+	const data = await salesService.deleteSalesDetailsEachTxn(
+		req.body,
+		req.user.center_id,
+		req.user.id
+	);
 	return responseForward(data, 'deleteSalesDetails', res);
 });
 
@@ -41,12 +48,20 @@ const convertSale = catchAsync(async (req, res) => {
 });
 
 const deleteSale = catchAsync(async (req, res) => {
-	const data = await salesService.deleteSale(req.params.id);
+	const data = await salesService.deleteSaleTxn(
+		req.params.id,
+		req.user.center_id,
+		req.user.id
+	);
 	return responseForward(data, 'deleteSale', res);
 });
 
 const deleteSaleMaster = catchAsync(async (req, res) => {
-	const data = await salesService.deleteSaleMaster(req.params.id);
+	const data = await salesService.deleteSaleMasterTxn(
+		req.params.id,
+		req.user.center_id,
+		req.user.id
+	);
 	return responseForward(data, 'deleteSaleMaster', res);
 });
 
@@ -71,7 +86,10 @@ const getPrintCounter = catchAsync(async (req, res) => {
 });
 
 const duplicateInvoiceNoCheck = catchAsync(async (req, res) => {
-	const data = await salesService.duplicateInvoiceNoCheck(req.body.invoice_no, req.user.center_id);
+	const data = await salesService.duplicateInvoiceNoCheck(
+		req.body.invoice_no,
+		req.user.center_id
+	);
 	return responseForward(data, 'duplicateInvoiceNoCheck', res);
 });
 

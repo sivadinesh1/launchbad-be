@@ -72,9 +72,20 @@ function convert_number(number) {
 		'Sixteen',
 		'Seventeen',
 		'Eighteen',
-		'Nineteen',
+		'Nineteen'
 	);
-	var tens = Array('', '', 'Twenty', 'Thirty', 'Fourty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety');
+	var tens = Array(
+		'',
+		'',
+		'Twenty',
+		'Thirty',
+		'Fourty',
+		'Fifty',
+		'Sixty',
+		'Seventy',
+		'Eighty',
+		'Ninety'
+	);
 
 	if (tn > 0 || one > 0) {
 		if (!(res == '')) {
@@ -133,7 +144,9 @@ function leftPad(value) {
 
 function formatSequenceNumber(sequence, type = '') {
 	console.log('formatSequenceNumber :: ' + sequence, type);
-	return `${type}${getCurrentYear()}/${getCurrentMonth()}/${leftPad(sequence)}`;
+	return `${type}${getCurrentYear()}/${getCurrentMonth()}/${leftPad(
+		sequence
+	)}`;
 }
 
 const encryptPassword = async (password) => {
@@ -172,7 +185,9 @@ const responseForward = (data, msg, res, status = 200) => {
 };
 
 const bigIntToString = (data) => {
-	const result = JSON.stringify(data, (key, value) => (typeof value === 'bigint' ? value.toString() : value));
+	const result = JSON.stringify(data, (key, value) =>
+		typeof value === 'bigint' ? value.toString() : value
+	);
 	return JSON.parse(result);
 };
 

@@ -215,7 +215,7 @@ group by
 sale_ref_id
 order by aging_days ${order}
 `;
-
+	console.log('dinesh getPendingReceivables :::', query);
 	return promisifyQuery(query);
 };
 
@@ -247,6 +247,8 @@ const getPendingInvoices = (center_id, customer_id) => {
 			ORDER BY 2,1 desc `;
 
 	// #AND T1.SaleType='stockissue' # stockissue / gstinvoice
+
+	console.log('dinesh get pending invoices :::', query);
 
 	return promisifyQuery(query);
 };

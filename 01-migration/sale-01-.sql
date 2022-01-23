@@ -30,6 +30,16 @@ update sale set invoice_date = (select date_format(str_to_date(invoice_date,'%d-
 
 ALTER TABLE sale CHANGE invoice_date invoice_date date;
 
+-- Processing Sale table : stock_issue_date_ref conversion
+
+update sale set stock_issue_date_ref = (select date_format(str_to_date(stock_issue_date_ref,'%d-%m-%Y'),'%Y-%m-%d')) where stock_issue_date_ref != ''; 
+
+
+update sale set stock_issue_date_ref = '9999-01-20' where stock_issue_date_ref = '';
+
+
+ALTER TABLE sale CHANGE stock_issue_date_ref stock_issue_date_ref date;
+
   -- Processing Sale table : Drop sale_datetime
 update sale set sale_datetime =
 (select date_format(str_to_date(sale_datetime,'%d-%m-%Y %k:%i:%s'),'%Y-%m-%d %k:%i:%s'));
@@ -63,7 +73,7 @@ add column updatedAt datetime,
 add column created_by bigint,
 add column updated_by bigint;
 
-
+update sale set payment_status = 'N';
 
 
 

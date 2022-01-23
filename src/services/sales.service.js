@@ -1,3 +1,4 @@
+var pool = require('../config/db');
 const { prisma } = require('../config/prisma');
 
 // Repors
@@ -13,7 +14,6 @@ const SaleLedgerRepo = require('../repos/sale-ledger.repo');
 
 // Services
 const { addSaleLedgerRecord } = require('./accounts.service');
-const { insertItemHistoryTable, updateStockViaId } = require('./stock.service');
 
 // model
 const { Ledger } = require('../domain/Ledger');
@@ -47,26 +47,6 @@ const getSalesMaster = async (sales_id) => {
 	customer c where s.customer_id = c.id and s.id = '${sales_id}' `;
 
 	return promisifyQuery(query);
-};
-
-const getSalesDetails = async (sales_id) => {
-	let result = await SaleDetailRepo.getSaleDetails(sales_id);
-	return result;
-
-	// let query = ` select sd.*, sd.id as id, sd.sale_id as sale_id,
-	// 						sd.product_id as product_id, sd.qty as qty,sd.unit_price as unit_price,
-	// 						sd.mrp as mrp, sd.batch_date as batch_date, sd.tax as tax, sd.igs_t as igs_t,
-	// 						sd.cgs_t as cgs_t, sd.sgs_t as sgs_t, sd.after_tax_value as tax_value,
-	// 						sd.total_value as total_value, p.product_code, p.product_description, p.packet_size, p.tax_rate,
-	// 						p.hsn_code, p.unit,
-	// 						s.id as stock_pk, s.mrp as stock_mrp, s.available_stock as stock_available_stock
-	// 						from
-	// 						sale_detail sd, product p, stock s
-	// 						where
-	// 						p.id = sd.product_id and s.product_id = p.id and
-	// 						s.id = sd.stock_id and sd.sale_id = '${sales_id}' `;
-
-	// return promisifyQuery(query);
 };
 
 const insertSale = async (saleMaster, saleDetails) => {
@@ -228,10 +208,12 @@ async function insertSaleDetails(saleMaster, saleDetails, sale_master, prisma) {
 				(saleMaster.status === 'D' &&
 					saleMaster.invoice_type === 'stockIssue')
 			) {
-				result3 = await ItemHistoryRepo.addItemHistory(
-					itemHistory,
-					prisma
-				);
+				if (itemHistory.txn_qty !== 0) {
+					let result3 = await ItemHistoryRepo.addItemHistory(
+						itemHistory,
+						prisma
+					);
+				}
 			}
 
 			if (
@@ -386,30 +368,28 @@ async function prepareAndAddCustomerChangeAudit(
 	sale_master,
 	prisma
 ) {
-	return new Promise(async (resolve, reject) => {
-		let audit = new Audit();
-		try {
-			audit.center_id = saleMaster.center_id;
-			audit.revision = 0;
-			audit.module = 'Ledger';
-			audit.module_ref_id = sale_master.id;
-			audit.module_ref_det_id = sale_master.id;
-			audit.action = 'Customer Updated';
-			audit.old_value = saleMaster.old_customer_id.toString();
-			audit.new_value = saleMaster.customer_id.toString();
-			audit.created_by = saleMaster.updated_by;
-			audit.updated_by = saleMaster.updated_by;
+	let audit = new Audit();
+	try {
+		audit.center_id = saleMaster.center_id;
+		audit.revision = 0;
+		audit.module = 'Ledger';
+		audit.module_ref_id = sale_master.id;
+		audit.module_ref_det_id = sale_master.id;
+		audit.action = 'Customer Updated';
+		audit.old_value = saleMaster.old_customer_id.toString();
+		audit.new_value = saleMaster.customer_id.toString();
+		audit.created_by = saleMaster.updated_by;
+		audit.updated_by = saleMaster.updated_by;
 
-			let auditResult = await AuditRepo.addAudit(audit, prisma);
-		} catch (error) {
-			console.log(
-				'error in Sales.Service.js :: prepareCustomerChangeAudit:: ' +
-					error
-			);
-			reject(error);
-		}
-		resolve(audit);
-	});
+		let auditResult = await AuditRepo.addAudit(audit, prisma);
+
+		return audit;
+	} catch (error) {
+		throw new Error(
+			`error :: prepareAndAddCustomerChangeAudit sales.service.js ` +
+				error.message
+		);
+	}
 }
 
 async function prepareItemHistory(
@@ -499,66 +479,6 @@ async function prepareItemHistory(
 	return itemHistory;
 }
 
-// Update Sequence in financial Year tbl DRAFT
-async function updateDraftSequenceGenerator(cloneReq) {
-	let query = '';
-
-	if (cloneReq.invoice_type === 'gstInvoice') {
-		query = `
-		update financial_year set draft_inv_seq = draft_inv_seq + 1 where 
-		center_id = '${cloneReq.center_id}' and  
-		CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
-	} else if (cloneReq.invoice_type === 'stockIssue') {
-		query = `
-	update financial_year set stock_issue_seq = stock_issue_seq + 1 where 
-	center_id = '${cloneReq.center_id}' and  
-	CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
-	}
-
-	return await promisifyQuery(query);
-}
-
-// format and send sequence #
-async function getSequenceNo(cloneReq) {
-	let invNoQry = '';
-	if (cloneReq.invoice_type === 'gstInvoice' && cloneReq.status !== 'D') {
-		invNoQry = ` select 
-		concat('${currentTimeInTimeZone('YY')}', "/", 
-		'${currentTimeInTimeZone(
-			'MM'
-		)}', "/", lpad(inv_seq, 5, "0")) as invNo from financial_year 
-				where 
-				center_id = '${cloneReq.center_id}' and  
-				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
-	} else if (
-		cloneReq.invoice_type === 'gstInvoice' &&
-		cloneReq.status === 'D'
-	) {
-		invNoQry = ` select concat("D/", 
-		'${currentTimeInTimeZone('YY')}', "/", 
-		'${currentTimeInTimeZone(
-			'MM'
-		)}', "/", lpad(draft_inv_seq, 5, "0")) as invNo from financial_year 
-							where 
-							center_id = '${cloneReq.center_id}' and  
-							CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
-	} else if (cloneReq.invoice_type === 'stockIssue') {
-		invNoQry = ` select concat('SI',"-",'${currentTimeInTimeZone(
-			'YY'
-		)}', "/", 
-		'${currentTimeInTimeZone(
-			'MM'
-		)}', "/", lpad(stock_issue_seq, 5, "0")) as invNo from financial_year 
-				where 
-				center_id = '${cloneReq.center_id}' and  
-				CURDATE() between str_to_date(start_date, '%d-%m-%Y') and str_to_date(end_date, '%d-%m-%Y') `;
-	}
-
-	let data = await promisifyQuery(invNoQry);
-
-	return data[0].invNo;
-}
-
 // check
 const updateProductAsync = async (k) => {
 	let query = ` update product set current_stock = (select sum(available_stock) 
@@ -566,25 +486,6 @@ const updateProductAsync = async (k) => {
 
 	return promisifyQuery(query);
 };
-
-// const getNextSaleinvoice_noAsync = async (center_id, invoice_type) => {
-// 	let query = '';
-
-// 	let invoice_year = currentTimeInTimeZone('Asia/Kolkata', 'YY');
-// 	let invoice_month = currentTimeInTimeZone('Asia/Kolkata', 'MM');
-
-// 	if (invoice_type === 'stockIssue') {
-// 		query = `select concat('SI',"-",'${invoice_year}', "/", '${invoice_month}', "/", lpad(stock_issue_seq + 1, 5, "0")) as NxtInvNo from financial_year  where
-// 					center_id = '${center_id}' and
-// 					CURDATE() between str_to_date(start_date, '%Y-%m-%d') and str_to_date(end_date, '%Y-%m-%d') `;
-// 	} else if (invoice_type === 'gstInvoice') {
-// 		query = `select concat('${invoice_year}', "/", '${invoice_month}', "/", lpad(inv_seq + 1, 5, "0")) as NxtInvNo from financial_year  where
-// 					center_id = '${center_id}' and
-// 					CURDATE() between str_to_date(start_date, '%Y-%m-%d') and str_to_date(end_date, '%Y-%m-%d') `;
-// 	}
-// 	console.log('@dinesh ' + query);
-// 	return promisifyQuery(query);
-// };
 
 const insertAuditTblforDeleteSaleDetailsRecAsync = async (element, sale_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
@@ -651,98 +552,6 @@ const duplicateinvoice_noCheck = (invoice_no, center_id) => {
 	return data[0].count;
 };
 
-const deleteSalesDetails = async (requestBody) => {
-	let center_id = requestBody.center_id;
-	let sale_det_id = requestBody.id;
-	let sale_id = requestBody.sale_id;
-	let quantity = requestBody.quantity;
-	let product_id = requestBody.product_id;
-	let stock_id = requestBody.stock_id;
-	let mrp = requestBody.mrp;
-	let audit_needed = requestBody.audit_needed;
-
-	if (audit_needed) {
-		let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
-
-		let query = `
-		INSERT INTO audit (module, module_ref_id, module_ref_det_id, action, old_value, new_value, audit_date, center_id)
-		VALUES
-			('Sales', '${sale_id}', '${sale_det_id}', 'delete', 
-			(SELECT CONCAT('[{', result, '}]') as final
-			FROM (
-				SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', sale_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"qty": "', quantity, '"')) SEPARATOR '},{') as result
-				FROM (
-					SELECT sale_id, product_id, quantity
-					FROM sale_detail where id = '${sale_det_id}'
-				) t1
-			) t2)
-			, '', '${today}', '${center_id}'
-			) `;
-
-		// step 1
-		let auditPromise = promisifyQuery(query);
-	}
-
-	// step 2
-	let deletePromise = deleteSaleDetail(sale_det_id);
-
-	// step 3 - Update Stock
-	let stockUpdatePromise = await updateStockViaId(
-		quantity,
-		product_id,
-		stock_id,
-		'add'
-	);
-
-	// step 4 - update item history table. as items are deleted, items has to be reversed
-	if (stockUpdatePromise.affectedRows === 1) {
-		let updateitemhistorytbl = await insertItemHistoryTable(
-			center_id,
-			'Sale',
-			product_id,
-			'0',
-			'0',
-			sale_id,
-			id,
-			'SAL',
-			`Deleted MRP - ${mrp}`,
-			quantity,
-			'0', // sale_return_id
-			'0', // sale_return_det_id
-			'0', // purchase_return_id
-			'0' // purchase_return_det_id
-		);
-
-		return {
-			result: 'success',
-		};
-	} else {
-		return {
-			result: 'failed',
-		};
-	}
-};
-
-// Update Sequence in financial Year tbl when its fresh sale insert
-async function updateSequenceGenerator(cloneReq) {
-	let query = '';
-
-	if (cloneReq.invoice_type === 'gstInvoice') {
-		query = `
-		update financial_year set inv_seq = inv_seq + 1 where 
-		center_id = '${cloneReq.center_id}' and  
-		CURDATE() between start_date and end_date `;
-	} else if (cloneReq.invoice_type === 'stockIssue') {
-		query = `		
-	update financial_year set 
-	stock_issue_seq = @stock_issue_seq:= stock_issue_seq + 1 where 
- center_id = '${cloneReq.center_id}' and  
- CURDATE() between start_date and end_date LIMIT 1  `;
-	}
-
-	return await promisifyQuery(query);
-}
-
 // convert stock issue to sale
 // 1. update sale table with status 'C' & sale type as 'gstInvoice'
 // 2. insert ledger with payment details
@@ -804,59 +613,72 @@ const convertSale = async (requestBody) => {
 	}
 };
 
-const deleteSale = async (sale_id) => {
-	let saleDetails = await getSalesDetails(sale_id);
+// const deleteSaleMaster = async (sale_id) => {
+// 	let query = `
+// 		delete from sale where
+// 	id = '${sale_id}' `;
 
-	let idx = 0;
+// 	let data = promisifyQuery(query);
+// 	return {
+// 		result: 'success',
+// 	};
+// };
 
-	let retValue = deleteSaleDetailsRecs(saleDetails, sale_id);
+const deleteSaleMasterTxn = async (sale_id, center_id, user_id) => {
+	try {
+		const status = await prisma.$transaction(async (prisma) => {
+			let result1 = await SaleRepo.deleteSaleMaster(sale_id, prisma);
 
-	if (retValue?.result === 'done') {
-		return {
-			result: 'success',
-		};
+			let result2 = await prepareAndDoSaleMasterDeleteAudit(
+				center_id,
+				sale_id,
+				user_id,
+				prisma
+			);
+
+			return {
+				result: 'success',
+			};
+		});
+		return status;
+	} catch (error) {
+		console.log('Error while deleteSaleMasterTxn Sale ' + error);
+		throw error;
 	}
 };
 
-function deleteSaleDetailsRecs(saleDetails, sale_id) {
-	let idx = 1;
+async function prepareAndDoSaleMasterDeleteAudit(
+	center_id,
 
-	saleDetails.forEach(async (element, index) => {
-		idx = index + 1;
-		// step 1
-		let p_audit = await insertAuditTblforDeleteSaleDetailsRecAsync(
-			element,
-			sale_id
+	sale_id,
+
+	user_id,
+	prisma
+) {
+	try {
+		let audit = {
+			center_id: center_id,
+			revision: 0,
+			module: 'Sale',
+			module_ref_id: sale_id,
+			module_ref_det_id: '0',
+			action: 'delete',
+			old_value: sale_id,
+			new_value: '',
+			created_by: user_id,
+			updated_by: user_id,
+		};
+
+		let auditResult = await AuditRepo.addAudit(audit, prisma);
+
+		return audit;
+	} catch (error) {
+		throw new Error(
+			`error :: prepareAndDoSaleDeleteAudit sale.service.js ` +
+				error.message
 		);
-
-		// step 2
-		let p_delete = await deleteSaleDetailsRecAsync(element);
-
-		// step 3
-
-		let p_stock_update = await updateStockViaId(
-			element.quantity,
-			element.product_id,
-			element.stock_id,
-			'add'
-		);
-	});
-
-	if (saleDetails.length === idx) {
-		return { result: 'done' };
 	}
 }
-
-const deleteSaleMaster = async (sale_id) => {
-	let query = `
-		delete from sale where 
-	id = '${sale_id}' `;
-
-	let data = promisifyQuery(query);
-	return {
-		result: 'success',
-	};
-};
 
 const updateGetPrintCounter = async (sale_id) => {
 	let response = await updatePrintCounter(sale_id);
@@ -864,9 +686,246 @@ const updateGetPrintCounter = async (sale_id) => {
 	return { counter };
 };
 
+const deleteSaleTxn = async (sale_id, center_id, user_id) => {
+	try {
+		const status = await prisma.$transaction(async (prisma) => {
+			let saleDetails = await SaleDetailRepo.getSaleDetailsTxn(
+				sale_id,
+				prisma
+			);
+
+			let retValue = await deleteSaleDetailsTxn(
+				saleDetails,
+				sale_id,
+				center_id,
+				user_id,
+				prisma
+			);
+
+			return {
+				status: 'success',
+				id: sale_id,
+				//		invoice_no: saleMaster.invoice_no,
+			};
+		});
+		return status;
+	} catch (error) {
+		console.log('Error while deleteSaleTxn Sale ' + error);
+		throw error;
+	}
+};
+
+const deleteSaleDetailsTxn = async (
+	saleDetails,
+	sale_id,
+	center_id,
+	user_id,
+	prisma
+) => {
+	for await (const item of saleDetails) {
+		try {
+			// step 1
+			// prepare audit table
+			let result1 = await prepareAndDoSaleDeleteAudit(
+				center_id,
+				item.id,
+				sale_id,
+				user_id,
+				prisma
+			);
+
+			// step 2
+			// delete sale details
+			let result2 = await SaleDetailRepo.deleteSaleDetailById(
+				item.id,
+				prisma
+			);
+
+			// step 3
+			let result3 = await StockRepo.stockAdd(
+				item.quantity,
+				item.stock_id,
+				user_id,
+				prisma
+			);
+
+			// step 4
+
+			let itemHistory = await prepareItemHistoryDelete(
+				center_id,
+				sale_id,
+				item.id,
+				item.product_id,
+				item.stock_id,
+				item.quantity,
+				item.mrp,
+				user_id,
+				prisma
+			);
+
+			result3 = await ItemHistoryRepo.addItemHistory(itemHistory, prisma);
+		} catch (error) {
+			throw new Error(
+				`error :: deleteSaleDetailsTxn sale.services.js ` +
+					error.message
+			);
+		}
+	}
+};
+
+async function prepareAndDoSaleDeleteAudit(
+	center_id,
+	sale_detail_id,
+	sale_id,
+
+	user_id,
+	prisma
+) {
+	let old_value = await SaleRepo.getOldValue(sale_detail_id, prisma);
+
+	try {
+		let audit = {
+			center_id: center_id,
+			revision: 0,
+			module: 'Sale',
+			module_ref_id: sale_id,
+			module_ref_det_id: sale_detail_id,
+			action: 'delete',
+			old_value: old_value,
+			new_value: '',
+			created_by: user_id,
+			updated_by: user_id,
+		};
+
+		let auditResult = await AuditRepo.addAudit(audit, prisma);
+
+		return audit;
+	} catch (error) {
+		throw new Error(
+			`error :: prepareAndDoSaleDeleteAudit sale.service.js ` +
+				error.message
+		);
+	}
+}
+
+const prepareItemHistoryDelete = async (
+	center_id,
+	sale_id,
+	sale_detail_id,
+	product_id,
+	stock_id,
+	quantity,
+	mrp,
+	user_id,
+	prisma
+) => {
+	const product_count = await StockRepo.stockCount(product_id, prisma);
+
+	let itemHistory = {
+		center_id: center_id,
+		module: 'Sale',
+		product_ref_id: product_id,
+		sale_id: sale_id,
+		sale_det_id: sale_detail_id,
+		action: 'SAL',
+		action_type: `Deleted`,
+		mrp: `${mrp}`,
+
+		txn_qty: quantity,
+		stock_level: product_count,
+		txn_date: new Date(),
+		sale_return_id: 0,
+		sale_return_det_id: 0,
+		purchase_id: '0',
+		purchase_det_id: '0',
+		purchase_return_id: 0,
+		purchase_return_det_id: 0,
+
+		created_by: user_id,
+	};
+
+	return itemHistory;
+};
+
+const getSalesDetails = async (sales_id) => {
+	let result = await SaleDetailRepo.getSaleDetails(sales_id);
+	return result;
+};
+
+const deleteSalesDetailsEachTxn = async (requestBody, center_id, user_id) => {
+	let sale_detail_id = requestBody.id;
+	let sale_id = requestBody.sale_id;
+	let quantity = requestBody.quantity;
+	let product_id = requestBody.product_id;
+	let stock_id = requestBody.stock_id;
+	let mrp = requestBody.mrp;
+	let audit_needed = requestBody.audit_needed;
+
+	try {
+		const status = await prisma.$transaction(async (prisma) => {
+			if (audit_needed) {
+				// step 1
+				// prepare audit table
+				let result1 = await prepareAndDoSaleDeleteAudit(
+					center_id,
+					sale_detail_id,
+					sale_id,
+					user_id,
+					prisma
+				);
+			}
+
+			// step 2
+			// delete sale details
+			let result2 = await SaleDetailRepo.deleteSaleDetailById(
+				sale_detail_id,
+				prisma
+			);
+
+			// step 3 - Update Stock
+			let result3 = await StockRepo.stockAdd(
+				quantity,
+				stock_id,
+				user_id,
+				prisma
+			);
+
+			let itemHistory = await prepareItemHistoryDelete(
+				center_id,
+				sale_id,
+				sale_detail_id,
+				product_id,
+				stock_id,
+				quantity,
+				mrp,
+				user_id,
+				prisma
+			);
+
+			result3 = await ItemHistoryRepo.addItemHistory(itemHistory, prisma);
+			return {
+				result: 'success',
+			};
+		});
+		return status;
+	} catch (error) {
+		console.log('Error while deleteSalesDetailsEachTxn Sale ' + error);
+		throw error;
+	}
+};
+
+// return {
+// 	result: 'success',
+// };
+// } else {
+// return {
+// 	result: 'failed',
+// };
+// }
+
 module.exports = {
 	getSalesMaster,
-	getSalesDetails,
+
 	insertSale,
 
 	updateProductAsync,
@@ -879,11 +938,13 @@ module.exports = {
 	updatePrintCounter,
 	getPrintCounter,
 	duplicateinvoice_noCheck,
-	deleteSalesDetails,
+
 	convertSale,
-	deleteSale,
-	deleteSaleMaster,
+	getSalesDetails,
 	updateGetPrintCounter,
+	deleteSaleTxn,
+	deleteSaleMasterTxn,
+	deleteSalesDetailsEachTxn,
 };
 
 // const [updateInvoiceSequenceGenerator] = await prisma.$transaction([

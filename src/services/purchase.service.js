@@ -7,16 +7,18 @@ const {
 } = require('../utils/utils');
 
 // repos
-const purchaseRepo = require('../repos/purchase.repo');
+const PurchaseRepo = require('../repos/purchase.repo');
 const PurchaseDetailRepo = require('../repos/purchase-detail.repo');
 const StockRepo = require('../repos/stock.repo');
 const ItemHistoryRepo = require('../repos/item-history.repo');
 const ProductRepo = require('../repos/product.repo');
 const VendorRepo = require('../repos/vendor.repo');
 const PurchaseLedgerRepo = require('../repos/purchase-ledger.repo');
+const AuditRepo = require('../repos/audit.repo');
 
 // domain
 const { PurchaseLedger } = require('../domain/PurchaseLedger');
+const { Audit } = require('../domain/Audit');
 
 const insertPurchase = async (purchaseObject, user_id) => {
 	// request object for purchase entry (both add & edit)
@@ -30,13 +32,13 @@ const insertPurchase = async (purchaseObject, user_id) => {
 			let purchase_master;
 			// if purchase_id not present its a add else its edit
 			if (purchase_object.purchase_id === '') {
-				purchase_master = await purchaseRepo.addPurchaseMaster(
+				purchase_master = await PurchaseRepo.addPurchaseMaster(
 					purchaseMaster,
 					user_id,
 					prisma
 				);
 			} else if (purchase_object.purchase_id !== '') {
-				purchase_master = await purchaseRepo.editPurchaseMaster(
+				purchase_master = await PurchaseRepo.editPurchaseMaster(
 					purchaseMaster,
 					user_id,
 					prisma
@@ -574,6 +576,151 @@ const updateVendorBalanceAmt = async (purchase_object, prisma) => {
 	}
 };
 
+// 1. Insert into audit
+// 2. Delete from purchase_details
+// 3. Update stock table
+// 4. Update History table
+// 5. Update vendor balance table (should it be done? - not yet done)
+const deletePurchaseDetails = async (requestBody, center_id, user_id) => {
+	let purchase_detail_id = requestBody.pur_det_id;
+	let purchase_id = requestBody.purchase_id;
+	let quantity = requestBody.quantity;
+	let product_id = requestBody.product_id;
+	let stock_id = requestBody.stock_id;
+	let mrp = requestBody.mrp;
+
+	try {
+		const response = await prisma.$transaction(async (prisma) => {
+			// 1. Insert into audit
+			let result = await prepareAndDoPurchaseDeleteAudit(
+				center_id,
+				purchase_detail_id,
+				purchase_id,
+
+				user_id,
+				prisma
+			);
+
+			//	2. Delete from purchase_details
+			let result1 = await PurchaseDetailRepo.deletePurchaseDetailById(
+				purchase_detail_id,
+				prisma
+			);
+
+			// 3. Update stock table
+			let result2 = await StockRepo.stockMinus(
+				quantity,
+				stock_id,
+				user_id,
+				prisma
+			);
+
+			// 4. add History table
+			let item_history = await prepareItemHistoryDelete(
+				center_id,
+				purchase_id,
+				purchase_detail_id,
+				product_id,
+				stock_id,
+				quantity,
+				mrp,
+				user_id,
+				prisma
+			);
+
+			let result3 = await ItemHistoryRepo.addItemHistory(
+				item_history,
+				prisma
+			);
+
+			return {
+				result: 'success',
+			};
+		});
+		return response;
+	} catch (error) {
+		console.log(
+			'Error while deletePurchaseDetails purchase.service.js ' + error
+		);
+		throw error;
+	}
+};
+
+const prepareItemHistoryDelete = async (
+	center_id,
+	purchase_id,
+	purchase_detail_id,
+	product_id,
+	stock_id,
+	quantity,
+	mrp,
+	user_id,
+	prisma
+) => {
+	const product_count = await StockRepo.stockCount(product_id, prisma);
+
+	let itemHistory = {
+		center_id: center_id,
+		module: 'Purchase',
+		product_ref_id: product_id,
+		sale_id: '0',
+		sale_det_id: '0',
+		action: 'PUR',
+		action_type: `Deleted`,
+		mrp: `${mrp}`,
+
+		txn_qty: quantity,
+		stock_level: product_count,
+		txn_date: new Date(),
+		sale_return_id: 0,
+		sale_return_det_id: 0,
+		purchase_id: purchase_id,
+		purchase_det_id: purchase_detail_id,
+		purchase_return_id: 0,
+		purchase_return_det_id: 0,
+
+		created_by: user_id,
+	};
+
+	return itemHistory;
+};
+
+async function prepareAndDoPurchaseDeleteAudit(
+	center_id,
+	purchase_detail_id,
+	purchase_id,
+
+	user_id,
+	prisma
+) {
+	let old_value = await PurchaseRepo.getOldValue(purchase_detail_id, prisma);
+
+	try {
+		let audit = {
+			center_id: center_id,
+			revision: 0,
+			module: 'Purchase',
+			module_ref_id: purchase_id,
+			module_ref_det_id: purchase_detail_id,
+			action: 'delete',
+			old_value: old_value,
+			new_value: '',
+			created_by: user_id,
+			updated_by: user_id,
+		};
+
+		let auditResult = await AuditRepo.addAudit(audit, prisma);
+
+		return audit;
+	} catch (error) {
+		throw new Error(
+			`error :: prepareAndAddPurchaseDeleteAudit purchase.service.js ` +
+				error.message
+		);
+	}
+}
+
 module.exports = {
 	insertPurchase,
+	deletePurchaseDetails,
 };

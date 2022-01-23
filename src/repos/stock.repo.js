@@ -46,7 +46,7 @@ const insertToStock = async (stock, prisma) => {
 const stockCount = async (product_id, prisma) => {
 	const result = await prisma.stock.aggregate({
 		where: {
-			product_id: product_id,
+			product_id: Number(product_id),
 		},
 		_sum: {
 			available_stock: true,
@@ -56,7 +56,7 @@ const stockCount = async (product_id, prisma) => {
 	return result._sum.available_stock;
 };
 
-const stockCorrection = async (stock) => {
+const stockCorrection = async (stock, user_id) => {
 	try {
 		const result = await prisma.stock.updateMany({
 			where: {
@@ -66,7 +66,7 @@ const stockCorrection = async (stock) => {
 
 			data: {
 				available_stock: Number(stock.corrected_stock),
-				updated_by: stock.created_by,
+				updated_by: Number(user_id),
 			},
 		});
 
@@ -95,7 +95,7 @@ const deleteProductFromStockTable = async (
 
 			data: {
 				is_active: is_active,
-				updated_by: user_id,
+				updated_by: Number(user_id),
 			},
 		});
 
@@ -112,14 +112,14 @@ const stockMinus = async (qty_to_update, stock_pk, updated_by, prisma) => {
 	try {
 		const result = await prisma.stock.updateMany({
 			where: {
-				id: stock_pk,
+				id: Number(stock_pk),
 			},
 
 			data: {
 				available_stock: {
-					decrement: qty_to_update,
+					decrement: Number(qty_to_update),
 				},
-				updated_by: updated_by,
+				updated_by: Number(updated_by),
 			},
 		});
 
@@ -138,9 +138,9 @@ const stockAdd = async (qty_to_update, stock_pk, updated_by, prisma) => {
 
 			data: {
 				available_stock: {
-					increment: qty_to_update,
+					increment: Number(qty_to_update),
 				},
-				updated_by: updated_by,
+				updated_by: Number(updated_by),
 			},
 		});
 

@@ -143,8 +143,39 @@ const updateSalePaymentStatus = async (sale_id, status) => {
 	}
 };
 
+const getOldValue = async (sale_detail_id, prisma) => {
+	const result =
+		await prisma.$queryRaw`(SELECT CONCAT('[{', result, '}]') as final
+		FROM (
+			SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"saleId": ', sale_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"quantity": "', quantity, '"')) SEPARATOR '},{') as result
+			FROM (
+				SELECT sale_id, product_id, quantity
+				FROM sale_detail where id = ${sale_detail_id}
+			) t1
+		) t2)`;
+
+	return result[0].final;
+};
+
+const deleteSaleMaster = async (sale_id, prisma) => {
+	try {
+		const result = await prisma.sale.delete({
+			where: {
+				id: Number(sale_id),
+			},
+		});
+
+		return bigIntToString(result);
+	} catch (error) {
+		console.log('error :: sale.repo.js deleteSaleMaster: ' + error);
+		throw error;
+	}
+};
+
 module.exports = {
 	addSaleMaster,
 	editSaleMaster,
 	updateSalePaymentStatus,
+	getOldValue,
+	deleteSaleMaster,
 };

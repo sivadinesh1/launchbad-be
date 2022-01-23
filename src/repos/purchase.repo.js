@@ -114,7 +114,38 @@ const editPurchaseMaster = async (purchase, user_id, prisma) => {
 	}
 };
 
+// const getOldValue = async (purchase_det_id) => {
+// 	let query =
+// 		`		(SELECT CONCAT('[{', result, '}]') as final
+// 	FROM (
+// 		SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"purchaseId": ', purchase_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"quantity": "', quantity, '"')) SEPARATOR '},{') as result
+// 		FROM (
+// 			SELECT purchase_id, product_id, quantity
+// 			FROM purchase_detail where id = ` +
+// 		purchase_det_id +
+// 		`
+// 		) t1
+// 	) t2)`;
+
+// 	return await promisifyQuery(query);
+// };
+
+const getOldValue = async (purchase_detail_id, prisma) => {
+	const result =
+		await prisma.$queryRaw`(SELECT CONCAT('[{', result, '}]') as final
+	 FROM (
+	 	SELECT GROUP_CONCAT(CONCAT_WS(',', CONCAT('"purchaseId": ', purchase_id), CONCAT('"productId": "', product_id, '"'), CONCAT('"quantity": "', quantity, '"')) SEPARATOR '},{') as result
+	 	FROM (
+	 		SELECT purchase_id, product_id, quantity
+	 		FROM purchase_detail where id = ${purchase_detail_id}
+	 	) t1
+	 ) t2)`;
+
+	return result[0].final;
+};
+
 module.exports = {
 	addPurchaseMaster,
 	editPurchaseMaster,
+	getOldValue,
 };
