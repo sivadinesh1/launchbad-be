@@ -2,7 +2,12 @@ var pool = require('../config/db');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
-const { toTimeZoneFormat, currentTimeInTimeZone, promisifyQuery } = require('../utils/utils');
+const {
+	toTimeZoneFormat,
+	currentTimeInTimeZone,
+	promisifyQuery,
+} = require('../utils/utils');
+const EnquiryRepo = require('../repos/enquiry.repo');
 
 const insertEnquiryDetail = async (k, jsonObj, tmp_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
@@ -72,7 +77,15 @@ const updateEnquiry = async (status, enqId, updated_by) => {
 	return promisifyQuery(query);
 };
 
-const updateEnquiryDetail = async (product_id, stock_id, allotedQty, processed, status, enquiry_detail_id, updated_by) => {
+const updateEnquiryDetail = async (
+	product_id,
+	stock_id,
+	allotedQty,
+	processed,
+	status,
+	enquiry_detail_id,
+	updated_by
+) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
 	let query = `update enquiry_detail `;
@@ -111,7 +124,15 @@ const updateEnquiryDetail = async (product_id, stock_id, allotedQty, processed, 
 	return promisifyQuery(query);
 };
 
-const insertBackOrder = async (center_id, customer_id, enquiry_detail_id, ask_quantity, reason, status, created_by) => {
+const insertBackOrder = async (
+	center_id,
+	customer_id,
+	enquiry_detail_id,
+	ask_quantity,
+	reason,
+	status,
+	created_by
+) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 	let now = currentTimeInTimeZone('DD-MM-YYYY');
 
@@ -149,7 +170,14 @@ const draftEnquiry = async (requestBody) => {
 
 		pool.query(upQry1, function (err, data) {
 			if (err) {
-				return handleError(new ErrorHandler('500', '/draft-enquiry update enquiry', err), res);
+				return handleError(
+					new ErrorHandler(
+						'500',
+						'/draft-enquiry update enquiry',
+						err
+					),
+					res
+				);
 			}
 		});
 
@@ -176,7 +204,14 @@ const draftEnquiry = async (requestBody) => {
 
 		pool.query(u_Qry, function (err, data) {
 			if (err) {
-				return handleError(new ErrorHandler('500', '/draft-enquiry update enquiry_detail', err), res);
+				return handleError(
+					new ErrorHandler(
+						'500',
+						'/draft-enquiry update enquiry_detail',
+						err
+					),
+					res
+				);
 			}
 		});
 	});
@@ -210,7 +245,15 @@ const moveToSale = async (requestBody) => {
 			// updt enq_det_tbl status as B , give_quantity = 0
 			// insert back order tbl with reason product code not found
 
-			let result = await updateEnquiryDetail('', '', '0', '', 'B', objValue.id, user_id);
+			let result = await updateEnquiryDetail(
+				'',
+				'',
+				'0',
+				'',
+				'B',
+				objValue.id,
+				user_id
+			);
 			let result1 = await insertBackOrder(
 				objValue.center_id,
 				objValue.customer_id,
@@ -219,17 +262,39 @@ const moveToSale = async (requestBody) => {
 				'Product Code Not found',
 				'O',
 				user_id,
-				res,
+				res
 			);
-		} else if (objValue.ask_quantity > objValue.give_quantity && objValue.give_quantity === 0) {
+		} else if (
+			objValue.ask_quantity > objValue.give_quantity &&
+			objValue.give_quantity === 0
+		) {
 			// item code is present but given qty is 0, so effectively this goes in to back order straight
 
 			const b_qty = objValue.ask_quantity - objValue.give_quantity;
 
-			let result = await updateEnquiryDetail(objValue.product_id, objValue.stock_id, '0', objValue.processed, 'B', objValue.id, user_id);
+			let result = await updateEnquiryDetail(
+				objValue.product_id,
+				objValue.stock_id,
+				'0',
+				objValue.processed,
+				'B',
+				objValue.id,
+				user_id
+			);
 
-			let result1 = await insertBackOrder(objValue.center_id, objValue.customer_id, objValue.id, b_qty, 'Zero Quantity Alloted', 'O', user_id);
-		} else if (objValue.ask_quantity > objValue.give_quantity && objValue.give_quantity !== 0) {
+			let result1 = await insertBackOrder(
+				objValue.center_id,
+				objValue.customer_id,
+				objValue.id,
+				b_qty,
+				'Zero Quantity Alloted',
+				'O',
+				user_id
+			);
+		} else if (
+			objValue.ask_quantity > objValue.give_quantity &&
+			objValue.give_quantity !== 0
+		) {
 			// p - partial fulfillment, customer asks 100 Nos, given 50 Nos
 			// up_dt enq_det_tbl status as P (Partial), give qty = actual given
 			// insert back order tbl with reason Partial fulfillment
@@ -243,7 +308,7 @@ const moveToSale = async (requestBody) => {
 				objValue.processed,
 				'P',
 				objValue.id,
-				user_id,
+				user_id
 			);
 
 			let result1 = await insertBackOrder(
@@ -254,9 +319,13 @@ const moveToSale = async (requestBody) => {
 				'Partial fulfillment',
 				'O',
 				user_id,
-				res,
+				res
 			);
-		} else if (objValue.give_quantity >= objValue.ask_quantity && objValue.product_id !== '' && objValue.product_id !== null) {
+		} else if (
+			objValue.give_quantity >= objValue.ask_quantity &&
+			objValue.product_id !== '' &&
+			objValue.product_id !== null
+		) {
 			// F- fulfilled
 			// up dt enq_det_tbl status as F, give qty = actual given
 
@@ -267,7 +336,7 @@ const moveToSale = async (requestBody) => {
 				objValue.processed,
 				'F',
 				objValue.id,
-				user_id,
+				user_id
 			);
 		}
 
@@ -347,46 +416,73 @@ const updateEnquiryDetails = async (requestBody) => {
 	});
 };
 
-const insertEnquiryDetails = async (requestBody) => {
-	let jsonObj = requestBody;
+// const insertEnquiryDetails = async (requestBody) => {
+// 	let jsonObj = requestBody;
+
+// 	var today = new Date();
+// 	let count = 0;
+
+// 	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
+
+// 	let query = `INSERT INTO enquiry ( center_id, customer_id, enquiry_date, e_status, remarks)
+// 							values ( '${jsonObj.center_id}', '${jsonObj.customer_ctrl.id}', '${today}', 'O','${jsonObj.remarks}')`;
+
+// 	pool.query(query, async function (err, data) {
+// 		if (err) {
+// 			return handleError(new ErrorHandler('500', 'error /insert-enquiry-details insert enquiry..step1..', err), res);
+// 		} else {
+// 			let tmp_id = data.insertId;
+
+// 			const prodArr = jsonObj['product_arr'];
+
+// 			for (const k of prodArr) {
+// 				await insertEnquiryDetail(k, jsonObj, tmp_id, (err, data) => {
+// 					if (err) {
+// 						let errTxt = err.message;
+
+// 						return handleError(new ErrorHandler('500', '/insert-enquiry-details', err), res);
+// 					} else {
+// 						let newPK = data.insertId;
+// 						// do nothing...
+// 					}
+// 				});
+
+// 				count++;
+// 				if (count === prodArr.length) {
+// 					return {
+// 						result: 'success',
+// 					};
+// 				}
+// 			}
+// 		}
+// 	});
+// };
+
+const insertEnquiryDetailsTxn = async (requestBody, center_id, user_id) => {
+	let enquiry = requestBody;
 
 	var today = new Date();
 	let count = 0;
 
-	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
+	try {
+		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
+		const status = await prisma.$transaction(async (prisma) => {
+			let result2 = await EnquiryRepo.AddEnquiry(
+				enquiry,
+				center_id,
+				user_id,
+				prisma
+			);
 
-	let query = `INSERT INTO enquiry ( center_id, customer_id, enquiry_date, e_status, remarks) 
-							values ( '${jsonObj.center_id}', '${jsonObj.customer_ctrl.id}', '${today}', 'O','${jsonObj.remarks}')`;
-
-	pool.query(query, async function (err, data) {
-		if (err) {
-			return handleError(new ErrorHandler('500', 'error /insert-enquiry-details insert enquiry..step1..', err), res);
-		} else {
-			let tmp_id = data.insertId;
-
-			const prodArr = jsonObj['product_arr'];
-
-			for (const k of prodArr) {
-				await insertEnquiryDetail(k, jsonObj, tmp_id, (err, data) => {
-					if (err) {
-						let errTxt = err.message;
-
-						return handleError(new ErrorHandler('500', '/insert-enquiry-details', err), res);
-					} else {
-						let newPK = data.insertId;
-						// do nothing...
-					}
-				});
-
-				count++;
-				if (count === prodArr.length) {
-					return {
-						result: 'success',
-					};
-				}
-			}
-		}
-	});
+			return {
+				result: 'success',
+				invoice_no: invNo,
+			};
+		});
+		return status;
+	} catch (error) {
+		console.log('Error while inserting Sale ' + error);
+	}
 };
 
 const addMoreEnquiryDetails = async (requestBody) => {
@@ -404,7 +500,10 @@ const addMoreEnquiryDetails = async (requestBody) => {
 
 	pool.query(query1, function (err, data) {
 		if (err) {
-			return handleError(new ErrorHandler('500', '/add-more-enquiry-details', err), res);
+			return handleError(
+				new ErrorHandler('500', '/add-more-enquiry-details', err),
+				res
+			);
 		} else {
 			return {
 				result: data.insertId,
@@ -436,7 +535,14 @@ const getEnquiryDetails = async (enq_id) => {
 		if (err) {
 			let errTxt = err.message;
 
-			return handleError(new ErrorHandler('500', `/get-enquiry-details/:enqid ${enq_id}`, err), res);
+			return handleError(
+				new ErrorHandler(
+					'500',
+					`/get-enquiry-details/:enqid ${enq_id}`,
+					err
+				),
+				res
+			);
 		} else {
 			enquiryDetails = data;
 			// do nothing...
@@ -447,7 +553,14 @@ const getEnquiryDetails = async (enq_id) => {
 		if (err) {
 			let errTxt = err.message;
 
-			return handleError(new ErrorHandler('500', `/get-enquiry-details/:enq-id ${enq_id} fetchCustomerDetailsByEnqId .`, err), res);
+			return handleError(
+				new ErrorHandler(
+					'500',
+					`/get-enquiry-details/:enq-id ${enq_id} fetchCustomerDetailsByEnqId .`,
+					err
+				),
+				res
+			);
 		} else {
 			customerDetails = data;
 			// do nothing...
@@ -506,7 +619,12 @@ const getCustomerData = async (enq_id) => {
 	return promisifyQuery(query);
 };
 
-const getEnquiredProductData = async (center_id, customer_id, enq_id, order_date) => {
+const getEnquiredProductData = async (
+	center_id,
+	customer_id,
+	enq_id,
+	order_date
+) => {
 	// fetch values only of enq detail status in {P - processed, F - fulfilled} B- back order is ignored
 	let query = `select a.product_code as product_code, a.product_description, a.mrp, a.tax_rate, b.available_stock,
 	ed.give_quantity as qty, a.unit_price, a.id as product_id, b.id as stock_pk, e.enquiry_date,
@@ -669,7 +787,12 @@ const deleteEnquiryDetails = async (requestBody) => {
 	let auditPromise = await new Promise(function (resolve, reject) {
 		pool.query(auditQuery, function (err, data) {
 			if (err) {
-				return reject(handleError(new ErrorHandler('500', '/delete-enquiry-details', err), res));
+				return reject(
+					handleError(
+						new ErrorHandler('500', '/delete-enquiry-details', err),
+						res
+					)
+				);
 			}
 			resolve(data);
 		});
@@ -682,7 +805,12 @@ const deleteEnquiryDetails = async (requestBody) => {
 
 		pool.query(query, function (err, data) {
 			if (err) {
-				return reject(handleError(new ErrorHandler('500', '/delete-enquiry-details', err), res));
+				return reject(
+					handleError(
+						new ErrorHandler('500', '/delete-enquiry-details', err),
+						res
+					)
+				);
 			}
 			resolve(data);
 		});
@@ -740,6 +868,7 @@ module.exports = {
 	update_statusEnquiryDetails,
 	updateEnquiryDetails,
 	insertEnquiryDetails,
+	insertEnquiryDetailsTxn,
 	addMoreEnquiryDetails,
 	openEnquiries,
 	getEnquiryDetails,

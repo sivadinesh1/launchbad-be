@@ -23,7 +23,10 @@ const updateGiveqtyEnquiryDetails = catchAsync(async (req, res) => {
 });
 
 const updateCustomerEnquiry = catchAsync(async (req, res) => {
-	const data = await enquiryService.updateCustomerEnquiry(req.params.id, req.params.enqid);
+	const data = await enquiryService.updateCustomerEnquiry(
+		req.params.id,
+		req.params.enqid
+	);
 
 	return responseForward(data, 'updateCustomerEnquiry', res);
 });
@@ -41,7 +44,11 @@ const updateEnquiryDetails = catchAsync(async (req, res) => {
 });
 
 const insertEnquiryDetails = catchAsync(async (req, res) => {
-	const data = await enquiryService.insertEnquiryDetails(req.body);
+	const data = await enquiryService.insertEnquiryDetailsTxn(
+		req.body,
+		req.user.center_id,
+		req.user.id
+	);
 
 	return responseForward(data, 'insertEnquiryDetails', res);
 });
@@ -53,7 +60,10 @@ const addMoreEnquiryDetails = catchAsync(async (req, res) => {
 });
 
 const openEnquiries = catchAsync(async (req, res) => {
-	const data = await enquiryService.openEnquiries(req.user.center_id, req.params.status);
+	const data = await enquiryService.openEnquiries(
+		req.user.center_id,
+		req.params.status
+	);
 
 	return responseForward(data, 'openEnquiries', res);
 });
@@ -81,7 +91,12 @@ const getEnquiredProductData = catchAsync(async (req, res) => {
 	let customer_id = req.params.customer_id;
 	let enqid = req.params.enqid;
 	let orderdate = req.params.invdt;
-	const data = await enquiryService.getEnquiredProductData(center_id, customer_id, enqid, orderdate);
+	const data = await enquiryService.getEnquiredProductData(
+		center_id,
+		customer_id,
+		enqid,
+		orderdate
+	);
 
 	return responseForward(data, 'getEnquiredProductData', res);
 });
