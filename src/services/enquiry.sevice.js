@@ -1,4 +1,5 @@
 var pool = require('../config/db');
+const { prisma } = require('../config/prisma');
 
 const { handleError, ErrorHandler } = require('../config/error');
 
@@ -8,6 +9,8 @@ const {
 	promisifyQuery,
 } = require('../utils/utils');
 const EnquiryRepo = require('../repos/enquiry.repo');
+const EnquiryDetailRepo = require('../repos/enquiry-detail.repo');
+const ProductRepo = require('../repos/product.repo');
 
 const insertEnquiryDetail = async (k, jsonObj, tmp_id) => {
 	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
@@ -19,36 +22,32 @@ const insertEnquiryDetail = async (k, jsonObj, tmp_id) => {
 };
 
 const fetchEnquiryDetailByEnqId = async (enq_id) => {
-	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
-
 	let query = `
 	select orig.*, s.available_stock, s.id as stock_pk
-from
-(select ed.*, c.id as customer_id, c.name, c.address1, c.address2, c.district, c.pin, c.gst, c.mobile2, e.remarks, e.e_status,
-	p.id as pid, p.center_id, p.brand_id, p.product_code as product_code, p.product_description as product_description, p.unit, p.packet_size, p.hsn_code,
-	p.current_stock, p.unit_price, p.mrp, p.purchase_price,
-	p.sales_price, p.rack_info, p.location, p.max_discount, p.tax_rate, 
-	p.minimum_quantity, p.item_discount, p.reorder_quantity, p.average_purchase_price,
-	p.average_sale_price, p.margin
-	from 
-	enquiry e,
-	customer c,
-	enquiry_detail ed
-	LEFT outer JOIN product p
-	ON p.id = ed.product_id where
-	e.id = ed.enquiry_id and
-	e.customer_id = c.id and e.id =  ${enq_id}) as orig
-	LEFT outer JOIN stock s
-	ON orig.product_id = s.product_id and
-	s.mrp = orig.mrp
+	from
+	(select ed.*, c.id as customer_id, c.name, c.address1, c.address2, c.district, c.pin, c.gst, c.mobile2, e.remarks, e.e_status,
+		p.id as pid,  p.brand_id,  p.product_description as product_description, p.packet_size, p.hsn_code,
+		p.current_stock, p.unit_price, p.mrp, p.purchase_price,
+		p.sales_price, p.rack_info, p.location, p.max_discount, p.tax_rate, 
+		p.minimum_quantity, p.item_discount, p.reorder_quantity, p.average_purchase_price,
+		p.average_sale_price, p.margin
+		from 
+		enquiry e,
+		customer c,
+		enquiry_detail ed
+		LEFT outer JOIN product p
+		ON p.id = ed.product_id where
+		e.id = ed.enquiry_id and
+		e.customer_id = c.id and e.id =  ${enq_id} ) as orig
+		LEFT outer JOIN stock s
+		ON orig.product_id = s.product_id and
+		s.mrp = orig.mrp
 	`;
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 };
 
 const fetchCustomerDetailsByEnqId = async (enq_id) => {
-	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
-
 	let query = `
 	select c.*, e.* from 
 enquiry e,
@@ -58,7 +57,7 @@ c.id = e.customer_id and
 e.id = ${enq_id}
 	`;
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 };
 
 const updateEnquiry = async (status, enqId, updated_by) => {
@@ -138,7 +137,7 @@ const insertBackOrder = async (
 
 	let query = `
 		insert into
-			backorder (center_id, customer_id, enquiry_detail_id, qty, reason, status, order_date, created_by, createdAt)
+			back_order (center_id, customer_id, enquiry_detail_id, qty, reason, status, order_date, created_by, createdAt)
 		VALUES ('${center_id}', '${customer_id}', '${enquiry_detail_id}', '${ask_quantity}', '${reason}', '${status}', '${now}', '${created_by}', '${today}') 
 	`;
 
@@ -461,14 +460,25 @@ const updateEnquiryDetails = async (requestBody) => {
 const insertEnquiryDetailsTxn = async (requestBody, center_id, user_id) => {
 	let enquiry = requestBody;
 
+	const prodArr = enquiry['product_arr'];
+
 	var today = new Date();
 	let count = 0;
 
 	try {
 		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
 		const status = await prisma.$transaction(async (prisma) => {
-			let result2 = await EnquiryRepo.AddEnquiry(
-				enquiry,
+			let result1 = await EnquiryRepo.AddEnquiry(
+				enquiry.customer_ctrl.id,
+				enquiry.remarks,
+				center_id,
+				user_id,
+				prisma
+			);
+
+			let result2 = await addEnquiryDetailTxn(
+				result1.id,
+				prodArr,
 				center_id,
 				user_id,
 				prisma
@@ -476,13 +486,68 @@ const insertEnquiryDetailsTxn = async (requestBody, center_id, user_id) => {
 
 			return {
 				result: 'success',
-				invoice_no: invNo,
 			};
 		});
 		return status;
 	} catch (error) {
 		console.log('Error while inserting Sale ' + error);
 	}
+};
+
+const addEnquiryDetailTxn = async (
+	enquiry_id,
+	prodArr,
+	center_id,
+	user_id,
+	prisma
+) => {
+	for await (const item of prodArr) {
+		let product_id = await getProductId(
+			item.product_code,
+			center_id,
+			prisma
+		);
+
+		let result_final = await addEnquiryDetailEach(
+			enquiry_id,
+			center_id,
+			product_id,
+			item.quantity,
+			item.product_code,
+			item.notes,
+			'O',
+			user_id,
+			prisma
+		);
+	}
+};
+
+const getProductId = async (product_code, center_id, prisma) => {
+	return await ProductRepo.getProductId(product_code, center_id, prisma);
+};
+
+const addEnquiryDetailEach = async (
+	enquiry_id,
+	center_id,
+	product_id,
+	ask_quantity,
+	product_code,
+	notes,
+	status,
+	user_id,
+	prisma
+) => {
+	return await EnquiryDetailRepo.AddEnquiryDetail(
+		enquiry_id,
+		center_id,
+		product_id,
+		ask_quantity,
+		product_code,
+		notes,
+		status,
+		user_id,
+		prisma
+	);
 };
 
 const addMoreEnquiryDetails = async (requestBody) => {
@@ -524,53 +589,17 @@ const openEnquiries = async (center_id, status) => {
 	order by 
 	enquiry_date desc`;
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 };
 
 const getEnquiryDetails = async (enq_id) => {
-	let enquiryDetails;
-	let customerDetails;
+	let enquiryDetails = await fetchEnquiryDetailByEnqId(enq_id);
+	let customerDetails = await fetchCustomerDetailsByEnqId(enq_id);
 
-	await fetchEnquiryDetailByEnqId(enq_id, (err, data) => {
-		if (err) {
-			let errTxt = err.message;
-
-			return handleError(
-				new ErrorHandler(
-					'500',
-					`/get-enquiry-details/:enqid ${enq_id}`,
-					err
-				),
-				res
-			);
-		} else {
-			enquiryDetails = data;
-			// do nothing...
-		}
-	});
-
-	await fetchCustomerDetailsByEnqId(enq_id, (err, data) => {
-		if (err) {
-			let errTxt = err.message;
-
-			return handleError(
-				new ErrorHandler(
-					'500',
-					`/get-enquiry-details/:enq-id ${enq_id} fetchCustomerDetailsByEnqId .`,
-					err
-				),
-				res
-			);
-		} else {
-			customerDetails = data;
-			// do nothing...
-		}
-	});
-
-	return res.json({
+	return {
 		enquiryDetails: enquiryDetails,
 		customerDetails: customerDetails,
-	});
+	};
 };
 
 const getEnquiryMaster = async (enq_id) => {
@@ -601,7 +630,7 @@ const getEnquiryMaster = async (enq_id) => {
 	
 	`;
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 };
 
 const getCustomerData = async (enq_id) => {
@@ -616,7 +645,7 @@ const getCustomerData = async (enq_id) => {
 	e.id = ${enq_id}
 	`;
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 };
 
 const getEnquiredProductData = async (
@@ -670,42 +699,45 @@ discount.brand_id = 0 )
 };
 
 const getBackOrder = async (center_id) => {
-	let sql = `SELECT c.name as customer_name, p.product_code as product_code, p.id as product_id,
-	p.product_description as description, ed.notes, ed.ask_quantity, ed.give_quantity, b.reason, b.order_date, s.available_stock
-	FROM 
-	backorder b, 
-	enquiry_detail ed,
-	product p,
-	stock s, customer c
-	WHERE 
-	s.product_id = p.id and c.id = b.customer_id and
-	b.enquiry_detail_id = ed.id and
-	p.id = ed.product_id and
-	b.center_id = '${center_id}' and
-	str_to_date(order_date, '%d-%m-%YYYY') BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()
-	union all
-	SELECT c.name as customer_name, "N/A" as product_code, "N/A" as product_id, "N/A" as description, ed.notes, ed.ask_quantity, ed.give_quantity, b.reason, 
-	b.order_date, "N/A" as available_stock FROM 
-	backorder b, customer c,
-	enquiry_detail ed
-	WHERE 
-	b.enquiry_detail_id = ed.id and
-	c.id = b.customer_id and
-	ed.product_id is null and
-	b.center_id = '${center_id}' and
-	str_to_date(order_date, '%d-%m-%YYYY') BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW();
+	let query = ` 
+	SELECT c.name as customer_name, p.product_code as product_code, p.id as product_id,
+		p.product_description as description, ed.notes, ed.ask_quantity, ed.give_quantity, b.reason, b.order_date, s.available_stock
+		FROM 
+		back_order b, 
+		enquiry_detail ed,
+		product p,
+		stock s, customer c
+		WHERE 
+		s.product_id = p.id and c.id = b.customer_id and
+		b.enquiry_detail_id = ed.id and
+		p.id = ed.product_id and
+		b.center_id = '${center_id}' and
+	order_date BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW()
+		union all
+		SELECT c.name as customer_name, "N/A" as product_code, "N/A" as product_id, "N/A" as description, ed.notes, ed.ask_quantity, ed.give_quantity, b.reason, 
+		b.order_date, "N/A" as available_stock FROM 
+		back_order b, customer c,
+		enquiry_detail ed
+		WHERE 
+		b.enquiry_detail_id = ed.id and
+		c.id = b.customer_id and
+		ed.product_id is null and
+		b.center_id = '${center_id}' and
+		order_date BETWEEN DATE_SUB(NOW(), INTERVAL 30 DAY) AND NOW();
 	`;
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 };
 
-const searchEnquiries = async (requestBody) => {
-	let center_id = requestBody.center_id;
+const searchEnquiries = async (requestBody, center_id) => {
 	let status = requestBody.status;
 	let customer_id = requestBody.customer_id;
 	let from_date = requestBody.from_date;
 	let to_date = requestBody.to_date;
 	let order = requestBody.order;
+
+	let offset = requestBody.offset;
+	let length = requestBody.length;
 
 	if (from_date !== '') {
 		from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD');
@@ -744,9 +776,9 @@ const searchEnquiries = async (requestBody) => {
 	c.id = e.customer_id and
 
 	e.center_id =  '${center_id}' and
-	str_to_date(DATE_FORMAT(enquiry_date,'%d-%m-%YYYY') , '%d-%m-%YYYY') between
-	str_to_date('${from_date}', '%d-%m-%YYYY') and
-	str_to_date('${to_date}', '%d-%m-%YYYY')  `;
+	enquiry_date between
+	'${from_date}' and
+	'${to_date}'  `;
 
 	if (customer_id !== 'all') {
 		query = query + customer_sql;
@@ -756,9 +788,54 @@ const searchEnquiries = async (requestBody) => {
 		query = query + ` and e.e_status =  '${status}' `;
 	}
 
-	query = query + `order by enquiry_date ${order} `;
+	query = query + `order by enquiry_date ${order} limit ${offset}, ${length}`;
 
-	return promisifyQuery(query);
+	console.log('enq... search query..' + query);
+
+	let result1 = await promisifyQuery(query);
+
+	let result2 = await searchEnquiriesCountStar(requestBody, center_id);
+
+	return { full_count: result2[0].full_count, result: result1 };
+};
+
+const searchEnquiriesCountStar = async (requestBody, center_id) => {
+	let status = requestBody.status;
+	let customer_id = requestBody.customer_id;
+	let from_date = requestBody.from_date;
+	let to_date = requestBody.to_date;
+
+	if (from_date !== '') {
+		from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD');
+	}
+
+	if (to_date !== '') {
+		to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD');
+	}
+
+	let customer_sql = `and e.customer_id = '${customer_id}' `;
+
+	let query = `select count(*) as full_count
+	from
+	enquiry e,
+	customer c
+	where
+	c.id = e.customer_id and
+
+	e.center_id =  '${center_id}' and
+	enquiry_date between
+	'${from_date}' and
+	'${to_date}'  `;
+
+	if (customer_id !== 'all') {
+		query = query + customer_sql;
+	}
+
+	if (status !== 'all') {
+		query = query + ` and e.e_status =  '${status}' `;
+	}
+	console.log('dineshKK ' + query);
+	return await promisifyQuery(query);
 };
 
 const deleteEnquiryDetails = async (requestBody) => {
@@ -867,7 +944,7 @@ module.exports = {
 	updateCustomerEnquiry,
 	update_statusEnquiryDetails,
 	updateEnquiryDetails,
-	insertEnquiryDetails,
+	// insertEnquiryDetails,
 	insertEnquiryDetailsTxn,
 	addMoreEnquiryDetails,
 	openEnquiries,

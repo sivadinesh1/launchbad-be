@@ -27,24 +27,25 @@ const updateEnquiryAfterSale = async (enq_id, saleId, prisma) => {
 	return bigIntToString(result);
 };
 
-const AddEnquiry = async (enquiry, center_id, user_id, prisma) => {
+const AddEnquiry = async (customer_id, remarks, center_id, user_id, prisma) => {
 	try {
 		const result = await prisma.enquiry.create({
 			data: {
-				center_id: center_id,
-				customer_id: enquiry.customer_id,
+				center_id: Number(center_id),
+				customer_id: Number(customer_id),
 				enquiry_date: currentTimeInTimeZone(),
 				e_status: 'O',
-				remarks: enquiry.remarks,
+				remarks: remarks,
 				createdAt: currentTimeInTimeZone(),
-				created_by: user_id,
+				created_by: Number(user_id),
 			},
 		});
 
 		return bigIntToString(result);
 	} catch (error) {
-		console.log('error :: AddEnquiry enquiry.repo.js ' + error);
-		throw error;
+		throw new Error(
+			`error :: AddEnquiry enquiry.repo.js ..` + error.message
+		);
 	}
 };
 

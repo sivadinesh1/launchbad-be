@@ -122,6 +122,37 @@ const isProductExists = async (product_code, center_id, prisma) => {
 		throw new Error(`Errored while isProductExists ..` + error.message);
 	}
 };
+// select id from product where product_code='${jsonObj.product_code}'
+// 							and center_id = '${jsonObj.center_id}'),
+
+// const brandRepoGetAllBrands = async (center_id, status) => {
+// 	const result = await prisma.brand.findMany({
+// 		where: {
+// 			center_id: Number(center_id),
+// 			is_active: status,
+// 		},
+// 		orderBy: {
+// 			brand_name: 'asc',
+// 		},
+// 	});
+// 	return bigIntToString(result);
+// };
+
+const getProductId = async (product_code, center_id, prisma) => {
+	try {
+		const result = await prisma.product.findMany({
+			where: {
+				center_id: Number(center_id),
+				product_code: escapeText(product_code),
+			},
+		});
+
+		return bigIntToString(result[0].id);
+	} catch (error) {
+		console.log('error :: getProductId: product.repo.js ' + error);
+		throw new Error(`Errored while getProductId ..` + error.message);
+	}
+};
 
 //public async updateProduct(product: IProduct) {
 const searchProduct = async (
@@ -224,4 +255,5 @@ module.exports = {
 	isProductExists,
 	searchProduct,
 	updateLatestPurchasePrice,
+	getProductId,
 };

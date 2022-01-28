@@ -549,7 +549,7 @@ model audit {
 
 }
 
-model backorder {
+model back_order {
   id                BigInt    @id @default(autoincrement())
   center_id         BigInt
   customer_id       BigInt
@@ -574,34 +574,34 @@ model enquiry {
   enquiry_date   DateTime @default(now())
   e_status       String   @default("A") @db.VarChar(100)
   remarks        String   @default("") @db.VarChar(200)
-  sale_id        BigInt
-  processed_date DateTime
+  sale_id        BigInt?
+  processed_date DateTime?
 
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
   created_by BigInt?
   updated_by BigInt?
 
-  center         center           @relation(fields: [center_id], references: [id])
-  customer       customer         @relation(fields: [customer_id], references: [id])
-  sale           sale             @relation(fields: [sale_id], references: [id])
+  center         center[]           @relation(fields: [center_id], references: [id])
+  customer       customer[]         @relation(fields: [customer_id], references: [id])
+  sale           sale[]             @relation(fields: [sale_id], references: [id])
   enquiry_detail enquiry_detail[]
 
 }
 
 model enquiry_detail {
-  id        BigInt @id @default(autoincrement())
+  id        BigInt @id  @default(autoincrement())
   center_id BigInt
 
   enquiry_id    BigInt
-  product_id    BigInt
-  product_code  String @default("") @db.VarChar(50)
-  stock_id      BigInt
-  ask_quantity  Int
-  give_quantity Int
-  notes         String @default("") @db.VarChar(50)
-  status        String @default("") @db.VarChar(10)
-  processed     String @default("NO") @db.VarChar(20)
+  product_id    BigInt?
+  product_code  String?  @default("") @db.VarChar(50)
+  stock_id      BigInt?
+  ask_quantity  Int?
+  give_quantity Int?
+  notes         String?  @default("") @db.VarChar(50)
+  status        String  @default("") @db.VarChar(10)
+  processed     String?  @default("NO") @db.VarChar(20)
 
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
@@ -610,8 +610,8 @@ model enquiry_detail {
 
   center  center  @relation(fields: [center_id], references: [id])
   enquiry enquiry @relation(fields: [enquiry_id], references: [id])
-  product product @relation(fields: [product_id], references: [id])
-  stock   stock   @relation(fields: [stock_id], references: [id])
+  product product[] @relation(fields: [product_id], references: [id])
+  stock   stock[]   @relation(fields: [stock_id], references: [id])
 
 }
 

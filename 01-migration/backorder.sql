@@ -1,4 +1,4 @@
-
+RENAME TABLE backorder TO back_order;
 
 ALTER TABLE backorder 
 change qty quantity bigint,

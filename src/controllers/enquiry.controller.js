@@ -108,7 +108,10 @@ const getBackOrder = catchAsync(async (req, res) => {
 });
 
 const searchEnquiries = catchAsync(async (req, res) => {
-	const data = await enquiryService.searchEnquiries(req.body);
+	const data = await enquiryService.searchEnquiries(
+		req.body,
+		req.user.center_id
+	);
 
 	return responseForward(data, 'searchEnquiries', res);
 });
