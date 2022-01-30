@@ -3,8 +3,8 @@ var pool = require('../../config/db');
 const { handleError, ErrorHandler } = require('../../config/error');
 const { promisifyQuery } = require('../../utils/utils');
 
-const getProductInventoryReport = (requestBody) => {
-	const [center_id, product_code, product_id] = Object.values(requestBody);
+const getProductInventoryReport = async (requestBody, center_id) => {
+	const [product_id] = Object.values(requestBody);
 
 	let query = ` select ih.id, module, p.id as product_id, p.product_code as product_code, p.product_description as product_description,
   p.mrp as mrp,
@@ -54,8 +54,8 @@ const getProductInventoryReport = (requestBody) => {
   `;
 	// product_ref_id = '${product_id}'
 	// lateer include this to the search, as of now, fetch all
-
-	return promisifyQuery(query);
+	console.log('dinesh sql search>> ' + query);
+	return await promisifyQuery(query);
 };
 
 // used in product correction

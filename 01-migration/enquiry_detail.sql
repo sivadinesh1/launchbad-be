@@ -9,6 +9,8 @@ change createdby created_by bigint;
 alter table enquiry_detail
 add column center_id bigint after id;
 
+ALTER TABLE enquiry_detail
+	DROP FOREIGN KEY enq_detail_prod;
 
 update enquiry_detail ed  set
 center_id = (select e.center_id from 

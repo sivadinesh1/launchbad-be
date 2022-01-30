@@ -10,6 +10,7 @@ const {
 } = require('../utils/utils');
 const EnquiryRepo = require('../repos/enquiry.repo');
 const EnquiryDetailRepo = require('../repos/enquiry-detail.repo');
+const BackOrderRepo = require('../repos/back-order.repo');
 const ProductRepo = require('../repos/product.repo');
 
 const insertEnquiryDetail = async (k, jsonObj, tmp_id) => {
@@ -220,23 +221,36 @@ const draftEnquiry = async (requestBody) => {
 	};
 };
 
-const moveToSale = async (requestBody) => {
-	let jsonObj = requestBody.enquries;
-	let user_id = requestBody.user_id;
+const moveToSale = async (requestBody, center_id, user_id) => {
+	let enqArrays = requestBody.enquiries;
 
-	let today = new Date();
-	let now = new Date();
+	// get all enquiries key values
+	var keysArrays = Object.keys(enqArrays);
 
-	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
-	now = currentTimeInTimeZone('DD-MM-YYYY');
+	try {
+		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
+		const status = await prisma.$transaction(async (prisma) => {
+			let result = await processEnquiries(
+				enqArrays,
+				center_id,
+				user_id,
+				prisma
+			);
 
-	var objectKeysArray = Object.keys(jsonObj);
+			return {
+				result: 'success',
+			};
+		});
+		return status;
+	} catch (error) {
+		console.log('Error while inserting Sale ' + error);
+	}
 
 	let idx = 1;
 
 	// iterate each record from enquiry detail
-	objectKeysArray.forEach(async (objKey, index) => {
-		var objValue = jsonObj[objKey];
+	keysArrays.forEach(async (objKey, index) => {
+		var objValue = enqArrays[objKey];
 
 		/** No Product Id, obviously its a back order */
 		if (objValue.product_id === '' || objValue.product_id === null) {
@@ -339,11 +353,55 @@ const moveToSale = async (requestBody) => {
 			);
 		}
 
-		if (objectKeysArray.length === idx) {
-			finalEnquiryStatusUpdate(jsonObj, user_id);
+		if (keysArrays.length === idx) {
+			finalEnquiryStatusUpdate(enqArrays, user_id);
 		}
 		idx = idx + 1;
 	});
+};
+
+const processEnquiries = async (enqArrays, center_id, user_id, prisma) => {
+	for await (const item of enqArrays) {
+		const customer_id = item.customer_id;
+		const product_id = item.product_id;
+		const stock_id = item.stock_id;
+		const give_quantity = item.give_quantity;
+		const ask_quantity = item.ask_quantity;
+		const processed = item.processed;
+		const enquiry_detail_id = item.id;
+
+		if (product_id === '' || product_id === null) {
+			// status b - full back order
+			// update enq_det_tbl status as B , give_quantity = 0
+			let result1 = await EnquiryDetailRepo.UpdateEnquiryDetail(
+				enquiry_detail_id,
+				product_id,
+				stock_id,
+				'0',
+				processed,
+				'B',
+				user_id,
+				prisma
+			);
+
+			let backOrderObject = {
+				customer_id,
+				enquiry_detail_id,
+				ask_quantity,
+				reason: 'Product Code Not found',
+				status: 'O',
+			};
+
+			let result2 = await BackOrderRepo.addBackOrder(
+				backOrderObject,
+				center_id,
+				user_id,
+				prisma
+			);
+
+			// insert back order tbl with reason product code not found
+		}
+	}
 };
 
 const finalEnquiryStatusUpdate = async (jsonObj, user_id) => {
@@ -502,16 +560,17 @@ const addEnquiryDetailTxn = async (
 	prisma
 ) => {
 	for await (const item of prodArr) {
-		let product_id = await getProductId(
-			item.product_code,
-			center_id,
-			prisma
-		);
+		// if(item.product_code !== '')
+		// let product_id = await getProductId(
+		// 	item.product_code,
+		// 	center_id,
+		// 	prisma
+		// );
 
 		let result_final = await addEnquiryDetailEach(
 			enquiry_id,
 			center_id,
-			product_id,
+			item.product_id !== '' ? item.product_id : null,
 			item.quantity,
 			item.product_code,
 			item.notes,
@@ -522,9 +581,9 @@ const addEnquiryDetailTxn = async (
 	}
 };
 
-const getProductId = async (product_code, center_id, prisma) => {
-	return await ProductRepo.getProductId(product_code, center_id, prisma);
-};
+// const getProductId = async (product_code, center_id, prisma) => {
+// 	return await ProductRepo.getProductId(product_code, center_id, prisma);
+// };
 
 const addEnquiryDetailEach = async (
 	enquiry_id,
@@ -550,32 +609,51 @@ const addEnquiryDetailEach = async (
 	);
 };
 
-const addMoreEnquiryDetails = async (requestBody) => {
-	let jsonObj = requestBody;
+const addMoreEnquiryDetails = async (requestBody, center_id, user_id) => {
+	let enquiry_id = requestBody.enquiry_id;
+	let product_id = requestBody.product_id;
+	let ask_quantity = requestBody.ask_quantity;
+	let product_code = requestBody.product_code;
+	let notes = requestBody.notes;
+	let status = requestBody.status;
 
 	var today = new Date();
 
 	today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	let query1 = `INSERT INTO enquiry_detail ( enquiry_id, product_id, ask_quantity, product_code, notes, status)
-							values ( '${jsonObj.enquiry_id}', 
-							(select id from product where product_code='${jsonObj.product_code}' 
-							and center_id = '${jsonObj.center_id}'), 
-							'${jsonObj.ask_quantity}', '${jsonObj.product_code}', '${jsonObj.notes}', 'O')`;
+	let data = await addEnquiryDetailEach(
+		enquiry_id,
+		center_id,
+		product_id,
+		ask_quantity,
+		product_code,
+		notes,
+		'O',
+		user_id,
+		prisma
+	);
 
-	pool.query(query1, function (err, data) {
-		if (err) {
-			return handleError(
-				new ErrorHandler('500', '/add-more-enquiry-details', err),
-				res
-			);
-		} else {
-			return {
-				result: data.insertId,
-			};
-		}
-	});
+	// let query = `INSERT INTO enquiry_detail ( enquiry_id, product_id, ask_quantity, product_code, notes, status)
+	// 						values ( '${jsonObj.enquiry_id}',
+	// 						(select id from product where product_code='${jsonObj.product_code}'
+	// 						and center_id = '${jsonObj.center_id}'),
+	// 						'${jsonObj.ask_quantity}', '${jsonObj.product_code}', '${jsonObj.notes}', 'O')`;
+
+	// // insertId
+	// let data = await promisifyQuery(query);
+	// console.log('dinesh ' + JSON.stringify(data));
+	return data;
 };
+
+// enquiry_id,
+// center_id,
+// product_id,
+// ask_quantity,
+// product_code,
+// notes,
+// status,
+// user_id,
+// prisma
 
 const openEnquiries = async (center_id, status) => {
 	let query = `select e.id, e.enquiry_date, e.e_status, c.name as customer_name,
@@ -740,11 +818,13 @@ const searchEnquiries = async (requestBody, center_id) => {
 	let length = requestBody.length;
 
 	if (from_date !== '') {
-		from_date = toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD');
+		from_date =
+			toTimeZoneFormat(requestBody.from_date, 'YYYY-MM-DD') + ' 00:00:00';
 	}
 
 	if (to_date !== '') {
-		to_date = toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD');
+		to_date =
+			toTimeZoneFormat(requestBody.to_date, 'YYYY-MM-DD') + ' 23:59:59';
 	}
 
 	let customer_sql = `and e.customer_id = '${customer_id}' `;
@@ -960,3 +1040,19 @@ module.exports = {
 	getEnquiryById,
 	getCustomerDetailsById,
 };
+
+// id:2293
+// invoice_no:null
+// mrp:490
+// notes:'Kit- Valve Guide With Stem Seal (Rb22)'
+// packet_size:1
+// processed:'YS'
+// product_code:'P000214'
+// product_desc:'Kit- Valve Guide With Stem Seal (Rb22)'
+// product_id:65616
+// qty:1
+// rack:null
+// status:'P'
+// stock_id:null
+// unit_price:279.06
+// __proto__:Object

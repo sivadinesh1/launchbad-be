@@ -11,7 +11,11 @@ const draftEnquiry = catchAsync(async (req, res) => {
 });
 
 const moveToSale = catchAsync(async (req, res) => {
-	const data = await enquiryService.moveToSale(req.body);
+	const data = await enquiryService.moveToSale(
+		req.body,
+		req.user.center_id,
+		req.user.id
+	);
 
 	return responseForward(data, 'moveToSale', res);
 });
@@ -54,7 +58,11 @@ const insertEnquiryDetails = catchAsync(async (req, res) => {
 });
 
 const addMoreEnquiryDetails = catchAsync(async (req, res) => {
-	const data = await enquiryService.addMoreEnquiryDetails(req.body);
+	const data = await enquiryService.addMoreEnquiryDetails(
+		req.body,
+		req.user.center_id,
+		req.user.id
+	);
 
 	return responseForward(data, 'addMoreEnquiryDetails', res);
 });

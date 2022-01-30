@@ -49,7 +49,7 @@ values ('${center_id}', '${module}', '${product_id}', '${purchase_id}', '${purch
 		`	
 			 '${today}', '${sale_return_id}', '${sale_return_det_id}', '${purchase_return_id}', '${purchase_return_det_id}' ) `;
 
-	return promisifyQuery(query);
+	return await promisifyQuery(query);
 };
 
 // dinesh check

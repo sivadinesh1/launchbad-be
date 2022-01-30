@@ -229,7 +229,7 @@ model product {
   stock                  stock[]
   purchase_detail        purchase_detail[]
   item_history           item_history[]
-  enquiry_detail         enquiry_detail[]
+  
   sale_detail            sale_detail[]
 }
 
@@ -525,7 +525,7 @@ model stock {
   product    product?  @relation(fields: [product_id], references: [id])
 
   purchase_detail purchase_detail[]
-  enquiry_detail  enquiry_detail[]
+  
   sale_detail     sale_detail[]
 
 }
@@ -610,8 +610,7 @@ model enquiry_detail {
 
   center  center  @relation(fields: [center_id], references: [id])
   enquiry enquiry @relation(fields: [enquiry_id], references: [id])
-  product product[] @relation(fields: [product_id], references: [id])
-  stock   stock[]   @relation(fields: [stock_id], references: [id])
+  
 
 }
 

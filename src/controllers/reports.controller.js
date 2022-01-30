@@ -19,7 +19,8 @@ const fullStockReport = catchAsync(async (req, res) => {
 
 const getProductInventoryReport = catchAsync(async (req, res) => {
 	const data = await inventoryReportsService.getProductInventoryReport(
-		req.body
+		req.body,
+		req.user.center_id
 	);
 	return responseForward(data, 'getProductInventoryReport', res);
 });

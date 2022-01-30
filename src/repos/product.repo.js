@@ -138,21 +138,21 @@ const isProductExists = async (product_code, center_id, prisma) => {
 // 	return bigIntToString(result);
 // };
 
-const getProductId = async (product_code, center_id, prisma) => {
-	try {
-		const result = await prisma.product.findMany({
-			where: {
-				center_id: Number(center_id),
-				product_code: escapeText(product_code),
-			},
-		});
+// const getProductId = async (product_code, center_id, prisma) => {
+// 	try {
+// 		const result = await prisma.product.findMany({
+// 			where: {
+// 				center_id: Number(center_id),
+// 				product_code: escapeText(product_code),
+// 			},
+// 		});
 
-		return bigIntToString(result[0].id);
-	} catch (error) {
-		console.log('error :: getProductId: product.repo.js ' + error);
-		throw new Error(`Errored while getProductId ..` + error.message);
-	}
-};
+// 		return bigIntToString(result[0].id);
+// 	} catch (error) {
+// 		console.log('error :: getProductId: product.repo.js ' + error);
+// 		throw new Error(`Errored while getProductId ..` + error.message);
+// 	}
+// };
 
 //public async updateProduct(product: IProduct) {
 const searchProduct = async (
@@ -255,5 +255,4 @@ module.exports = {
 	isProductExists,
 	searchProduct,
 	updateLatestPurchasePrice,
-	getProductId,
 };
