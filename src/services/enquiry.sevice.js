@@ -61,20 +61,29 @@ e.id = ${enq_id}
 	return await promisifyQuery(query);
 };
 
-const updateEnquiry = async (status, enqId, updated_by) => {
-	let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
+const updateEnquiry = async (status, enq_id, updated_by) => {
+	const updateEnqStatus = await EnquiryRepo.updateEnquiry(
+		status,
+		enq_id,
+		updated_by,
+		prisma
+	);
 
-	let query = `update enquiry 
-			set
-				e_status = '${status}',
-				processed_date = '${today}',
-				updated_by = '${updated_by}',
-				updatedAt = '${today}'
+	return updateEnqStatus;
 
-			where
-				id = '${enqId}' `;
+	// let today = currentTimeInTimeZone('YYYY-MM-DD HH:mm:ss');
 
-	return promisifyQuery(query);
+	// let query = `update enquiry
+	// 		set
+	// 			e_status = '${status}',
+	// 			processed_date = '${today}',
+	// 			updated_by = '${updated_by}',
+	// 			updatedAt = '${today}'
+
+	// 		where
+	// 			id = '${enqId}' `;
+
+	// return promisifyQuery(query);
 };
 
 const updateEnquiryDetail = async (
@@ -145,87 +154,83 @@ const insertBackOrder = async (
 	return promisifyQuery(query);
 };
 
-const getSuccessfullyProcessedItems = async (enquiry_id) => {
-	let query = `
-	select
-		count(*) as count
-	from 
-		enquiry_detail e
-	where
-		enquiry_id = '${enquiry_id}' and
-		e.status in ('P', 'F')`;
+// countOfSuccessfullyProcessedItems
 
-	return promisifyQuery(query)[0].count;
+const getSuccessfullyProcessedItems = async (enquiry_id, prisma) => {
+	let count = await EnquiryDetailRepo.countOfSuccessfullyProcessedItems(
+		enquiry_id,
+		prisma
+	);
+
+	return count;
+
+	// let query = `
+	// select
+	// 	count(*) as count
+	// from
+	// 	enquiry_detail e
+	// where
+	// 	enquiry_id = '${enquiry_id}' and
+	// 	e.status in ('P', 'F')`;
+
+	// return promisifyQuery(query)[0].count;
 };
 
-const draftEnquiry = async (requestBody) => {
-	let jsonObj = requestBody;
+const draftEnquiry = async (requestBody, center_id, user_id) => {
+	let enquiryArray = requestBody;
 
-	var objectKeysArray = Object.keys(jsonObj);
-	objectKeysArray.forEach(function (objKey) {
-		var objValue = jsonObj[objKey];
+	try {
+		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
+		const status = await prisma.$transaction(async (prisma) => {
+			let result = await EnquiryRepo.updateEnquiryStatus(
+				enquiryArray[0].enquiry_id,
+				'D',
 
-		// first update enquiry table with STATUS = 'D'
-		let upQry1 = `update enquiry set e_status = 'D' where id = '${objValue.enquiry_id}' `;
+				prisma
+			);
 
-		pool.query(upQry1, function (err, data) {
-			if (err) {
-				return handleError(
-					new ErrorHandler(
-						'500',
-						'/draft-enquiry update enquiry',
-						err
-					),
-					res
-				);
-			}
+			let result1 = await loopThroughEnquiryDetails(
+				enquiryArray,
+				user_id,
+				prisma
+			);
 		});
+		return {
+			result: 'success',
+		};
+	} catch (error) {
+		console.log('Error while draftEnquiry ' + error);
+	}
+};
 
-		// then update enquiry details table with STATUS = 'D' & with updated values
-		let upQuery1 = `update enquiry_detail
-		set
-		product_id = '${objValue.product_id}',
-		stock_id = ${objValue.stock_id},
-		give_quantity = '${objValue.give_quantity}',
-		processed = '${objValue.processed}',
-		status = 'D'
-		where id = '${objValue.id}' `;
+const loopThroughEnquiryDetails = async (enquiryArray, user_id, prisma) => {
+	for await (const item of enquiryArray) {
+		let enquiry_detail_id = item.id;
+		let product_id = item.product_id === null ? null : item.product_id;
+		let stock_id =
+			item.stock_id === null || item.stock_id === undefined
+				? null
+				: item.stock_id;
+		let give_quantity = item.give_quantity;
+		let processed = item.processed;
+		let status = 'D';
 
-		let upQuery2 = `update enquiry_detail
-			set
-			product_id = null,
-			stock_id = null,
-			give_quantity = '${objValue.give_quantity}',
-			processed = '${objValue.processed}',
-			status = 'D'
-			where id = '${objValue.id}' `;
-
-		let u_Qry = objValue.product_id === null ? upQuery2 : upQuery1;
-
-		pool.query(u_Qry, function (err, data) {
-			if (err) {
-				return handleError(
-					new ErrorHandler(
-						'500',
-						'/draft-enquiry update enquiry_detail',
-						err
-					),
-					res
-				);
-			}
-		});
-	});
-
-	return {
-		result: 'success',
-	};
+		let result = await EnquiryDetailRepo.UpdateEnquiryDetail(
+			enquiry_detail_id,
+			product_id,
+			stock_id,
+			give_quantity,
+			processed,
+			status,
+			user_id,
+			prisma
+		);
+	}
 };
 
 const moveToSale = async (requestBody, center_id, user_id) => {
 	let enqArrays = requestBody.enquiries;
-
-	// get all enquiries key values
-	var keysArrays = Object.keys(enqArrays);
+	let enquiry_id = enqArrays[0].enquiry_id;
 
 	try {
 		// (1) Updates inv_seq in tbl financial_year, then {returns} formatted sequence {YY/MM/inv_seq}
@@ -237,134 +242,27 @@ const moveToSale = async (requestBody, center_id, user_id) => {
 				prisma
 			);
 
+			let result1 = await finalEnquiryStatusUpdate(
+				enquiry_id,
+				user_id,
+				prisma
+			);
+
 			return {
 				result: 'success',
 			};
 		});
 		return status;
 	} catch (error) {
-		console.log('Error while inserting Sale ' + error);
+		console.log('Error while moveToSale ' + error);
 	}
-
-	let idx = 1;
-
-	// iterate each record from enquiry detail
-	keysArrays.forEach(async (objKey, index) => {
-		var objValue = enqArrays[objKey];
-
-		/** No Product Id, obviously its a back order */
-		if (objValue.product_id === '' || objValue.product_id === null) {
-			// b - full back order
-			// updt enq_det_tbl status as B , give_quantity = 0
-			// insert back order tbl with reason product code not found
-
-			let result = await updateEnquiryDetail(
-				'',
-				'',
-				'0',
-				'',
-				'B',
-				objValue.id,
-				user_id
-			);
-			let result1 = await insertBackOrder(
-				objValue.center_id,
-				objValue.customer_id,
-				objValue.id,
-				objValue.ask_quantity,
-				'Product Code Not found',
-				'O',
-				user_id,
-				res
-			);
-		} else if (
-			objValue.ask_quantity > objValue.give_quantity &&
-			objValue.give_quantity === 0
-		) {
-			// item code is present but given qty is 0, so effectively this goes in to back order straight
-
-			const b_qty = objValue.ask_quantity - objValue.give_quantity;
-
-			let result = await updateEnquiryDetail(
-				objValue.product_id,
-				objValue.stock_id,
-				'0',
-				objValue.processed,
-				'B',
-				objValue.id,
-				user_id
-			);
-
-			let result1 = await insertBackOrder(
-				objValue.center_id,
-				objValue.customer_id,
-				objValue.id,
-				b_qty,
-				'Zero Quantity Alloted',
-				'O',
-				user_id
-			);
-		} else if (
-			objValue.ask_quantity > objValue.give_quantity &&
-			objValue.give_quantity !== 0
-		) {
-			// p - partial fulfillment, customer asks 100 Nos, given 50 Nos
-			// up_dt enq_det_tbl status as P (Partial), give qty = actual given
-			// insert back order tbl with reason Partial fulfillment
-
-			const b_qty = objValue.ask_quantity - objValue.give_quantity;
-
-			let result = await updateEnquiryDetail(
-				objValue.product_id,
-				objValue.stock_id,
-				objValue.give_quantity,
-				objValue.processed,
-				'P',
-				objValue.id,
-				user_id
-			);
-
-			let result1 = await insertBackOrder(
-				objValue.center_id,
-				objValue.customer_id,
-				objValue.id,
-				b_qty,
-				'Partial fulfillment',
-				'O',
-				user_id,
-				res
-			);
-		} else if (
-			objValue.give_quantity >= objValue.ask_quantity &&
-			objValue.product_id !== '' &&
-			objValue.product_id !== null
-		) {
-			// F- fulfilled
-			// up dt enq_det_tbl status as F, give qty = actual given
-
-			let result = await updateEnquiryDetail(
-				objValue.product_id,
-				objValue.stock_id,
-				objValue.give_quantity,
-				objValue.processed,
-				'F',
-				objValue.id,
-				user_id
-			);
-		}
-
-		if (keysArrays.length === idx) {
-			finalEnquiryStatusUpdate(enqArrays, user_id);
-		}
-		idx = idx + 1;
-	});
 };
 
 const processEnquiries = async (enqArrays, center_id, user_id, prisma) => {
 	for await (const item of enqArrays) {
 		const customer_id = item.customer_id;
-		const product_id = item.product_id;
-		const stock_id = item.stock_id;
+		const product_id = item.product_id === '' ? null : item.product_id;
+		const stock_id = item.stock_id === '' ? null : item.stock_id;
 		const give_quantity = item.give_quantity;
 		const ask_quantity = item.ask_quantity;
 		const processed = item.processed;
@@ -392,40 +290,113 @@ const processEnquiries = async (enqArrays, center_id, user_id, prisma) => {
 				status: 'O',
 			};
 
+			// insert back order tbl with reason product code not found
 			let result2 = await BackOrderRepo.addBackOrder(
 				backOrderObject,
 				center_id,
 				user_id,
 				prisma
 			);
+		} else if (ask_quantity > give_quantity && give_quantity === 0) {
+			// item code is present but given qty is 0, so effectively this goes in to back order straight
+			const b_qty = ask_quantity - give_quantity;
 
-			// insert back order tbl with reason product code not found
+			// let result = await updateEnquiryDetail(objValue.product_id,
+			// 	objValue.stockid, '0', objValue.processed, 'B', objValue.id, userid, res);
+
+			let result3 = await EnquiryDetailRepo.UpdateEnquiryDetail(
+				enquiry_detail_id,
+				product_id,
+				stock_id,
+				'0',
+				processed,
+				'B',
+				user_id,
+				prisma
+			);
+
+			let backOrderObject = {
+				customer_id,
+				enquiry_detail_id,
+				ask_quantity,
+				reason: 'Zero Quantity Alloted',
+				status: 'O',
+			};
+
+			let result4 = await BackOrderRepo.addBackOrder(
+				backOrderObject,
+				center_id,
+				user_id,
+				prisma
+			);
+		} else if (ask_quantity > give_quantity && give_quantity !== 0) {
+			// p - partial fulfillment, customer asks 100 Nos, given 50 Nos
+			// update enq_det_tbl status as P (Partial), give qty = actual given
+			// insert back order tbl with reason Partial full fulfillment
+
+			const b_qty = ask_quantity - give_quantity;
+
+			let result4 = await EnquiryDetailRepo.UpdateEnquiryDetail(
+				enquiry_detail_id,
+				product_id,
+				stock_id,
+				give_quantity,
+				processed,
+				'P',
+				user_id,
+				prisma
+			);
+
+			let backOrderObject = {
+				customer_id,
+				enquiry_detail_id,
+				b_qty,
+				reason: 'Partial fulfillment',
+				status: 'O',
+			};
+
+			let result5 = await BackOrderRepo.addBackOrder(
+				backOrderObject,
+				center_id,
+				user_id,
+				prisma
+			);
+		} else if (
+			give_quantity >= ask_quantity &&
+			product_id !== '' &&
+			product_id !== null
+		) {
+			// F- fulfilled
+			// update enq_det_tbl status as F, give qty = actual given
+
+			let result4 = await EnquiryDetailRepo.UpdateEnquiryDetail(
+				enquiry_detail_id,
+				product_id,
+				stock_id,
+				give_quantity,
+				processed,
+				'F',
+				user_id,
+				prisma
+			);
 		}
 	}
 };
 
-const finalEnquiryStatusUpdate = async (jsonObj, user_id) => {
-	let rows = await getSuccessfullyProcessedItems(jsonObj[0].enquiry_id);
+const finalEnquiryStatusUpdate = async (enquiry_id, user_id, prisma) => {
+	let rows = await getSuccessfullyProcessedItems(enquiry_id, prisma);
 
 	let final_result = '';
 
 	if (rows === 0) {
 		// E - executed means will not appear in open enquiry page
-		final_result = await updateEnquiry('E', jsonObj[0].enquiry_id, user_id);
+		final_result = await updateEnquiry('E', enquiry_id, user_id);
 	} else {
 		// P - processed, ready for sale in open enquiry page
-		final_result = await updateEnquiry('P', jsonObj[0].enquiry_id, user_id);
+		final_result = await updateEnquiry('P', enquiry_id, user_id);
 	}
 
-	if (final_result === 'success') {
-		return {
-			result: 'success',
-		};
-	} else {
-		return {
-			result: 'failure',
-		};
-	}
+	return final_result;
 };
 
 const updateGiveQuantityEnquiryDetails = async (requestBody) => {
@@ -870,8 +841,6 @@ const searchEnquiries = async (requestBody, center_id) => {
 
 	query = query + `order by enquiry_date ${order} limit ${offset}, ${length}`;
 
-	console.log('enq... search query..' + query);
-
 	let result1 = await promisifyQuery(query);
 
 	let result2 = await searchEnquiriesCountStar(requestBody, center_id);
@@ -914,7 +883,7 @@ const searchEnquiriesCountStar = async (requestBody, center_id) => {
 	if (status !== 'all') {
 		query = query + ` and e.e_status =  '${status}' `;
 	}
-	console.log('dineshKK ' + query);
+
 	return await promisifyQuery(query);
 };
 

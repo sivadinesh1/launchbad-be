@@ -81,7 +81,42 @@ const UpdateEnquiryDetail = async (
 	}
 };
 
+// const getSuccessfullyProcessedItems = async (enquiry_id) => {
+// 	let query = `
+// 	select
+// 		count(*) as count
+// 	from
+// 		enquiry_detail e
+// 	where
+// 		enquiry_id = '${enquiry_id}' and
+// 		e.status in ('P', 'F')`;
+
+// 	return promisifyQuery(query)[0].count;
+// };
+
+// await prisma.product.findMany({
+// 	where: {
+// 		AND: [
+// 			{ price: 21.99 },
+// 			{ filters: { some: { name: 'ram', value: '8GB' } } },
+// 			{ filters: { some: { name: 'storage', value: '256GB' } } },
+// 		],
+// 	},
+// })
+
+const countOfSuccessfullyProcessedItems = async (enquiry_id, prisma) => {
+	let count = await prisma.enquiry_detail.findMany({
+		where: {
+			enquiry_id: Number(enquiry_id),
+			OR: [{ status: 'P' }, { status: 'F' }],
+		},
+	});
+
+	return { result: count };
+};
+
 module.exports = {
 	AddEnquiryDetail,
 	UpdateEnquiryDetail,
+	countOfSuccessfullyProcessedItems,
 };

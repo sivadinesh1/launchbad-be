@@ -74,9 +74,9 @@ const insertSale = async (saleMaster, saleDetails) => {
 			} else if (
 				// draft or stock issue
 				saleMaster.status === 'D' &&
+				saleMaster.invoice_type === 'gstInvoice' &&
 				saleMaster.inv_gen_mode === 'A' &&
-				saleMaster.invoice_no.startsWith('D') === false &&
-				saleMaster.invoice_no.startsWith('SI') === false
+				saleMaster.invoice_no.startsWith('D') === false
 			) {
 				let result =
 					await FinancialYearRepo.updateDraftInvoiceSequenceGenerator(
@@ -86,6 +86,20 @@ const insertSale = async (saleMaster, saleDetails) => {
 				invNo = formatSequenceNumber(result.draft_inv_seq, 'D/');
 				saleMaster.invoice_no = invNo;
 				console.log('draft invoice ' + invNo);
+			} else if (
+				// draft or stock issue
+				saleMaster.status === 'D' &&
+				saleMaster.inv_gen_mode === 'A' &&
+				saleMaster.invoice_type === 'stockIssue' &&
+				saleMaster.invoice_no.startsWith('SI') === false
+			) {
+				let result =
+					await FinancialYearRepo.updateStockIssueSequenceGenerator(
+						saleMaster.center_id,
+						prisma
+					);
+				invNo = formatSequenceNumber(result.draft_inv_seq, 'SI/');
+				saleMaster.invoice_no = invNo;
 			}
 
 			// sale master insert/update
@@ -703,7 +717,7 @@ const deleteSaleTxn = async (sale_id, center_id, user_id) => {
 			);
 
 			return {
-				status: 'success',
+				result: 'success',
 				id: sale_id,
 				//		invoice_no: saleMaster.invoice_no,
 			};

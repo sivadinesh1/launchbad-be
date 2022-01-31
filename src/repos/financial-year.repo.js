@@ -101,13 +101,7 @@ const updateStockIssueSequenceGenerator = async (center_id, prisma) => {
 	let rowId = await getFinancialYearRow(center_id, prisma); // get the row id
 	const result = await prisma.financial_year.update({
 		where: {
-			center_id: Number(rowId),
-			start_date: {
-				lt: new Date(),
-			},
-			end_date: {
-				gt: new Date(),
-			},
+			id: Number(rowId),
 		},
 		data: {
 			stock_issue_seq: {

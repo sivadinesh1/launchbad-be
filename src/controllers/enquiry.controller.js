@@ -5,7 +5,11 @@ const catchAsync = require('../utils/catchAsync');
 const { enquiryService } = require('../services');
 
 const draftEnquiry = catchAsync(async (req, res) => {
-	const data = await enquiryService.draftEnquiry(req.body);
+	const data = await enquiryService.draftEnquiry(
+		req.body,
+		req.user.center_id,
+		req.user.id
+	);
 
 	return responseForward(data, 'draftEnquiry', res);
 });

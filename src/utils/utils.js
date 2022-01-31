@@ -139,7 +139,7 @@ function getCurrentMonth() {
 }
 
 function leftPad(value) {
-	return value.padStart(6, '0');
+	return value.padStart(5, '0');
 }
 
 function formatSequenceNumber(sequence, type = '') {

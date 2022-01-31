@@ -53,27 +53,27 @@ const editSaleDetail = async (saleDetail, sale_id, updated_by, prisma) => {
 				id: Number(saleDetail.id),
 			},
 			data: {
-				center_id: saleDetail.center_id,
+				center_id: Number(saleDetail.center_id),
 
-				cgs_t: saleDetail.cgs_t,
+				cgs_t: Number(saleDetail.cgs_t),
 
-				disc_percent: saleDetail.disc_percent,
+				disc_percent: Number(saleDetail.disc_percent),
 
-				disc_value: saleDetail.disc_value,
-				igs_t: saleDetail.igs_t,
-				mrp: saleDetail.mrp,
-				product_id: saleDetail.product_id,
-				quantity: saleDetail.quantity,
+				disc_value: Number(saleDetail.disc_value),
+				igs_t: Number(saleDetail.igs_t),
+				mrp: Number(saleDetail.mrp),
+				product_id: Number(saleDetail.product_id),
+				quantity: Number(saleDetail.quantity),
 
 				sale_id: Number(sale_id),
-				sgs_t: saleDetail.sgs_t,
-				stock_id: saleDetail.stock_id,
+				sgs_t: Number(saleDetail.sgs_t),
+				stock_id: Number(saleDetail.stock_id),
 
-				tax: saleDetail.tax,
+				tax: Number(saleDetail.tax),
 				// old_value: saleDetail.old_val,
-				after_tax_value: saleDetail.after_tax_value,
-				total_value: saleDetail.total_value,
-				unit_price: saleDetail.unit_price,
+				after_tax_value: Number(saleDetail.after_tax_value),
+				total_value: Number(saleDetail.total_value),
+				unit_price: Number(saleDetail.unit_price),
 				created_by: Number(updated_by),
 				updated_by: Number(updated_by),
 			},
@@ -107,6 +107,7 @@ const getSaleDetails = async (sale_id) => {
 };
 
 const getSaleDetailsTxn = async (sale_id, prisma) => {
+	console.log('sale_id', sale_id);
 	try {
 		const result = await prisma.sale_detail.findMany({
 			where: {
@@ -117,6 +118,7 @@ const getSaleDetailsTxn = async (sale_id, prisma) => {
 				stock: true,
 			},
 		});
+
 		return bigIntToString(result);
 	} catch (error) {
 		throw new Error(

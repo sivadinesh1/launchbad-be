@@ -27,6 +27,19 @@ const updateEnquiryAfterSale = async (enq_id, saleId, prisma) => {
 	return bigIntToString(result);
 };
 
+const updateEnquiryStatus = async (enq_id, status, prisma) => {
+	const result = await prisma.enquiry.update({
+		where: {
+			id: Number(enq_id),
+		},
+		data: {
+			e_status: status,
+		},
+	});
+
+	return bigIntToString(result);
+};
+
 const AddEnquiry = async (customer_id, remarks, center_id, user_id, prisma) => {
 	try {
 		const result = await prisma.enquiry.create({
@@ -49,7 +62,25 @@ const AddEnquiry = async (customer_id, remarks, center_id, user_id, prisma) => {
 	}
 };
 
+const updateEnquiry = async (status, enq_id, updated_by, prisma) => {
+	const result = await prisma.enquiry.update({
+		where: {
+			id: Number(enq_id),
+		},
+		data: {
+			e_status: status,
+			processed_date: currentTimeInTimeZone(),
+			updated_by: Number(updated_by),
+			updatedAt: currentTimeInTimeZone(),
+		},
+	});
+
+	return bigIntToString(result);
+};
+
 module.exports = {
 	updateEnquiryAfterSale,
 	AddEnquiry,
+	updateEnquiryStatus,
+	updateEnquiry,
 };

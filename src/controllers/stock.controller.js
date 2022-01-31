@@ -41,7 +41,7 @@ const deleteSaleDetails = catchAsync(async (req, res) => {
 });
 
 const deleteItemHistory = catchAsync(async (req, res) => {
-	const data = await stockService.deleteItemHistory(req.params.saleid);
+	const data = await stockService.deleteItemHistory(req.params.sale_id);
 	return responseForward(data, 'deleteItemHistory', res);
 });
 
